@@ -58,7 +58,7 @@ export function PaymentPage() {
   const { data: booking, isLoading } = useQuery<BookingDetail>({
     queryKey: ['booking-payment', bookingId],
     queryFn: async () => {
-      const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/booking/${bookingId}`)
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'https://swiftpg-backend.onrender.com'}/api/booking/${bookingId}`)
       if (!res.ok) throw new Error('Failed to load booking')
       return res.json()
     },
@@ -72,7 +72,7 @@ export function PaymentPage() {
 
     try {
       // Step 1: Initiate payment — create Razorpay order on backend
-      const initiateRes = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/payment/initiate`, {
+      const initiateRes = await fetch(`${import.meta.env.VITE_API_URL || 'https://swiftpg-backend.onrender.com'}/api/payment/initiate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ booking_id: booking.id }),
@@ -104,7 +104,7 @@ export function PaymentPage() {
         handler: async (response: any) => {
           // Step 3: Verify payment on backend
           try {
-            const verifyRes = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/payment/verify`, {
+            const verifyRes = await fetch(`${import.meta.env.VITE_API_URL || 'https://swiftpg-backend.onrender.com'}/api/payment/verify`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
@@ -152,7 +152,7 @@ export function PaymentPage() {
     setInitiating(true)
 
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/payment/demo-confirm`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'https://swiftpg-backend.onrender.com'}/api/payment/demo-confirm`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ booking_id: booking.id }),

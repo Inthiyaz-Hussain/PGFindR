@@ -52,7 +52,10 @@ export function SearchBar({
     }
 
     const controller = new AbortController()
-    fetch(`${import.meta.env.VITE_API_URL || ''}/api/pgs/cities?q=${encodeURIComponent(query)}`, {
+    const rawUrl = import.meta.env.VITE_API_URL || ''
+    const baseUrl = rawUrl.replace(/\/api\/?$/, '').replace(/\/$/, '')
+
+    fetch(`${baseUrl}/api/pgs/cities?q=${encodeURIComponent(query)}`, {
       signal: controller.signal,
     })
       .then((res) => res.json())
@@ -60,7 +63,7 @@ export function SearchBar({
         setSuggestions(data)
         setShowSuggestions(data.length > 0)
       })
-      .catch(() => {})
+      .catch(() => { })
 
     return () => controller.abort()
   }, [query])

@@ -200,7 +200,7 @@ export function InquiryModal({
     }
 
     const token = activeSession?.access_token
-    const res = await fetch('/api/inquiry', {
+    const res = await fetch(`${import.meta.env.VITE_API_URL || 'https://swiftpg-backend.onrender.com'}/api/inquiry`, {
       method: 'POST',
       headers: { 
         'Content-Type': 'application/json',

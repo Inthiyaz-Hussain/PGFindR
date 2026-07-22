@@ -93,7 +93,7 @@ export async function registerFcmToken(userId: string): Promise<boolean> {
   }
 
   try {
-    const response = await fetch('/api/notifications/register-token', {
+    const response = await fetch(`${import.meta.env.VITE_API_URL || 'https://swiftpg-backend.onrender.com'}/api/notifications/register-token`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ user_id: userId, fcm_token: token }),

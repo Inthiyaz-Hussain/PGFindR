@@ -25,7 +25,7 @@ export function useFirebasePush() {
         const token = await requestNotificationPermission()
         if (token) {
           // Register token with backend
-          await fetch('/api/notifications/register-token', {
+          await fetch(`${import.meta.env.VITE_API_URL || 'https://swiftpg-backend.onrender.com'}/api/notifications/register-token`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ user_id: user.id, fcm_token: token }),

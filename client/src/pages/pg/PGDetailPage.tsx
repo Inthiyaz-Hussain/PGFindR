@@ -72,7 +72,7 @@ export function PGDetailPage() {
   } = useQuery<PGDetailData>({
     queryKey: ['pg-detail', id],
     queryFn: async () => {
-      const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/pgs/${id}`)
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/pgs/${id}`)
       if (!res.ok) throw new Error('Failed to load PG details')
       return res.json()
     },
@@ -85,7 +85,7 @@ export function PGDetailPage() {
   } = useQuery<ReviewsResponse>({
     queryKey: ['pg-reviews', id, reviewOffset],
     queryFn: async () => {
-      const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/pgs/${id}/reviews?limit=${REVIEW_LIMIT}&offset=${reviewOffset}`)
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/pgs/${id}/reviews?limit=${REVIEW_LIMIT}&offset=${reviewOffset}`)
       if (!res.ok) throw new Error('Failed to load reviews')
       return res.json()
     },
