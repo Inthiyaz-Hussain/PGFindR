@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Search, X, SlidersHorizontal, MapPin, Wifi, Utensils, Wind, Car, Shield, Building2 } from 'lucide-react'
+import { Search, X, Wifi, Utensils, Wind, Car, Shield, Building2 } from 'lucide-react'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'

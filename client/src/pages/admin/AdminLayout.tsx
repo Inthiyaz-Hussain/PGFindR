@@ -73,8 +73,7 @@ export function AdminLayout() {
   const { profile, signOut } = useAuth()
   const initials = profile?.full_name?.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase() || 'A'
 
-  // Flatten all nav items for mobile
-  const allNavItems = NAV_GROUPS.flatMap(g => g.items)
+
 
   return (
     <div className="flex flex-col min-h-screen">

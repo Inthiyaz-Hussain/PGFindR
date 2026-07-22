@@ -16,7 +16,9 @@ import {
   LocateFixed,
   Search,
   Bookmark,
-  ShieldCheck
+  ShieldCheck,
+  MessageSquare,
+  UserCheck
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -65,7 +67,6 @@ export interface NavbarProps {
 }
 
 export function Navbar({
-  brandName = 'SwiftPG',
   selectedCity: propCity,
   onCityChange,
   wishlistCount: propWishlistCount = 3,
@@ -157,8 +158,6 @@ export function Navbar({
     ? user.email.slice(0, 2).toUpperCase()
     : 'JD'
 
-  const brandMain = brandName.endsWith('PG') ? brandName.slice(0, -2) : brandName
-  const brandSub = brandName.endsWith('PG') ? 'PG' : ''
 
 
   const userDisplayName = profile?.full_name || user?.email?.split('@')[0] || 'John Doe'
@@ -596,7 +595,7 @@ export function Navbar({
                           onClick={() => setMobileMenuOpen(false)}
                           className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                         >
-                          <Building className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                          <Building2 className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                           <span>Listings</span>
                         </Link>
                         <Link

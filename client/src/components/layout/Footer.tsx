@@ -5,7 +5,6 @@ import {
   ShieldCheck,
   ArrowUp
 } from 'lucide-react'
-import { useAuth } from '@/hooks/useAuth'
 
 const Facebook = (props: React.SVGProps<SVGSVGElement>) => (
   <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" {...props}>
@@ -44,13 +43,6 @@ export function Footer({ compact = false }: FooterProps) {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  const auth = (() => {
-    try {
-      return useAuth()
-    } catch {
-      return null
-    }
-  })()
 
   const pathname = window.location.pathname
   const role = (

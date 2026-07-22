@@ -187,7 +187,7 @@ describe('InquiryModal', () => {
   it('shows email verification and handles submit for unauthenticated users', async () => {
     const user = userEvent.setup()
     mockAuthContext.user = null as any
-    mockAuthContext.profile = null
+    mockAuthContext.profile = null as any
 
     // Mock register and login context callbacks
     mockAuthContext.register = vi.fn().mockResolvedValue({ error: null })
@@ -203,7 +203,8 @@ describe('InquiryModal', () => {
           access_token: 'mock-token',
           user: { id: 'user-guest-456', email: 'guest@example.com' } as any
         } as any
-      }
+      },
+      error: null
     })
 
     let capturedBody: any
