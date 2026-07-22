@@ -50,9 +50,7 @@ async function fetchPGs({
   if (filters.availableOnly) params.set('available_only', 'true')
   params.set('limit', '20')
   params.set('offset', String(pageParam))
-  const rawUrl = import.meta.env.VITE_API_URL || ''
-  const baseUrl = rawUrl.replace(/\/api\/?$/, '').replace(/\/$/, '')
-  const res = await fetch(`${baseUrl}/api/pgs?${params}`)
+  const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/pgs?${params}`)
   if (!res.ok) throw new Error('Failed to fetch PGs')
   return res.json()
 }

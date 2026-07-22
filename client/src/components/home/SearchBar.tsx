@@ -52,10 +52,7 @@ export function SearchBar({
     }
 
     const controller = new AbortController()
-    const rawUrl = import.meta.env.VITE_API_URL || ''
-    const baseUrl = rawUrl.replace(/\/api\/?$/, '').replace(/\/$/, '')
-
-    fetch(`${baseUrl}/api/pgs/cities?q=${encodeURIComponent(query)}`, {
+    fetch(`${import.meta.env.VITE_API_URL || ''}/api/pgs/cities?q=${encodeURIComponent(query)}`, {
       signal: controller.signal,
     })
       .then((res) => res.json())
