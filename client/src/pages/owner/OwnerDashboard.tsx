@@ -227,7 +227,7 @@ export function OwnerDashboard() {
                   return (
                     <div key={inq.id} className="flex items-center justify-between rounded-md border p-3 cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => navigate('/owner/inquiries')}>
                       <div>
-                        <div className="font-medium text-sm">{seeker?.full_name || 'Seeker'}</div>
+                        <div className="font-medium text-sm">{inq.full_name || seeker?.full_name || 'Seeker'}</div>
                         <div className="text-xs text-muted-foreground">{pg?.name || 'PG'}</div>
                       </div>
                       {inq.move_in_date && (
