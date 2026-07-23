@@ -20,6 +20,13 @@ vi.mock('@/lib/supabase', () => ({
         },
         error: null
       }),
+      signInWithOtp: vi.fn().mockResolvedValue({ data: {}, error: null }),
+      verifyOtp: vi.fn().mockResolvedValue({
+        data: {
+          user: { id: 'user-guest-456', email: 'guest@example.com' }
+        },
+        error: null
+      }),
     },
     from: vi.fn().mockReturnValue({
       select: vi.fn().mockReturnThis(),

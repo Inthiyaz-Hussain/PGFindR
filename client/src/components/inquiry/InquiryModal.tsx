@@ -78,54 +78,80 @@ export function InquiryModal({
     }
   }, [emailInputValue, user])
 
-  const handleSendOtp = () => {
+  const handleSendOtp = async () => {
     const email = emailInputValue.trim()
     if (!email || !email.includes('@') || !email.includes('.')) {
       toast.error('Please enter a valid email address first')
       return
     }
     setIsSendingOtp(true)
-    setTimeout(() => {
-      setIsSendingOtp(false)
-      setOtpSent(true)
-      toast.success('Verification code sent! Use OTP: 123456', {
-        duration: 8000,
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          shouldCreateUser: true,
+          data: {
+            role: 'seeker',
+            full_name: 'Guest Seeker',
+          }
+        }
       })
-    }, 600)
+      setIsSendingOtp(false)
+      if (error) {
+        console.error('Supabase OTP send failed:', error)
+        toast.error(error.message || 'Failed to send OTP code')
+        return
+      }
+      setOtpSent(true)
+      toast.success('Verification code sent! Please check your email inbox.')
+    } catch (e) {
+      setIsSendingOtp(false)
+      console.error(e)
+      toast.error('Error sending verification code')
+    }
   }
 
-  const handleVerifyOtp = () => {
-    if (otpInputValue.trim() === '123456') {
-      setIsVerifyingOtp(true)
-      setTimeout(async () => {
-        try {
-          const { data, error } = await supabase.auth.signInAnonymously({
-            options: {
-              data: {
-                role: 'seeker',
-                full_name: 'Guest Seeker',
-              }
-            }
-          })
-          setIsVerifyingOtp(false)
-          if (error) {
-            console.error('Anonymous sign-in failed:', error)
-            toast.error('Verification failed. Please try again.')
-            return
-          }
-          if (data.user) {
-            localStorage.setItem('seeker_id', data.user.id)
-          }
-          setOtpVerified(true)
-          toast.success('Email verified successfully!')
-        } catch (e) {
-          setIsVerifyingOtp(false)
-          console.error(e)
-          toast.error('Verification failed.')
-        }
-      }, 500)
-    } else {
-      toast.error('Invalid OTP. Please try again.')
+  const handleVerifyOtp = async () => {
+    const email = emailInputValue.trim()
+    const token = otpInputValue.trim()
+    if (token.length !== 6) {
+      toast.error('Please enter a valid 6-digit OTP code')
+      return
+    }
+    setIsVerifyingOtp(true)
+    try {
+      // First try to verify with type 'email' (for signin)
+      let result = await supabase.auth.verifyOtp({
+        email,
+        token,
+        type: 'email',
+      })
+
+      // If it fails, fallback to 'signup' type (in case it is a new signup confirmation)
+      if (result.error) {
+        result = await supabase.auth.verifyOtp({
+          email,
+          token,
+          type: 'signup',
+        })
+      }
+
+      setIsVerifyingOtp(false)
+      if (result.error) {
+        console.error('OTP verification failed:', result.error)
+        toast.error(result.error.message || 'Invalid or expired OTP code')
+        return
+      }
+
+      if (result.data?.user) {
+        localStorage.setItem('seeker_id', result.data.user.id)
+      }
+      setOtpVerified(true)
+      toast.success('Email verified successfully!')
+    } catch (e) {
+      setIsVerifyingOtp(false)
+      console.error(e)
+      toast.error('Verification failed. Please try again.')
     }
   }
 
