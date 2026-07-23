@@ -1,4 +1,5 @@
 import { Router } from 'express'
+import { createClient } from '@supabase/supabase-js'
 import { supabase } from '../index.js'
 import { sendPushNotification } from '../lib/firebase.js'
 import { createNotification, getUserFcmToken } from '../lib/notifications.js'
@@ -139,8 +140,29 @@ router.post('/', authenticateToken, async (req, res) => {
       finalSeekerId = pg.owner_id
     }
 
+    // Initialize request-scoped client to propagate user JWT for RLS
+    const authHeader = req.headers.authorization
+    const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null
+    const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL!
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY!
+
+    let dbClient = supabase
+    if (token && !token.startsWith('mock-token-') && !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      dbClient = createClient(supabaseUrl, supabaseKey, {
+        auth: {
+          persistSession: false,
+          autoRefreshToken: false,
+        },
+        global: {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      })
+    }
+
     // Insert inquiry
-    const { data, error } = await supabase
+    const { data, error } = await dbClient
       .from('inquiries')
       .insert({
         pg_id,

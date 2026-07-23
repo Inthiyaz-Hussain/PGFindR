@@ -14,6 +14,12 @@ vi.mock('@/lib/supabase', () => ({
         data: { subscription: { unsubscribe: vi.fn() } },
       }),
       getUser: vi.fn().mockResolvedValue({ data: { user: null }, error: null }),
+      signInAnonymously: vi.fn().mockResolvedValue({
+        data: {
+          user: { id: 'user-guest-456', email: 'guest@example.com' }
+        },
+        error: null
+      }),
     },
     from: vi.fn().mockReturnValue({
       select: vi.fn().mockReturnThis(),

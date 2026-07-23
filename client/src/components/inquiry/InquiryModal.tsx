@@ -13,6 +13,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { useAuth } from '@/hooks/useAuth'
+import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
 import type { SharingTypeItem } from '@/types'
 
@@ -96,10 +97,32 @@ export function InquiryModal({
   const handleVerifyOtp = () => {
     if (otpInputValue.trim() === '123456') {
       setIsVerifyingOtp(true)
-      setTimeout(() => {
-        setIsVerifyingOtp(false)
-        setOtpVerified(true)
-        toast.success('Email verified successfully!')
+      setTimeout(async () => {
+        try {
+          const { data, error } = await supabase.auth.signInAnonymously({
+            options: {
+              data: {
+                role: 'seeker',
+                full_name: 'Guest Seeker',
+              }
+            }
+          })
+          setIsVerifyingOtp(false)
+          if (error) {
+            console.error('Anonymous sign-in failed:', error)
+            toast.error('Verification failed. Please try again.')
+            return
+          }
+          if (data.user) {
+            localStorage.setItem('seeker_id', data.user.id)
+          }
+          setOtpVerified(true)
+          toast.success('Email verified successfully!')
+        } catch (e) {
+          setIsVerifyingOtp(false)
+          console.error(e)
+          toast.error('Verification failed.')
+        }
       }, 500)
     } else {
       toast.error('Invalid OTP. Please try again.')
