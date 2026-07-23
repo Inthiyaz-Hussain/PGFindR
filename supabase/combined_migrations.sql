@@ -416,7 +416,7 @@ CREATE POLICY "select_own_inquiries_seeker" ON public.inquiries FOR SELECT TO au
 DROP POLICY IF EXISTS "select_own_inquiries_owner" ON public.inquiries;
 CREATE POLICY "select_own_inquiries_owner" ON public.inquiries FOR SELECT TO authenticated USING (EXISTS (SELECT 1 FROM public.pg_listings WHERE id = pg_id AND owner_id = auth.uid()));
 DROP POLICY IF EXISTS "insert_inquiries" ON public.inquiries;
-CREATE POLICY "insert_inquiries" ON public.inquiries FOR INSERT TO authenticated WITH CHECK (auth.uid() = seeker_id);
+CREATE POLICY "insert_inquiries" ON public.inquiries FOR INSERT TO public WITH CHECK (true);
 DROP POLICY IF EXISTS "update_inquiries_seeker" ON public.inquiries;
 CREATE POLICY "update_inquiries_seeker" ON public.inquiries FOR UPDATE TO authenticated USING (auth.uid() = seeker_id) WITH CHECK (auth.uid() = seeker_id);
 DROP POLICY IF EXISTS "update_inquiries_owner" ON public.inquiries;

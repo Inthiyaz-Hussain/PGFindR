@@ -138,7 +138,7 @@ CREATE POLICY "select_own_inquiries_seeker" ON inquiries FOR SELECT TO authentic
 CREATE POLICY "select_own_inquiries_owner" ON inquiries FOR SELECT TO authenticated USING (
   EXISTS (SELECT 1 FROM pg_listings WHERE id = pg_id AND owner_id = auth.uid())
 );
-CREATE POLICY "insert_inquiries" ON inquiries FOR INSERT TO authenticated WITH CHECK (auth.uid() = seeker_id);
+CREATE POLICY "insert_inquiries" ON inquiries FOR INSERT TO public WITH CHECK (true);
 CREATE POLICY "update_inquiries_seeker" ON inquiries FOR UPDATE TO authenticated USING (auth.uid() = seeker_id) WITH CHECK (auth.uid() = seeker_id);
 CREATE POLICY "update_inquiries_owner" ON inquiries FOR UPDATE TO authenticated USING (
   EXISTS (SELECT 1 FROM pg_listings WHERE id = pg_id AND owner_id = auth.uid())
