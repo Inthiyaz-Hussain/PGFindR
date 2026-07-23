@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { User, Phone, Mail, Loader2, Save } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -11,9 +11,23 @@ import { toast } from 'sonner'
 
 export function ProfilePage() {
   const { user, profile, refreshProfile } = useAuth()
-  const [fullName, setFullName] = useState(profile?.full_name || '')
-  const [phone, setPhone] = useState(profile?.phone || '')
+  const [fullName, setFullName] = useState('')
+  const [phone, setPhone] = useState('')
+  const [email, setEmail] = useState('')
   const [saving, setSaving] = useState(false)
+
+  // Sync state with profile or localStorage
+  useEffect(() => {
+    if (profile) {
+      setFullName(profile.full_name || '')
+      setPhone(profile.phone || '')
+      setEmail(user?.email || '')
+    } else {
+      setFullName(localStorage.getItem('seeker_fullName') || '')
+      setPhone(localStorage.getItem('seeker_phone') || '')
+      setEmail(localStorage.getItem('seeker_email') || '')
+    }
+  }, [profile, user])
 
   const initials = fullName
     ? fullName.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()
@@ -22,16 +36,24 @@ export function ProfilePage() {
   async function handleSave(e: React.FormEvent) {
     e.preventDefault()
     setSaving(true)
-    const { error } = await (supabase
-      .from('profiles') as any)
-      .update({ full_name: fullName, phone, updated_at: new Date().toISOString() })
-      .eq('id', user!.id)
-    setSaving(false)
-    if (error) {
-      toast.error('Failed to save profile')
+    if (user) {
+      const { error } = await (supabase
+        .from('profiles') as any)
+        .update({ full_name: fullName, phone, updated_at: new Date().toISOString() })
+        .eq('id', user.id)
+      setSaving(false)
+      if (error) {
+        toast.error('Failed to save profile')
+      } else {
+        await refreshProfile()
+        toast.success('Profile updated!')
+      }
     } else {
-      await refreshProfile()
-      toast.success('Profile updated!')
+      localStorage.setItem('seeker_fullName', fullName)
+      localStorage.setItem('seeker_phone', phone)
+      localStorage.setItem('seeker_email', email)
+      setSaving(false)
+      toast.success('Profile saved locally!')
     }
   }
 
@@ -49,8 +71,8 @@ export function ProfilePage() {
               <AvatarFallback className="text-xl font-semibold">{initials}</AvatarFallback>
             </Avatar>
             <div>
-              <CardTitle className="text-lg">{profile?.full_name || 'User'}</CardTitle>
-              <p className="text-sm text-muted-foreground capitalize">{profile?.role}</p>
+              <CardTitle className="text-lg">{fullName || 'Guest Seeker'}</CardTitle>
+              <p className="text-sm text-muted-foreground capitalize">{profile?.role || 'Guest Seeker'}</p>
             </div>
           </div>
         </CardHeader>
@@ -76,9 +98,12 @@ export function ProfilePage() {
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                 <Input
                   id="email"
-                  value={user?.email || ''}
-                  disabled
-                  className="pl-10 bg-muted"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  disabled={!!user}
+                  className={`pl-10 ${user ? 'bg-muted' : ''}`}
+                  required
                 />
               </div>
             </div>

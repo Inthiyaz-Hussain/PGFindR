@@ -1,5 +1,6 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { MessageSquare, ExternalLink, Calendar, Loader2 } from 'lucide-react'
+import { MessageSquare, ExternalLink, Calendar, Loader2, CreditCard } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -22,19 +23,85 @@ export function InquiriesPage() {
   const { user } = useAuth()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const [payingInqId, setPayingInqId] = useState<string | null>(null)
+
+  const savedInquiryIds = JSON.parse(localStorage.getItem('pgr_saved_inquiries') || '[]')
 
   const { data: inquiries, isLoading } = useQuery({
-    queryKey: ['seeker-inquiries-all', user?.id],
+    queryKey: ['seeker-inquiries-all', user?.id, savedInquiryIds],
     queryFn: async () => {
-      const { data } = await supabase
-        .from('inquiries')
-        .select('*, pg:pg_listings(id, name, city, locality, monthly_rent_min), bed:beds(room_number, bed_label, monthly_rent)')
-        .eq('seeker_id', user!.id)
-        .order('created_at', { ascending: false })
-      return (data || []) as Inquiry[]
+      if (user) {
+        const { data } = await supabase
+          .from('inquiries')
+          .select('*, pg:pg_listings(id, name, city, locality, monthly_rent_min, owner_id), bed:beds(room_number, bed_label, monthly_rent)')
+          .eq('seeker_id', user.id)
+          .order('created_at', { ascending: false })
+        return (data || []) as Inquiry[]
+      } else {
+        if (savedInquiryIds.length === 0) return []
+        const { data } = await supabase
+          .from('inquiries')
+          .select('*, pg:pg_listings(id, name, city, locality, monthly_rent_min, owner_id), bed:beds(room_number, bed_label, monthly_rent)')
+          .in('id', savedInquiryIds)
+          .order('created_at', { ascending: false })
+        return (data || []) as Inquiry[]
+      }
     },
-    enabled: !!user,
+    enabled: !!user || savedInquiryIds.length > 0,
   })
+
+  async function handlePay(inq: Inquiry) {
+    setPayingInqId(inq.id)
+    try {
+      const sharingTypeMap: Record<number, string> = { 1: 'single', 2: 'double', 3: 'triple', 4: 'dormitory' }
+      const prefStr = inq.sharing_preference ? sharingTypeMap[inq.sharing_preference] : 'single'
+
+      const { data: beds } = await supabase
+        .from('beds')
+        .select('id, monthly_rent')
+        .eq('pg_id', inq.pg_id)
+        .eq('status', 'available')
+        .eq('sharing_type', prefStr)
+        .limit(1)
+
+      const bedId = (beds as any)?.[0]?.id || null
+      const monthlyRent = (beds as any)?.[0]?.monthly_rent || (inq.pg as any)?.monthly_rent_min || 5000
+
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'https://swiftpg-backend.onrender.com'}/api/booking`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          inquiry_id: inq.id,
+          pg_id: inq.pg_id,
+          seeker_id: inq.seeker_id || localStorage.getItem('seeker_id'),
+          owner_id: (inq.pg as any)?.owner_id,
+          bed_id: bedId,
+          monthly_rent: monthlyRent,
+          move_in_date: inq.move_in_date || new Date().toISOString().split('T')[0]
+        })
+      })
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err.error || 'Failed to create booking')
+      }
+
+      const booking = await res.json()
+
+      const savedBookings = JSON.parse(localStorage.getItem('pgr_saved_bookings') || '[]')
+      if (!savedBookings.includes(booking.id)) {
+        savedBookings.push(booking.id)
+        localStorage.setItem('pgr_saved_bookings', JSON.stringify(savedBookings))
+      }
+
+      toast.success('Booking initialized! Redirecting to payment...')
+      navigate(`/payment/${booking.id}`)
+    } catch (err: any) {
+      toast.error(err.message || 'Payment initiation failed')
+    } finally {
+      setPayingInqId(null)
+    }
+  }
 
   const cancelMutation = useMutation({
     mutationFn: async (id: string) => {
@@ -109,6 +176,20 @@ export function InquiriesPage() {
                           disabled={cancelMutation.isPending}
                         >
                           {cancelMutation.isPending ? <Loader2 className="size-3 animate-spin" /> : 'Cancel'}
+                        </Button>
+                      )}
+                      {inq.status === 'confirmed' && (
+                        <Button
+                          size="sm"
+                          disabled={payingInqId === inq.id}
+                          onClick={() => handlePay(inq)}
+                        >
+                          {payingInqId === inq.id ? (
+                            <Loader2 className="size-3 animate-spin mr-1" />
+                          ) : (
+                            <CreditCard className="size-3 mr-1" />
+                          )}
+                          Pay
                         </Button>
                       )}
                     </div>

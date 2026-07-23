@@ -132,7 +132,7 @@ function getDemoMockData(email: string) {
     email: string,
     password: string
   ): Promise<{ error: Error | null; profile: Profile | null }> {
-    const isDemo = ['seeker@swiftpg.com', 'owner@swiftpg.com', 'admin@swiftpg.com'].includes(email.toLowerCase())
+    const isDemo = false
     try {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) {
@@ -181,7 +181,7 @@ function getDemoMockData(email: string) {
     role,
     phone,
   }: RegisterOptions): Promise<{ error: Error | null }> {
-    const isDemo = ['seeker@swiftpg.com', 'owner@swiftpg.com', 'admin@swiftpg.com'].includes(email.toLowerCase())
+    const isDemo = false
     try {
       const { data, error } = await supabase.auth.signUp({
         email,

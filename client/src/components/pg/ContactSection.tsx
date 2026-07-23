@@ -31,7 +31,7 @@ export function ContactSection({
   const isLoggedIn = !!user
 
   function handleSuccess(_id: string) {
-    navigate('/my-inquiries')
+    navigate('/seeker')
   }
 
   return (

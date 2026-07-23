@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { Link, NavLink, Outlet } from 'react-router-dom'
-import { Building2, LayoutDashboard, Users, UserCheck, CreditCard, Percent, LogOut, ChevronDown, ChevronRight, Building } from 'lucide-react'
+import { NavLink, Outlet } from 'react-router-dom'
+import { LayoutDashboard, Users, UserCheck, CreditCard, Percent, LogOut, ChevronDown, ChevronRight, Building } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { useAuth } from '@/hooks/useAuth'
@@ -79,17 +79,7 @@ export function AdminLayout() {
     <div className="flex flex-col min-h-screen">
       <Navbar />
       <div className="flex flex-1">
-        <aside className="hidden md:flex w-60 flex-col border-r bg-sidebar text-sidebar-foreground">
-          <div className="flex h-16 items-center gap-2 px-5 border-b border-sidebar-border">
-            <Link to="/" className="flex items-center gap-2 font-bold">
-              <div className="flex h-7 w-7 items-center justify-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground">
-                <Building2 className="size-3.5" />
-              </div>
-              PGFindR
-            </Link>
-            <span className="ml-auto text-xs bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 rounded px-1.5 py-0.5 font-medium">Admin</span>
-          </div>
-
+        <aside className="hidden md:flex w-60 flex-col border-r bg-sidebar text-sidebar-foreground pt-4">
           <div className="flex-1 p-3 space-y-4">
             {NAV_GROUPS.map((group) => (
               <NavGroup key={group.label} label={group.label} items={group.items} />
@@ -113,13 +103,11 @@ export function AdminLayout() {
           </div>
         </aside>
 
-        <main className="flex-1 min-w-0 bg-background flex flex-col justify-between">
-          <div className="flex-1">
-            <Outlet />
-          </div>
-          <Footer />
+        <main className="flex-1 min-w-0 bg-background">
+          <Outlet />
         </main>
       </div>
+      <Footer />
     </div>
   )
 }

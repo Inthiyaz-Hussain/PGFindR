@@ -46,7 +46,7 @@ export function LocationPrompt({ open, onSelect, onSkip }: LocationPromptProps) 
   }
 
   function selectCity(city: (typeof POPULAR_CITIES)[0]) {
-    onSelect({ lat: city.lat, lng: city.lng, city: city.name, radius: 5000 })
+    onSelect({ lat: city.lat, lng: city.lng, city: city.name, radius: 25000 })
   }
 
   async function requestGPS() {
@@ -62,7 +62,7 @@ export function LocationPrompt({ open, onSelect, onSkip }: LocationPromptProps) 
           lat: pos.coords.latitude,
           lng: pos.coords.longitude,
           city: 'Near me',
-          radius: 5000,
+          radius: 25000,
         })
         setGpsLoading(false)
       },

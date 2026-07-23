@@ -70,13 +70,11 @@ export function App() {
               <Route path="/auth/register" element={<RegisterPage />} />
 
               {/* Seeker */}
-              <Route element={<ProtectedRoute requiredRole="seeker" />}>
-                <Route element={<SeekerLayout />}>
-                  <Route path="/seeker" element={<SeekerDashboard />} />
-                  <Route path="/seeker/inquiries" element={<InquiriesPage />} />
-                  <Route path="/seeker/bookings" element={<BookingsPage />} />
-                  <Route path="/seeker/profile" element={<ProfilePage />} />
-                </Route>
+              <Route element={<SeekerLayout />}>
+                <Route path="/seeker" element={<SeekerDashboard />} />
+                <Route path="/seeker/inquiries" element={<InquiriesPage />} />
+                <Route path="/seeker/bookings" element={<BookingsPage />} />
+                <Route path="/seeker/profile" element={<ProfilePage />} />
               </Route>
 
               {/* Owner */}

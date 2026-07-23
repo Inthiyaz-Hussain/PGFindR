@@ -289,22 +289,30 @@ export function Footer({ compact = false }: FooterProps) {
               )}
 
               {/* Column 4: Contextual Actions / CTA Card */}
-              {role === 'seeker' && (
+              {(role === 'seeker' || role === 'public') && (
                 <div>
                   <div className="rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-800/80 p-5 shadow-inner space-y-4">
                     <div className="flex items-center gap-2 text-indigo-400">
                       <Building2 className="h-5 w-5" />
-                      <span className="text-sm font-bold text-white uppercase tracking-wider">Find Another PG?</span>
+                      <span className="text-sm font-bold text-white uppercase tracking-wider">Customer Care</span>
                     </div>
                     <p className="text-xs text-slate-400 leading-relaxed">
-                      Ready to move to a new location? Explore thousands of top-rated, verified PGs in real-time.
+                      Need assistance with finding a PG, booking confirmation, or payments? Contact our dedicated admin support desk.
                     </p>
-                    <Link
-                      to="/search"
-                      className="w-full flex items-center justify-center gap-2 py-2 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm transition-all shadow-md active:scale-95 duration-150 text-center"
-                    >
-                      Explore PGs
-                    </Link>
+                    <div className="space-y-2 text-xs text-slate-300 border-t border-slate-800 pt-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-slate-500">Helpline:</span>
+                        <span className="font-semibold text-indigo-450">+91 800-555-0199</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-slate-500">Email:</span>
+                        <span className="font-semibold hover:text-white transition-colors">support@swiftpg.com</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-slate-500">Available:</span>
+                        <span className="font-semibold text-emerald-450">24/7 (Mon - Sun)</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}
@@ -343,26 +351,6 @@ export function Footer({ compact = false }: FooterProps) {
                     <p className="text-xs text-slate-400 leading-relaxed">
                       If there are server alerts or pending approval backlogs, check notifications or system logs immediately.
                     </p>
-                  </div>
-                </div>
-              )}
-
-              {role === 'public' && (
-                <div>
-                  <div className="rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-800/80 p-5 shadow-inner space-y-4">
-                    <div className="flex items-center gap-2 text-indigo-400">
-                      <Building2 className="h-5 w-5" />
-                      <span className="text-sm font-bold text-white uppercase tracking-wider">Are you an owner?</span>
-                    </div>
-                    <p className="text-xs text-slate-400 leading-relaxed">
-                      List your property and start reaching thousands of verified tenants with zero middleman fee.
-                    </p>
-                    <Link
-                      to="/owner"
-                      className="w-full flex items-center justify-center gap-2 py-2 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm transition-all shadow-md active:scale-95 duration-150 text-center"
-                    >
-                      List Your PG
-                    </Link>
                   </div>
                 </div>
               )}

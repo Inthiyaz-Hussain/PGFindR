@@ -120,7 +120,7 @@ describe('InquiryModal', () => {
     let capturedBody: any
 
     server.use(
-      http.post('/api/inquiry', async ({ request }) => {
+      http.post('*/api/inquiry', async ({ request }) => {
         capturedBody = await request.json()
         return HttpResponse.json(
           { id: 'inq-new', message: 'Inquiry submitted successfully' },
@@ -160,7 +160,7 @@ describe('InquiryModal', () => {
     const { toast } = await import('sonner')
 
     server.use(
-      http.post('/api/inquiry', () =>
+      http.post('*/api/inquiry', () =>
         HttpResponse.json({ error: 'Server unavailable' }, { status: 500 })
       )
     )
@@ -209,7 +209,7 @@ describe('InquiryModal', () => {
 
     let capturedBody: any
     server.use(
-      http.post('/api/inquiry', async ({ request }) => {
+      http.post('*/api/inquiry', async ({ request }) => {
         capturedBody = await request.json()
         return HttpResponse.json(
           { id: 'inq-guest', message: 'Inquiry submitted successfully' },
@@ -218,6 +218,7 @@ describe('InquiryModal', () => {
       })
     )
 
+    localStorage.setItem('seeker_id', 'user-guest-456')
     renderWithProviders(<InquiryModal {...defaultProps} />)
 
     // Verify email field is shown
@@ -230,6 +231,18 @@ describe('InquiryModal', () => {
     // Type email
     const emailInput = screen.getByPlaceholderText(/you@example.com/i)
     await user.type(emailInput, 'guest@example.com')
+
+    // Click Send OTP
+    const sendOtpBtn = screen.getByRole('button', { name: /Send OTP/i })
+    await user.click(sendOtpBtn)
+
+    // Type OTP
+    const otpInput = await screen.findByPlaceholderText(/e.g. 123456/i)
+    await user.type(otpInput, '123456')
+
+    // Click Verify
+    const verifyBtn = screen.getByRole('button', { name: /Verify/i })
+    await user.click(verifyBtn)
 
     // Fill other fields
     const nameInput = screen.getByPlaceholderText(/your full name/i)

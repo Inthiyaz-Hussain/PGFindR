@@ -5,10 +5,8 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import {
   Building2, Eye, EyeOff, Loader2, UserPlus,
-  User, Home, CheckCircle2,
 } from 'lucide-react'
 import { toast } from 'sonner'
-import { cn } from '@/lib/utils'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -40,21 +38,6 @@ const registerSchema = z
 
 type RegisterFormValues = z.infer<typeof registerSchema>
 
-const roleOptions = [
-  {
-    value: 'seeker' as const,
-    label: 'Looking for PG',
-    description: 'Find and book paying guest accommodations',
-    icon: User,
-  },
-  {
-    value: 'owner' as const,
-    label: 'PG Owner',
-    description: 'List and manage your PG properties',
-    icon: Home,
-  },
-]
-
 export function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
@@ -64,7 +47,6 @@ export function RegisterPage() {
   const {
     control,
     handleSubmit,
-    watch,
     formState: { isSubmitting },
   } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
@@ -74,11 +56,9 @@ export function RegisterPage() {
       mobile: '',
       password: '',
       confirmPassword: '',
-      role: 'seeker',
+      role: 'owner',
     },
   })
-
-  const selectedRole = watch('role')
 
   async function onSubmit(values: RegisterFormValues) {
     const { error } = await register({
@@ -116,59 +96,12 @@ export function RegisterPage() {
         {/* Card */}
         <Card>
           <CardHeader className="text-center pb-4">
-            <CardTitle className="text-xl">Create your account</CardTitle>
-            <CardDescription>Join thousands of seekers and owners on PGFindR</CardDescription>
+            <CardTitle className="text-xl">Create Owner Account</CardTitle>
+            <CardDescription>Join thousands of owners listing PGs on PGFindR</CardDescription>
           </CardHeader>
 
           <CardContent>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
-
-              {/* Role Selection */}
-              <Controller
-                name="role"
-                control={control}
-                render={({ field }) => (
-                  <Field>
-                    <FieldLabel>I want to…</FieldLabel>
-                    <div className="grid grid-cols-2 gap-3 pt-1">
-                      {roleOptions.map(({ value, label, description, icon: Icon }) => {
-                        const active = field.value === value
-                        return (
-                          <button
-                            key={value}
-                            type="button"
-                            onClick={() => field.onChange(value)}
-                            className={cn(
-                              'relative flex flex-col items-start gap-1.5 rounded-lg border p-3 text-left transition-all',
-                              active
-                                ? 'border-primary bg-primary/5 ring-1 ring-primary'
-                                : 'border-border hover:border-primary/50 hover:bg-accent/40'
-                            )}
-                          >
-                            {active && (
-                              <CheckCircle2 className="absolute right-2.5 top-2.5 size-4 text-primary" />
-                            )}
-                            <div
-                              className={cn(
-                                'flex h-8 w-8 items-center justify-center rounded-md',
-                                active
-                                  ? 'bg-primary text-primary-foreground'
-                                  : 'bg-muted text-muted-foreground'
-                              )}
-                            >
-                              <Icon className="size-4" />
-                            </div>
-                            <span className="text-sm font-semibold">{label}</span>
-                            <span className="text-xs text-muted-foreground leading-tight">
-                              {description}
-                            </span>
-                          </button>
-                        )
-                      })}
-                    </div>
-                  </Field>
-                )}
-              />
 
               {/* Full Name */}
               <Controller
@@ -180,7 +113,7 @@ export function RegisterPage() {
                     <Input
                       {...field}
                       id="fullName"
-                      placeholder={selectedRole === 'owner' ? 'Suresh Patel' : 'Rahul Sharma'}
+                      placeholder="Suresh Patel"
                       autoComplete="name"
                       aria-invalid={fieldState.invalid}
                     />

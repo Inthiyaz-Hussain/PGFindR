@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Search, SlidersHorizontal, X, Filter } from 'lucide-react'
+import { Search, SlidersHorizontal, X, Filter, MapPin } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -11,11 +11,12 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/co
 import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useQuery } from '@tanstack/react-query'
-import { supabase } from '@/lib/supabase'
-import type { PGListing, PGType } from '@/types'
+import type { PGListing } from '@/types'
 import { PGCard } from '@/components/pg/PGCard'
 import { Empty, EmptyMedia, EmptyTitle, EmptyDescription } from '@/components/ui/empty'
 import { Building2 } from 'lucide-react'
+import { type LocationState } from '@/types/filters'
+import { LocationPrompt } from '@/components/home/LocationPrompt'
 
 const AMENITIES = [
   { id: 'wifi_included', label: 'WiFi' },
@@ -41,32 +42,81 @@ export function SearchPage() {
     setInputValue(q)
   }, [searchParams])
 
+  const [selectedCity, setSelectedCity] = useState('')
+  const [showLocationPrompt, setShowLocationPrompt] = useState(false)
+
+  useEffect(() => {
+    try {
+      const locStr = localStorage.getItem('pgr_location')
+      let hasLoc = false
+      if (locStr) {
+        const loc = JSON.parse(locStr)
+        setSelectedCity(loc.city || '')
+        if (loc.lat != null && loc.lng != null) {
+          hasLoc = true
+        }
+      }
+      const prompted = sessionStorage.getItem('pgr_location_prompt_shown') === 'true'
+      if (!prompted || !hasLoc) {
+        setShowLocationPrompt(true)
+        sessionStorage.setItem('pgr_location_prompt_shown', 'true')
+      }
+    } catch {
+      setShowLocationPrompt(true)
+      sessionStorage.setItem('pgr_location_prompt_shown', 'true')
+    }
+  }, [])
+
+  function handleLocationSelect(newLocation: LocationState) {
+    setSelectedCity(newLocation.city || '')
+    localStorage.setItem('pgr_location', JSON.stringify(newLocation))
+    setShowLocationPrompt(false)
+  }
+
+  function handleSkipLocation() {
+    setShowLocationPrompt(false)
+  }
+
   const { data: pgs, isLoading } = useQuery({
-    queryKey: ['search-pgs', query, pgType, Array.from(amenities), maxRent],
+    queryKey: ['search-pgs', query, pgType, Array.from(amenities), maxRent, selectedCity],
     queryFn: async () => {
-      let q = supabase
-        .from('pg_listings')
-        .select('*, photos:pg_photos(*)')
-        .eq('status', 'approved')
-
-      if (query) {
-        q = q.or(`name.ilike.%${query}%,city.ilike.%${query}%,locality.ilike.%${query}%,address.ilike.%${query}%`)
+      const params = new URLSearchParams()
+      
+      try {
+        const locStr = localStorage.getItem('pgr_location')
+        if (locStr) {
+          const loc = JSON.parse(locStr)
+          if (loc.lat != null && loc.lng != null) {
+            params.set('lat', String(loc.lat))
+            params.set('lng', String(loc.lng))
+            params.set('radius', String(loc.radius || 25000))
+          }
+        }
+      } catch (e) {
+        console.warn('Failed to parse local location:', e)
       }
 
-      if (pgType !== 'all') {
-        q = q.eq('pg_type', pgType as PGType)
+      if (query) params.set('q', query)
+      if (pgType !== 'all') params.set('gender', pgType)
+      if (maxRent && Number(maxRent) > 0) params.set('max_price', maxRent)
+      
+      const amenityArray = Array.from(amenities)
+      if (amenityArray.length > 0) {
+        params.set('amenities', amenityArray.join(','))
       }
 
-      if (maxRent && Number(maxRent) > 0) {
-        q = q.lte('monthly_rent_min', Number(maxRent))
+      params.set('limit', '50')
+
+      const rawUrl = import.meta.env.VITE_API_URL || ''
+      const baseUrl = rawUrl.replace(/\/api\/?$/, '').replace(/\/$/, '')
+      const res = await fetch(`${baseUrl}/api/pgs?${params}`)
+      
+      if (!res.ok) {
+        throw new Error('Failed to fetch filtered PGs')
       }
-
-      amenities.forEach((a) => {
-        q = q.eq(a as keyof PGListing, true)
-      })
-
-      const { data } = await q.order('available_beds', { ascending: false }).limit(50)
-      return (data || []) as PGListing[]
+      
+      const result = await res.json()
+      return (result.data || []) as PGListing[]
     },
   })
 
@@ -87,68 +137,70 @@ export function SearchPage() {
 
   const activeFilters = amenities.size + (pgType !== 'all' ? 1 : 0) + (maxRent ? 1 : 0)
 
-  const FiltersPanel = () => (
-    <div className="space-y-6">
-      <div className="space-y-3">
-        <Label className="text-sm font-medium">PG Type</Label>
-        <Select value={pgType} onValueChange={setPgType}>
-          <SelectTrigger>
-            <SelectValue placeholder="Any type" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Any type</SelectItem>
-            <SelectItem value="boys">Boys</SelectItem>
-            <SelectItem value="girls">Girls</SelectItem>
-            <SelectItem value="co-ed">Co-ed</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      <Separator />
-
-      <div className="space-y-3">
-        <Label className="text-sm font-medium">Max Monthly Rent (₹)</Label>
-        <Input
-          type="number"
-          placeholder="e.g. 15000"
-          value={maxRent}
-          onChange={(e) => setMaxRent(e.target.value)}
-        />
-      </div>
-
-      <Separator />
-
-      <div className="space-y-3">
-        <Label className="text-sm font-medium">Amenities</Label>
-        <div className="space-y-2.5">
-          {AMENITIES.map(({ id, label }) => (
-            <div key={id} className="flex items-center gap-2">
-              <Checkbox
-                id={id}
-                checked={amenities.has(id)}
-                onCheckedChange={() => toggleAmenity(id)}
-              />
-              <Label htmlFor={id} className="font-normal cursor-pointer">{label}</Label>
-            </div>
-          ))}
+  function renderFilters() {
+    return (
+      <div className="space-y-6">
+        <div className="space-y-3">
+          <Label className="text-sm font-medium">PG Type</Label>
+          <Select value={pgType} onValueChange={setPgType}>
+            <SelectTrigger>
+              <SelectValue placeholder="Any type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Any type</SelectItem>
+              <SelectItem value="boys">Boys</SelectItem>
+              <SelectItem value="girls">Girls</SelectItem>
+              <SelectItem value="co-ed">Co-ed</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
-      </div>
 
-      {activeFilters > 0 && (
-        <>
-          <Separator />
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => { setAmenities(new Set()); setPgType('all'); setMaxRent('') }}
-            className="w-full text-muted-foreground"
-          >
-            <X className="size-4" /> Clear all filters
-          </Button>
-        </>
-      )}
-    </div>
-  )
+        <Separator />
+
+        <div className="space-y-3">
+          <Label className="text-sm font-medium">Max Monthly Rent (₹)</Label>
+          <Input
+            type="number"
+            placeholder="e.g. 15000"
+            value={maxRent}
+            onChange={(e) => setMaxRent(e.target.value)}
+          />
+        </div>
+
+        <Separator />
+
+        <div className="space-y-3">
+          <Label className="text-sm font-medium">Amenities</Label>
+          <div className="space-y-2.5">
+            {AMENITIES.map(({ id, label }) => (
+              <div key={id} className="flex items-center gap-2">
+                <Checkbox
+                  id={id}
+                  checked={amenities.has(id)}
+                  onCheckedChange={() => toggleAmenity(id)}
+                />
+                <Label htmlFor={id} className="font-normal cursor-pointer">{label}</Label>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {activeFilters > 0 && (
+          <>
+            <Separator />
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => { setAmenities(new Set()); setPgType('all'); setMaxRent('') }}
+              className="w-full text-muted-foreground"
+            >
+              <X className="size-4" /> Clear all filters
+            </Button>
+          </>
+        )}
+      </div>
+    )
+  }
 
   return (
     <div className="container mx-auto px-4 py-6 max-w-7xl">
@@ -163,6 +215,15 @@ export function SearchPage() {
             className="pl-10"
           />
         </div>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => setShowLocationPrompt(true)}
+          className="flex items-center gap-1.5 cursor-pointer"
+        >
+          <MapPin className="size-4 text-primary shrink-0" />
+          <span className="max-w-[120px] truncate font-medium text-xs sm:text-sm">{selectedCity || 'Location'}</span>
+        </Button>
         <Button type="submit">Search</Button>
         {/* Mobile Filter Button */}
         <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
@@ -181,7 +242,7 @@ export function SearchPage() {
               <SheetTitle>Filters</SheetTitle>
             </SheetHeader>
             <div className="mt-4">
-              <FiltersPanel />
+              {renderFilters()}
             </div>
           </SheetContent>
         </Sheet>
@@ -198,7 +259,7 @@ export function SearchPage() {
                 <Badge variant="secondary" className="ml-auto text-xs">{activeFilters} active</Badge>
               )}
             </div>
-            <FiltersPanel />
+            {renderFilters()}
           </div>
         </aside>
 
@@ -208,6 +269,7 @@ export function SearchPage() {
             <p className="text-sm text-muted-foreground">
               {isLoading ? 'Searching...' : `${pgs?.length || 0} PGs found`}
               {query && <span className="font-medium text-foreground"> for "{query}"</span>}
+              {!query && selectedCity && <span className="font-medium text-foreground"> in {selectedCity}</span>}
             </p>
           </div>
 
@@ -246,6 +308,12 @@ export function SearchPage() {
           )}
         </main>
       </div>
+
+      <LocationPrompt
+        open={showLocationPrompt}
+        onSelect={handleLocationSelect}
+        onSkip={handleSkipLocation}
+      />
     </div>
   )
 }

@@ -17,7 +17,6 @@ import { Navbar } from '@/components/layout/Navbar'
 export function DesignSystemPage() {
   const [modalOpen, setModalOpen] = React.useState(false)
   const [inputVal, setInputVal] = React.useState('')
-  const [demoCity, setDemoCity] = React.useState('Bangalore')
 
   return (
     <div className="min-h-screen bg-background pb-10">
@@ -25,8 +24,6 @@ export function DesignSystemPage() {
       <div className="mb-8">
         <Navbar
           brandName="SwiftPG"
-          selectedCity={demoCity}
-          onCityChange={setDemoCity}
           wishlistCount={3}
         />
       </div>

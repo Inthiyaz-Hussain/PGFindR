@@ -22,8 +22,7 @@ type LoginFormValues = z.infer<typeof loginSchema>
 
 export function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
-  const { login, register } = useAuth()
-  const [loadingDemo, setLoadingDemo] = useState(false)
+  const { login } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const from = (location.state as { from?: string })?.from
@@ -37,7 +36,7 @@ export function LoginPage() {
     defaultValues: { email: '', password: '' },
   })
 
-  const isPending = isSubmitting || loadingDemo
+  const isPending = isSubmitting
 
   async function onSubmit(values: LoginFormValues) {
     const { error, profile } = await login(values.email, values.password)
@@ -50,52 +49,6 @@ export function LoginPage() {
     if (role === 'owner') navigate('/owner', { replace: true })
     else if (role === 'admin') navigate('/admin', { replace: true })
     else navigate(from || '/seeker', { replace: true })
-  }
-
-  async function handleDemoLogin(role: 'seeker' | 'owner' | 'admin') {
-    const email = `${role}@swiftpg.com`
-    const password = 'password123'
-    const fullName = `${role.charAt(0).toUpperCase() + role.slice(1)} Test User`
-    
-    setLoadingDemo(true)
-    const { error, profile } = await login(email, password)
-    
-    if (error) {
-      // Auto register if user does not exist
-      const regRes = await register({
-        email,
-        password,
-        fullName,
-        role,
-        phone: '+91 9999999999'
-      })
-      
-      if (regRes.error) {
-        toast.error(`Demo registration failed: ${regRes.error.message}`)
-        setLoadingDemo(false)
-        return
-      }
-      
-      const retryRes = await login(email, password)
-      if (retryRes.error) {
-        toast.error(`Demo login failed: ${retryRes.error.message}`)
-        setLoadingDemo(false)
-        return
-      }
-      
-      toast.success(`Demo account created and logged in as ${role}!`)
-      const retryRole = retryRes.profile?.role
-      if (retryRole === 'owner') navigate('/owner', { replace: true })
-      else if (retryRole === 'admin') navigate('/admin', { replace: true })
-      else navigate(from || '/seeker', { replace: true })
-    } else {
-      toast.success(`Welcome back! Logged in as ${role}!`)
-      const profileRole = profile?.role
-      if (profileRole === 'owner') navigate('/owner', { replace: true })
-      else if (profileRole === 'admin') navigate('/admin', { replace: true })
-      else navigate(from || '/seeker', { replace: true })
-    }
-    setLoadingDemo(false)
   }
 
   return (
@@ -215,50 +168,6 @@ export function LoginPage() {
                 </Link>
               </div>
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Quick Demo Access */}
-        <Card className="border-indigo-100/50 bg-indigo-50/10 dark:bg-indigo-950/10 dark:border-indigo-950/50 shadow-xs">
-          <CardHeader className="pb-3 pt-4 text-center">
-            <CardTitle className="text-sm font-bold tracking-wide text-indigo-950 dark:text-slate-100 uppercase flex items-center justify-center gap-1.5">
-              ⚡ Quick Demo Access
-            </CardTitle>
-            <CardDescription className="text-xs">
-              Click any role to auto-provision and sign in instantly
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="grid grid-cols-3 gap-2 pb-4 pt-0">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handleDemoLogin('seeker')}
-              disabled={isPending}
-              className="text-xs py-2 px-2 h-auto flex flex-col items-center gap-1.5 hover:bg-indigo-50/50 dark:hover:bg-indigo-950/30 cursor-pointer active:scale-95 transition-all"
-            >
-              <span className="text-lg">🔍</span>
-              <span className="font-bold">Seeker</span>
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handleDemoLogin('owner')}
-              disabled={isPending}
-              className="text-xs py-2 px-2 h-auto flex flex-col items-center gap-1.5 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/30 cursor-pointer active:scale-95 transition-all"
-            >
-              <span className="text-lg">🏡</span>
-              <span className="font-bold">Owner</span>
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handleDemoLogin('admin')}
-              disabled={isPending}
-              className="text-xs py-2 px-2 h-auto flex flex-col items-center gap-1.5 hover:bg-purple-50/50 dark:hover:bg-purple-950/30 cursor-pointer active:scale-95 transition-all"
-            >
-              <span className="text-lg">🛡️</span>
-              <span className="font-bold">Admin</span>
-            </Button>
           </CardContent>
         </Card>
 

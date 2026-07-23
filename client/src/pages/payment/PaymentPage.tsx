@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Separator } from '@/components/ui/separator'
-import { useAuth } from '@/hooks/useAuth'
 import { toast } from 'sonner'
 
 declare global {
@@ -35,7 +34,6 @@ const RAZORPAY_SCRIPT = 'https://checkout.razorpay.com/v1/checkout.js'
 export function PaymentPage() {
   const { id: bookingId } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { user } = useAuth()
   const [initiating, setInitiating] = useState(false)
   const [scriptLoaded, setScriptLoaded] = useState(false)
 
@@ -66,7 +64,7 @@ export function PaymentPage() {
   })
 
   const handlePayment = useCallback(async () => {
-    if (!booking || !user || !scriptLoaded) return
+    if (!booking || !scriptLoaded) return
 
     setInitiating(true)
 
@@ -95,8 +93,8 @@ export function PaymentPage() {
         description: `Booking: ${booking.pg?.name || 'PG'}`,
         image: '/vite.svg',
         prefill: {
-          name: booking.seeker?.full_name || user?.email || '',
-          email: user?.email || '',
+          name: booking.seeker?.full_name || localStorage.getItem('seeker_fullName') || '',
+          email: localStorage.getItem('seeker_email') || '',
         },
         theme: {
           color: '#0f172a',
@@ -144,10 +142,10 @@ export function PaymentPage() {
       toast.error((err as Error).message)
       setInitiating(false)
     }
-  }, [booking, user, scriptLoaded, navigate])
+  }, [booking, scriptLoaded, navigate])
 
   const handleDemoPayment = useCallback(async () => {
-    if (!booking || !user) return
+    if (!booking) return
 
     setInitiating(true)
 
@@ -169,7 +167,7 @@ export function PaymentPage() {
   toast.error((err as Error).message)
   setInitiating(false)
 }
-  }, [booking, user, navigate])
+  }, [booking, navigate])
 
 if (isLoading) {
   return (

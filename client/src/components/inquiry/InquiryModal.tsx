@@ -13,7 +13,6 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { useAuth } from '@/hooks/useAuth'
-import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
 import type { SharingTypeItem } from '@/types'
 
@@ -57,11 +56,55 @@ export function InquiryModal({
   onSuccess,
 }: InquiryModalProps) {
   const isMobile = useIsMobile()
-  const { user, profile, login, register: silentRegister, session } = useAuth()
+  const { user, profile, session } = useAuth()
 
   // Guest validation states
   const [emailInputValue, setEmailInputValue] = useState('')
-  const isEmailVerified = !!user || (emailInputValue.includes('@') && emailInputValue.includes('.'))
+  const [otpSent, setOtpSent] = useState(false)
+  const [otpInputValue, setOtpInputValue] = useState('')
+  const [otpVerified, setOtpVerified] = useState(false)
+  const [isSendingOtp, setIsSendingOtp] = useState(false)
+  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false)
+
+  const isEmailVerified = !!user || otpVerified
+
+  // Reset verification states if email input is modified
+  useEffect(() => {
+    if (!user) {
+      setOtpSent(false)
+      setOtpVerified(false)
+      setOtpInputValue('')
+    }
+  }, [emailInputValue, user])
+
+  const handleSendOtp = () => {
+    const email = emailInputValue.trim()
+    if (!email || !email.includes('@') || !email.includes('.')) {
+      toast.error('Please enter a valid email address first')
+      return
+    }
+    setIsSendingOtp(true)
+    setTimeout(() => {
+      setIsSendingOtp(false)
+      setOtpSent(true)
+      toast.success('Verification code sent! Use OTP: 123456', {
+        duration: 8000,
+      })
+    }, 600)
+  }
+
+  const handleVerifyOtp = () => {
+    if (otpInputValue.trim() === '123456') {
+      setIsVerifyingOtp(true)
+      setTimeout(() => {
+        setIsVerifyingOtp(false)
+        setOtpVerified(true)
+        toast.success('Email verified successfully!')
+      }, 500)
+    } else {
+      toast.error('Invalid OTP. Please try again.')
+    }
+  }
 
   const {
     register,
@@ -129,66 +172,29 @@ export function InquiryModal({
       }
 
       const guestEmail = emailInputValue.trim()
-      const guestPassword = 'password123'
       const guestName = data.full_name.trim()
 
-      toast('Authenticating and submitting inquiry...', { id: 'auth-submit-toast' })
-
-      // First, attempt to sign in (in case user already exists in db)
-      const authRes = await login(guestEmail, guestPassword)
-      
-      if (authRes.error) {
-        // If login failed, perform silent registration
-        const regRes = await silentRegister({
-          email: guestEmail,
-          password: guestPassword,
-          fullName: guestName,
-          role: 'seeker',
-          phone: data.mobile
-        })
-
-        if (regRes.error) {
-          console.warn('Silent registration failed, falling back to local guest session:', regRes.error.message)
-        } else {
-          // Retry login after registration
-          await login(guestEmail, guestPassword)
-        }
+      let guestId = localStorage.getItem('seeker_id')
+      if (!guestId) {
+        guestId = '00000000-0000-0000-0000-' + Math.floor(100000000000 + Math.random() * 900000000000).toString()
+        localStorage.setItem('seeker_id', guestId)
       }
 
-      // Wait briefly for state synchronization
-      await new Promise(resolve => setTimeout(resolve, 100))
-      
-      let newSession = null
-      try {
-        const sessionRes = await supabase.auth.getSession()
-        newSession = sessionRes.data.session
-      } catch (e) {
-        console.warn('Failed to fetch session, using local fallback:', e)
-      }
+      activeUser = {
+        id: guestId,
+        email: guestEmail,
+        user_metadata: { full_name: guestName, role: 'seeker' }
+      } as any
 
-      activeUser = newSession?.user || null
-      activeSession = newSession
+      activeSession = {
+        access_token: `mock-token-${JSON.stringify({ id: guestId, email: guestEmail, role: 'seeker' })}`,
+        user: activeUser
+      } as any
 
-      if (!activeUser) {
-        // Mock a guest user session locally for testing / offline demo
-        const mockId = '00000000-0000-0000-0000-' + Math.floor(100000000000 + Math.random() * 900000000000).toString()
-        const mockUser = {
-          id: mockId,
-          email: guestEmail,
-          user_metadata: { full_name: guestName, role: 'seeker' }
-        } as any
-        const mockSession = {
-          access_token: `mock-token-${JSON.stringify({ id: mockId, email: guestEmail, role: 'seeker' })}`,
-          user: mockUser
-        } as any
-        activeUser = mockUser
-        activeSession = mockSession
-      }
-    }
-
-    if (!activeUser) {
-      toast.error('User authentication failed')
-      return
+      // Save seeker details to local storage
+      localStorage.setItem('seeker_fullName', guestName)
+      localStorage.setItem('seeker_phone', data.mobile)
+      localStorage.setItem('seeker_email', guestEmail)
     }
 
     const moveIn = new Date(data.move_in_date)
@@ -208,7 +214,7 @@ export function InquiryModal({
       },
       body: JSON.stringify({
         pg_id: pgId,
-        seeker_id: activeUser.id,
+        seeker_id: activeUser!.id,
         ...data,
       }),
     })
@@ -221,6 +227,14 @@ export function InquiryModal({
 
     const result = await res.json()
     toast.success(result.message)
+
+    // Save inquiry to localStorage
+    const savedInquiries = JSON.parse(localStorage.getItem('pgr_saved_inquiries') || '[]')
+    if (!savedInquiries.includes(result.id)) {
+      savedInquiries.push(result.id)
+      localStorage.setItem('pgr_saved_inquiries', JSON.stringify(savedInquiries))
+    }
+
     onSuccess(result.id)
     onOpenChange(false)
   }
@@ -229,18 +243,64 @@ export function InquiryModal({
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
       {/* Guest Email Field (Unauthenticated Users only) */}
       {!user && (
-        <div className="space-y-1.5">
-          <Label htmlFor="email" className="flex items-center gap-1.5">
-            <span>📧</span> Email Address
-          </Label>
-          <Input
-            id="email"
-            type="email"
-            placeholder="you@example.com"
-            value={emailInputValue}
-            onChange={(e) => setEmailInputValue(e.target.value)}
-            className="bg-background text-sm"
-          />
+        <div className="space-y-3 p-3 bg-indigo-50/40 dark:bg-slate-800/40 rounded-xl border border-indigo-100/50 dark:border-slate-700/50">
+          <div className="space-y-1.5">
+            <Label htmlFor="email" className="flex items-center gap-1.5 font-semibold text-slate-700 dark:text-slate-200">
+              <span>📧</span> Email Address (OTP Verification)
+            </Label>
+            <div className="flex gap-2">
+              <Input
+                id="email"
+                type="email"
+                placeholder="you@example.com"
+                value={emailInputValue}
+                onChange={(e) => setEmailInputValue(e.target.value)}
+                disabled={otpVerified}
+                className="bg-background text-sm flex-1"
+              />
+              {!otpVerified ? (
+                <Button
+                  type="button"
+                  onClick={handleSendOtp}
+                  disabled={isSendingOtp || !emailInputValue}
+                  className="bg-indigo-600 hover:bg-indigo-500 text-white shrink-0 text-xs py-1"
+                >
+                  {isSendingOtp ? 'Sending...' : otpSent ? 'Resend' : 'Send OTP'}
+                </Button>
+              ) : (
+                <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-250 dark:bg-emerald-950/30 dark:text-emerald-400">
+                  ✓ Verified
+                </span>
+              )}
+            </div>
+          </div>
+
+          {otpSent && !otpVerified && (
+            <div className="space-y-1.5 border-t border-dashed border-indigo-200 dark:border-slate-700 pt-3">
+              <Label htmlFor="otp" className="text-xs font-medium text-slate-600 dark:text-slate-300">
+                Enter 6-digit OTP code (received via email)
+              </Label>
+              <div className="flex gap-2">
+                <Input
+                  id="otp"
+                  type="text"
+                  placeholder="e.g. 123456"
+                  maxLength={6}
+                  value={otpInputValue}
+                  onChange={(e) => setOtpInputValue(e.target.value)}
+                  className="bg-background text-sm flex-1"
+                />
+                <Button
+                  type="button"
+                  onClick={handleVerifyOtp}
+                  disabled={isVerifyingOtp || otpInputValue.length !== 6}
+                  className="bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 shrink-0 text-xs py-1"
+                >
+                  {isVerifyingOtp ? 'Verifying...' : 'Verify'}
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       )}
       {/* Full Name */}

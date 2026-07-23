@@ -22,17 +22,29 @@ export function BookingsPage() {
   const { user } = useAuth()
   const navigate = useNavigate()
 
+  const savedBookingIds = JSON.parse(localStorage.getItem('pgr_saved_bookings') || '[]')
+
   const { data: bookings, isLoading } = useQuery({
-    queryKey: ['seeker-bookings-all', user?.id],
+    queryKey: ['seeker-bookings-all', user?.id, savedBookingIds],
     queryFn: async () => {
-      const { data } = await supabase
-        .from('bookings')
-        .select('*, pg:pg_listings(id, name, city, locality), bed:beds(room_number, bed_label, sharing_type)')
-        .eq('seeker_id', user!.id)
-        .order('created_at', { ascending: false })
-      return (data || []) as Booking[]
+      if (user) {
+        const { data } = await supabase
+          .from('bookings')
+          .select('*, pg:pg_listings(id, name, city, locality), bed:beds(room_number, bed_label, sharing_type)')
+          .eq('seeker_id', user.id)
+          .order('created_at', { ascending: false })
+        return (data || []) as Booking[]
+      } else {
+        if (savedBookingIds.length === 0) return []
+        const { data } = await supabase
+          .from('bookings')
+          .select('*, pg:pg_listings(id, name, city, locality), bed:beds(room_number, bed_label, sharing_type)')
+          .in('id', savedBookingIds)
+          .order('created_at', { ascending: false })
+        return (data || []) as Booking[]
+      }
     },
-    enabled: !!user,
+    enabled: !!user || savedBookingIds.length > 0,
   })
 
   return (

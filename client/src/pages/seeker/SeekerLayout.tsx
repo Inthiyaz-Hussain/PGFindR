@@ -1,4 +1,4 @@
-import { Link, NavLink, Outlet } from 'react-router-dom'
+import { NavLink, Outlet } from 'react-router-dom'
 import { Building2, Search, MessageSquare, BedDouble, User, LogOut } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -18,28 +18,20 @@ const NAV_ITEMS = [
 ]
 
 export function SeekerLayout() {
-  const { profile, signOut } = useAuth()
+  const { user, profile, signOut } = useAuth()
   useFirebasePush()
 
-  const initials = profile?.full_name
-    ? profile.full_name.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()
-    : 'U'
+  const seekerName = profile?.full_name || localStorage.getItem('seeker_fullName') || 'Guest Seeker'
+  const initials = seekerName
+    ? seekerName.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()
+    : 'GS'
 
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
       <div className="flex flex-1">
         {/* Sidebar */}
-        <aside className="hidden md:flex w-60 flex-col border-r bg-sidebar text-sidebar-foreground">
-          <div className="flex h-16 items-center gap-2 px-5 border-b border-sidebar-border">
-            <Link to="/" className="flex items-center gap-2 font-bold">
-              <div className="flex h-7 w-7 items-center justify-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground">
-                <Building2 className="size-3.5" />
-              </div>
-              PGFindR
-            </Link>
-          </div>
-
+        <aside className="hidden md:flex w-60 flex-col border-r bg-sidebar text-sidebar-foreground pt-4">
           <div className="flex-1 p-3 space-y-1">
             {NAV_ITEMS.map(({ to, label, icon: Icon, end }) => (
               <NavLink
@@ -75,25 +67,27 @@ export function SeekerLayout() {
                 <AvatarFallback className="text-xs">{initials}</AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium truncate">{profile?.full_name}</div>
+                <div className="text-sm font-medium truncate">{seekerName}</div>
                 <div className="text-xs text-sidebar-foreground/60">Seeker</div>
               </div>
-              <NotificationBell />
-              <Button variant="ghost" size="icon-sm" onClick={signOut} title="Sign out">
-                <LogOut className="size-3.5" />
-              </Button>
+              {user && (
+                <>
+                  <NotificationBell />
+                  <Button variant="ghost" size="icon-sm" onClick={signOut} title="Sign out">
+                    <LogOut className="size-3.5" />
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 min-w-0 bg-background flex flex-col justify-between">
-          <div className="flex-1">
-            <Outlet />
-          </div>
-          <Footer />
+        <main className="flex-1 min-w-0 bg-background">
+          <Outlet />
         </main>
       </div>
+      <Footer />
     </div>
   )
 }

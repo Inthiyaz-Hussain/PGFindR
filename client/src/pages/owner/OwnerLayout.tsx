@@ -1,9 +1,9 @@
-import { Link, NavLink, Outlet } from 'react-router-dom'
+import { NavLink, Outlet } from 'react-router-dom'
 import { Building2, LayoutDashboard, MessageSquare, LogOut, Plus, IndianRupee, FileCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Separator } from '@/components/ui/separator'
-import { Badge } from '@/components/ui/badge'
+
 import { useAuth } from '@/hooks/useAuth'
 import { useFirebasePush } from '@/hooks/useFirebase'
 import { cn } from '@/lib/utils'
@@ -31,19 +31,7 @@ export function OwnerLayout() {
       <Navbar />
       <div className="flex flex-1">
         {/* Desktop Sidebar */}
-        <aside className="hidden md:flex w-64 flex-col border-r bg-sidebar text-sidebar-foreground">
-          <div className="flex h-16 items-center gap-2 px-5 border-b border-sidebar-border">
-            <Link to="/" className="flex items-center gap-2 font-bold">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                <Building2 className="size-4" />
-              </div>
-              <span>PGFindR</span>
-            </Link>
-            <Badge variant="secondary" className="ml-auto bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
-              Owner
-            </Badge>
-          </div>
-
+        <aside className="hidden md:flex w-64 flex-col border-r bg-sidebar text-sidebar-foreground pt-4">
           <div className="flex-1 p-3 space-y-1">
             {NAV_ITEMS.map(({ to, label, icon: Icon, end }) => (
               <NavLink
@@ -96,13 +84,11 @@ export function OwnerLayout() {
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 min-w-0 bg-background flex flex-col justify-between">
-          <div className="flex-1">
-            <Outlet />
-          </div>
-          <Footer />
+        <main className="flex-1 min-w-0 bg-background">
+          <Outlet />
         </main>
       </div>
+      <Footer />
     </div>
   )
 }

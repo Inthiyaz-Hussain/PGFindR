@@ -13,32 +13,57 @@ export function SeekerDashboard() {
   const { user, profile } = useAuth()
   const navigate = useNavigate()
 
+  const savedInquiryIds = JSON.parse(localStorage.getItem('pgr_saved_inquiries') || '[]')
+  const savedBookingIds = JSON.parse(localStorage.getItem('pgr_saved_bookings') || '[]')
+
   const { data: inquiries, isLoading: loadingInq } = useQuery({
-    queryKey: ['seeker-inquiries', user?.id],
+    queryKey: ['seeker-inquiries', user?.id, savedInquiryIds],
     queryFn: async () => {
-      const { data } = await supabase
-        .from('inquiries')
-        .select('*, pg:pg_listings(name, city, locality)')
-        .eq('seeker_id', user!.id)
-        .order('created_at', { ascending: false })
-        .limit(3)
-      return (data || []) as Inquiry[]
+      if (user) {
+        const { data } = await supabase
+          .from('inquiries')
+          .select('*, pg:pg_listings(name, city, locality)')
+          .eq('seeker_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(3)
+        return (data || []) as Inquiry[]
+      } else {
+        if (savedInquiryIds.length === 0) return []
+        const { data } = await supabase
+          .from('inquiries')
+          .select('*, pg:pg_listings(name, city, locality)')
+          .in('id', savedInquiryIds)
+          .order('created_at', { ascending: false })
+          .limit(3)
+        return (data || []) as Inquiry[]
+      }
     },
-    enabled: !!user,
+    enabled: !!user || savedInquiryIds.length > 0,
   })
 
   const { data: bookings, isLoading: loadingBook } = useQuery({
-    queryKey: ['seeker-bookings', user?.id],
+    queryKey: ['seeker-bookings', user?.id, savedBookingIds],
     queryFn: async () => {
-      const { data } = await supabase
-        .from('bookings')
-        .select('*, pg:pg_listings(name, city, locality), bed:beds(room_number, bed_label)')
-        .eq('seeker_id', user!.id)
-        .order('created_at', { ascending: false })
-        .limit(3)
-      return (data || []) as Booking[]
+      if (user) {
+        const { data } = await supabase
+          .from('bookings')
+          .select('*, pg:pg_listings(name, city, locality), bed:beds(room_number, bed_label)')
+          .eq('seeker_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(3)
+        return (data || []) as Booking[]
+      } else {
+        if (savedBookingIds.length === 0) return []
+        const { data } = await supabase
+          .from('bookings')
+          .select('*, pg:pg_listings(name, city, locality), bed:beds(room_number, bed_label)')
+          .in('id', savedBookingIds)
+          .order('created_at', { ascending: false })
+          .limit(3)
+        return (data || []) as Booking[]
+      }
     },
-    enabled: !!user,
+    enabled: !!user || savedBookingIds.length > 0,
   })
 
   const inquiryStatusColor: Record<string, string> = {
@@ -56,11 +81,13 @@ export function SeekerDashboard() {
     cancelled: 'bg-red-100 text-red-800',
   }
 
+  const seekerName = profile?.full_name || localStorage.getItem('seeker_fullName')
+
   return (
     <div className="p-4 md:p-6 max-w-4xl">
       <div className="mb-6">
         <h1 className="scroll-m-20 text-2xl font-bold tracking-tight">
-          Welcome back, {profile?.full_name?.split(' ')[0] || 'there'}!
+          Welcome back, {seekerName?.split(' ')[0] || 'there'}!
         </h1>
         <p className="text-muted-foreground mt-1">Find your perfect paying guest accommodation</p>
       </div>
