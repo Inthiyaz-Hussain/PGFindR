@@ -115,31 +115,6 @@ router.post('/', authenticateToken, async (req, res) => {
       return res.status(400).json({ error: 'Duration unit is required (days or months)' })
     }
 
-    // Verify PG exists and is approved
-    const { data: pg, error: pgError } = await supabase
-      .from('pg_listings')
-      .select('id, owner_id, name')
-      .eq('id', pg_id)
-      .eq('status', 'approved')
-      .single()
-
-    if (pgError || !pg) {
-      return res.status(404).json({ error: 'PG not found or not approved' })
-    }
-
-    // Verify seeker_id profile exists to prevent foreign key violation (guest fallback)
-    let finalSeekerId = seeker_id
-    const { data: seekerProfile } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('id', seeker_id)
-      .maybeSingle()
-
-    if (!seekerProfile) {
-      // Fallback to the PG's owner_id (which is guaranteed to exist in profiles)
-      finalSeekerId = pg.owner_id
-    }
-
     // Initialize request-scoped client to propagate user JWT for RLS
     const authHeader = req.headers.authorization
     const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null
@@ -159,6 +134,36 @@ router.post('/', authenticateToken, async (req, res) => {
           }
         }
       })
+    }
+
+    // Verify PG exists and is approved
+    const { data: pg, error: pgError } = await dbClient
+      .from('pg_listings')
+      .select('id, owner_id, name')
+      .eq('id', pg_id)
+      .eq('status', 'approved')
+      .single()
+
+    if (pgError || !pg) {
+      console.error('[Inquiry Route] PG listing lookup error:', pgError || 'PG not found or not approved')
+      return res.status(404).json({ error: 'PG not found or not approved' })
+    }
+
+    // Verify seeker_id profile exists to prevent foreign key violation (guest fallback)
+    let finalSeekerId = seeker_id
+    const { data: seekerProfile, error: seekerProfileError } = await dbClient
+      .from('profiles')
+      .select('id')
+      .eq('id', seeker_id)
+      .maybeSingle()
+
+    if (seekerProfileError) {
+      console.error('[Inquiry Route] Seeker profile lookup warning:', seekerProfileError)
+    }
+
+    if (!seekerProfile) {
+      // Fallback to the PG's owner_id (which is guaranteed to exist in profiles)
+      finalSeekerId = pg.owner_id
     }
 
     // Insert inquiry
@@ -182,7 +187,10 @@ router.post('/', authenticateToken, async (req, res) => {
       .select()
       .single()
 
-    if (error) throw error
+    if (error) {
+      console.error('[Inquiry Route] Database insert failure details:', error)
+      throw error
+    }
 
     // Send push notification to PG owner
     const owner = pg as { owner_id: string; name: string }
@@ -222,6 +230,7 @@ router.post('/', authenticateToken, async (req, res) => {
       inquiry: data,
     })
   } catch (err) {
+    console.error('[Inquiry Route] Unhandled error during submission:', err)
     res.status(500).json({ error: (err as Error).message })
   }
 })

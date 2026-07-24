@@ -27,6 +27,7 @@ const profileSelectChain = {
   select: jest.fn().mockReturnThis(),
   eq: jest.fn().mockReturnThis(),
   single: jest.fn(),
+  maybeSingle: jest.fn(),
 }
 
 const notifInsertChain = {
@@ -118,6 +119,10 @@ describe('POST /api/inquiry', () => {
     })
 
     profileSelectChain.single.mockResolvedValue({
+      data: { id: mockUser.id, role: 'seeker' },
+      error: null,
+    })
+    profileSelectChain.maybeSingle.mockResolvedValue({
       data: { id: mockUser.id, role: 'seeker' },
       error: null,
     })
