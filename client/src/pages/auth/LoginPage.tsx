@@ -21,6 +21,22 @@ const loginSchema = z.object({
 
 type LoginFormValues = z.infer<typeof loginSchema>
 
+function getRedirectPath(role: string, fromPath: string): string {
+  if (fromPath) {
+    if (fromPath.startsWith('/admin')) {
+      return role === 'admin' ? fromPath : `/${role}`
+    }
+    if (fromPath.startsWith('/owner')) {
+      return role === 'owner' ? fromPath : `/${role}`
+    }
+    if (fromPath.startsWith('/seeker')) {
+      return role === 'seeker' ? fromPath : `/${role}`
+    }
+    return fromPath
+  }
+  return `/${role}`
+}
+
 export function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const { login, user, profile } = useAuth()
@@ -33,9 +49,16 @@ export function LoginPage() {
   useEffect(() => {
     if (user && profile) {
       const role = profile.role
-      if (role === 'owner') navigate('/owner', { replace: true })
-      else if (role === 'admin') navigate('/admin', { replace: true })
-      else navigate(from || '/seeker', { replace: true })
+      // Only auto-redirect if there is no role mismatch with the target path.
+      // If mismatch is true, let the user stay on the login page to login with another account.
+      const isMismatch =
+        (from.startsWith('/admin') && role !== 'admin') ||
+        (from.startsWith('/owner') && role !== 'owner') ||
+        (from.startsWith('/seeker') && role !== 'seeker')
+
+      if (!isMismatch) {
+        navigate(getRedirectPath(role, from), { replace: true })
+      }
     }
   }, [user, profile, navigate, from])
 
@@ -57,10 +80,9 @@ export function LoginPage() {
       return
     }
     toast.success('Welcome back!')
-    const role = profile?.role
-    if (role === 'owner') navigate('/owner', { replace: true })
-    else if (role === 'admin') navigate('/admin', { replace: true })
-    else navigate(from || '/seeker', { replace: true })
+    if (profile) {
+      navigate(getRedirectPath(profile.role, from), { replace: true })
+    }
   }
 
   const handleGoogleSignIn = async () => {
