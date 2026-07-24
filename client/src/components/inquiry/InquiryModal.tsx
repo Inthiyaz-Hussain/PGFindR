@@ -622,9 +622,9 @@ export function InquiryModal({
   if (isMobile) {
     return (
       <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent side="bottom" className="h-[90vh] overflow-y-auto">
+        <SheetContent side="bottom" className="h-[90vh] overflow-y-auto bg-[#F8FAFC] text-slate-900 border-t border-slate-200">
           <SheetHeader className="mb-4">
-            <SheetTitle>Send Inquiry — {pgName}</SheetTitle>
+            <SheetTitle className="text-slate-900">Send Inquiry — {pgName}</SheetTitle>
           </SheetHeader>
           {formContent}
         </SheetContent>
@@ -634,9 +634,9 @@ export function InquiryModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto bg-[#F8FAFC] text-slate-900 border border-slate-200">
         <DialogHeader>
-          <DialogTitle>Send Inquiry — {pgName}</DialogTitle>
+          <DialogTitle className="text-slate-900">Send Inquiry — {pgName}</DialogTitle>
         </DialogHeader>
         {formContent}
       </DialogContent>
