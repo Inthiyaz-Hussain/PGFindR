@@ -21,9 +21,8 @@ export function ProtectedRoute({ requiredRole }: ProtectedRouteProps) {
     return <Navigate to="/auth/login" state={{ from: location.pathname }} replace />
   }
 
-  if (requiredRole && profile?.role !== requiredRole) {
-    const dashboardPath = profile?.role === 'owner' ? '/owner' : profile?.role === 'admin' ? '/admin' : '/seeker'
-    return <Navigate to={dashboardPath} replace />
+  if (requiredRole && profile.role !== requiredRole) {
+    return <Navigate to="/auth/login" state={{ from: location.pathname }} replace />
   }
 
   return <Outlet />
