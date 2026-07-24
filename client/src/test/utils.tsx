@@ -22,9 +22,10 @@ export const mockProfile: Profile = {
 export const mockAuthContext = {
   user: { id: 'user-123', email: 'test@example.com' } as any,
   session: null,
-  profile: mockProfile,
+  profile: mockProfile as Profile | null,
   loading: false,
   isLoading: false,
+  profileLoading: false,
   login: vi.fn().mockResolvedValue({ error: null, profile: mockProfile }),
   logout: vi.fn().mockResolvedValue(undefined),
   register: vi.fn().mockResolvedValue({ error: null }),

@@ -6,9 +6,9 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ requiredRole }: ProtectedRouteProps) {
-  const { user, profile, loading } = useAuth()
+  const { user, profile, loading, profileLoading } = useAuth()
 
-  if (loading) {
+  if (loading || profileLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="text-muted-foreground">Loading...</div>

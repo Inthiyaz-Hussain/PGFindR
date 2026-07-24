@@ -18,6 +18,7 @@ interface AuthContextType {
   profile: Profile | null
   loading: boolean
   isLoading: boolean
+  profileLoading: boolean
 
   // Primary API (matches requested interface)
   login: (email: string, password: string) => Promise<{ error: Error | null; profile: Profile | null }>
@@ -39,6 +40,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
+  const [profileLoading, setProfileLoading] = useState(false)
 
   // Guard against state updates after unmount / double-fire
   const mounted = useRef(true)
@@ -48,14 +50,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   async function fetchProfile(userId: string): Promise<Profile | null> {
-    const { data } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single()
-    const p = data as Profile | null
-    if (mounted.current) setProfile(p)
-    return p
+    setProfileLoading(true)
+    try {
+      const { data } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single()
+      const p = data as Profile | null
+      if (mounted.current) setProfile(p)
+      return p
+    } catch (e) {
+      console.error('Error fetching profile:', e)
+      return null
+    } finally {
+      if (mounted.current) setProfileLoading(false)
+    }
   }
 
   async function refreshProfile() {
@@ -240,6 +250,7 @@ function getDemoMockData(email: string) {
         profile,
         loading,
         isLoading: loading,
+        profileLoading,
         login,
         logout,
         register,

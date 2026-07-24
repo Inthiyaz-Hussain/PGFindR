@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -12,6 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Field, FieldLabel, FieldError } from '@/components/ui/field'
 import { Separator } from '@/components/ui/separator'
 import { useAuth } from '@/hooks/useAuth'
+import { supabase } from '@/lib/supabase'
 
 const loginSchema = z.object({
   email: z.string().email('Enter a valid email address'),
@@ -22,10 +23,19 @@ type LoginFormValues = z.infer<typeof loginSchema>
 
 export function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
-  const { login } = useAuth()
+  const { login, user, profile } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const from = (location.state as { from?: string })?.from
+
+  useEffect(() => {
+    if (user && profile) {
+      const role = profile.role
+      if (role === 'owner') navigate('/owner', { replace: true })
+      else if (role === 'admin') navigate('/admin', { replace: true })
+      else navigate(from || '/seeker', { replace: true })
+    }
+  }, [user, profile, navigate, from])
 
   const {
     control,
@@ -49,6 +59,27 @@ export function LoginPage() {
     if (role === 'owner') navigate('/owner', { replace: true })
     else if (role === 'admin') navigate('/admin', { replace: true })
     else navigate(from || '/seeker', { replace: true })
+  }
+
+  const handleGoogleSignIn = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: window.location.origin + '/auth/login',
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'select_account',
+          }
+        }
+      })
+      if (error) {
+        toast.error(error.message || 'Google Sign-In failed')
+      }
+    } catch (e) {
+      console.error(e)
+      toast.error('Google Sign-In error')
+    }
   }
 
   return (
@@ -152,7 +183,27 @@ export function LoginPage() {
               </Button>
             </form>
 
-            <div className="mt-5">
+            <div className="relative my-5">
+              <Separator />
+              <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-2 text-xs text-muted-foreground">
+                Or continue with
+              </span>
+            </div>
+
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full flex items-center justify-center gap-2"
+              onClick={handleGoogleSignIn}
+              disabled={isPending}
+            >
+              <svg className="h-4 w-4" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="google" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512">
+                <path fill="currentColor" d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z"></path>
+              </svg>
+              Google
+            </Button>
+
+            <div className="mt-6">
               <div className="relative">
                 <Separator />
                 <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-2 text-xs text-muted-foreground">

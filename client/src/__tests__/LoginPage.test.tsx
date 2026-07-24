@@ -10,7 +10,7 @@ import { screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { LoginPage } from '@/pages/auth/LoginPage'
-import { renderWithProviders, mockAuthContext } from '../test/utils'
+import { renderWithProviders, mockAuthContext, mockProfile } from '../test/utils'
 
 // vi.mock is hoisted before imports — must be in the test file, not a utility.
 vi.mock('@/hooks/useAuth', () => ({
@@ -32,7 +32,9 @@ vi.mock('sonner', () => ({
 describe('LoginPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockAuthContext.login.mockResolvedValue({ error: null, profile: mockAuthContext.profile })
+    mockAuthContext.user = null
+    mockAuthContext.profile = null
+    mockAuthContext.login.mockResolvedValue({ error: null, profile: mockProfile })
   })
 
   it('renders email input, password input, and sign-in button', () => {
