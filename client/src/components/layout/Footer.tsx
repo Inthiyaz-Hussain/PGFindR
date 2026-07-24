@@ -1,7 +1,6 @@
 import { Link } from 'react-router-dom'
 import {
   Building2,
-  Sparkles,
   ShieldCheck,
   ArrowUp
 } from 'lucide-react'
@@ -62,10 +61,11 @@ export function Footer({ compact = false }: FooterProps) {
               {/* Column 1: Brand Profile */}
               <div className="space-y-4">
                 <Link to="/" className="flex items-center gap-2 group max-w-fit">
-                  <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-950 via-slate-900 to-indigo-900 text-indigo-400 ring-1 ring-indigo-800/50 shadow-sm group-hover:scale-105 transition-all">
-                    <Building2 className="h-5 w-5 text-indigo-400 group-hover:text-indigo-300 transition-colors" />
-                    <Sparkles className="absolute -top-1 -right-1 h-3.5 w-3.5 text-amber-400 animate-pulse" />
-                  </div>
+                  <img
+                    src="/logo-swiftpg.png"
+                    alt="SwiftPG Icon"
+                    className="h-10 w-10 rounded-xl object-cover ring-1 ring-slate-800 shadow-xs group-hover:scale-105 transition-transform"
+                  />
                   <span className="text-xl font-bold tracking-tight text-white">
                     Swift<span className="text-indigo-400 font-extrabold">PG</span>
                   </span>

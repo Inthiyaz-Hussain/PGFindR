@@ -63,7 +63,7 @@ describe('PGDetailPage Component', () => {
     window.scrollTo = vi.fn()
 
     // Setup fetch mock
-    (globalThis as any).fetch = vi.fn().mockImplementation((url: string) => {
+    vi.stubGlobal('fetch', vi.fn().mockImplementation((url: string) => {
       if (url.includes('/api/pgs/pg-123/reviews')) {
         return Promise.resolve({
           ok: true,
@@ -83,7 +83,7 @@ describe('PGDetailPage Component', () => {
         } as Response)
       }
       return Promise.reject(new Error('Unknown URL: ' + url))
-    })
+    }))
   })
 
   it('renders PG Detail elements correctly including Map, Testimonials, and Similar PGs', async () => {

@@ -10,7 +10,6 @@ import {
   LogOut,
   LayoutDashboard,
   Menu,
-  Sparkles,
   Bookmark,
   ShieldCheck,
   MessageSquare,
@@ -103,10 +102,11 @@ export function Navbar({
               to="/"
               className="flex items-center gap-2.5 group transition-transform duration-200 active:scale-95"
             >
-              <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-950 via-slate-900 to-indigo-900 text-indigo-400 ring-1 ring-indigo-800/50 shadow-sm group-hover:shadow-indigo-950/20 group-hover:scale-105 transition-all">
-                <Building2 className="h-5 w-5 text-indigo-400 group-hover:text-indigo-300 transition-colors" />
-                <Sparkles className="absolute -top-1 -right-1 h-3.5 w-3.5 text-amber-400 animate-pulse" />
-              </div>
+              <img
+                src="/logo-swiftpg.png"
+                alt="SwiftPG Icon"
+                className="h-10 w-10 rounded-xl object-cover ring-1 ring-slate-200 dark:ring-slate-800 shadow-xs group-hover:scale-105 transition-transform"
+              />
               <span className="text-xl font-bold tracking-tight text-indigo-950 dark:text-slate-100">
                 Swift<span className="text-indigo-600 dark:text-indigo-400 font-extrabold">PG</span>
               </span>
@@ -385,13 +385,21 @@ export function Navbar({
               <SheetContent side="right" className="w-80 sm:w-96 p-6 flex flex-col justify-between">
                 <div>
                   <SheetHeader className="text-left border-b pb-4 mb-4">
-                    <SheetTitle className="flex items-center gap-2">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-950 text-indigo-400">
-                        <Building2 className="h-4 w-4 text-indigo-400" />
-                      </div>
-                      <span className="text-lg font-bold text-slate-900 dark:text-slate-100">
-                        Swift<span className="text-indigo-600">PG</span>
-                      </span>
+                    <SheetTitle>
+                      <Link
+                        to="/"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="flex items-center gap-2 text-left"
+                      >
+                        <img
+                          src="/logo-swiftpg.png"
+                          alt="SwiftPG Icon"
+                          className="h-8 w-8 rounded-lg object-cover"
+                        />
+                        <span className="text-lg font-bold text-slate-900 dark:text-slate-100">
+                          Swift<span className="text-indigo-600 font-extrabold">PG</span>
+                        </span>
+                      </Link>
                     </SheetTitle>
                   </SheetHeader>
 
