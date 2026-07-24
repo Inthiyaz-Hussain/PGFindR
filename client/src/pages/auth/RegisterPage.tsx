@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -14,6 +14,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Field, FieldLabel, FieldError, FieldDescription } from '@/components/ui/field'
 import { Separator } from '@/components/ui/separator'
 import { useAuth } from '@/hooks/useAuth'
+import { supabase } from '@/lib/supabase'
 
 const registerSchema = z
   .object({
@@ -43,6 +44,10 @@ export function RegisterPage() {
   const [showConfirm, setShowConfirm] = useState(false)
   const { register } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
+  const searchParams = new URLSearchParams(location.search)
+  const queryRole = searchParams.get('role') as 'seeker' | 'owner' | null
+  const defaultRole = queryRole === 'seeker' || queryRole === 'owner' ? queryRole : 'owner'
 
   const {
     control,
@@ -56,7 +61,7 @@ export function RegisterPage() {
       mobile: '',
       password: '',
       confirmPassword: '',
-      role: 'owner',
+      role: defaultRole,
     },
   })
 
@@ -78,6 +83,30 @@ export function RegisterPage() {
     navigate('/auth/login')
   }
 
+  const handleGoogleSignUp = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/login?from=${encodeURIComponent('/' + defaultRole)}`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'select_account',
+          },
+          data: {
+            role: defaultRole,
+          }
+        } as any
+      })
+      if (error) {
+        toast.error(error.message || 'Google Sign-Up failed')
+      }
+    } catch (e) {
+      console.error(e)
+      toast.error('Google Sign-Up error')
+    }
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-muted/30 px-4 py-12">
       <div className="w-full max-w-md space-y-6">
@@ -96,8 +125,14 @@ export function RegisterPage() {
         {/* Card */}
         <Card>
           <CardHeader className="text-center pb-4">
-            <CardTitle className="text-xl">Create Owner Account</CardTitle>
-            <CardDescription>Join thousands of owners listing PGs on PGFindR</CardDescription>
+            <CardTitle className="text-xl">
+              {defaultRole === 'owner' ? 'Create Owner Account' : 'Create Seeker Account'}
+            </CardTitle>
+            <CardDescription>
+              {defaultRole === 'owner'
+                ? 'Join thousands of owners listing PGs on PGFindR'
+                : 'Discover and book verified premium coliving spaces instantly'}
+            </CardDescription>
           </CardHeader>
 
           <CardContent>
@@ -244,7 +279,27 @@ export function RegisterPage() {
               </Button>
             </form>
 
-            <div className="mt-5">
+            <div className="relative my-5">
+              <Separator />
+              <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-2 text-xs text-muted-foreground">
+                Or sign up with
+              </span>
+            </div>
+
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full flex items-center justify-center gap-2"
+              onClick={handleGoogleSignUp}
+              disabled={isSubmitting}
+            >
+              <svg className="h-4 w-4" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="google" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512">
+                <path fill="currentColor" d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z"></path>
+              </svg>
+              Google
+            </Button>
+
+            <div className="mt-6">
               <div className="relative">
                 <Separator />
                 <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-2 text-xs text-muted-foreground">

@@ -44,23 +44,26 @@ export function LoginPage() {
   const location = useLocation()
   const searchParams = new URLSearchParams(location.search)
   const from = (location.state as { from?: string })?.from || searchParams.get('from') || ''
-  const targetRole = from.startsWith('/owner') ? 'owner' : from.startsWith('/admin') ? 'admin' : 'seeker'
+  const queryRole = searchParams.get('role')
+  const targetRole =
+    queryRole === 'owner' || queryRole === 'admin' || queryRole === 'seeker'
+      ? queryRole
+      : from.startsWith('/owner')
+      ? 'owner'
+      : from.startsWith('/admin')
+      ? 'admin'
+      : 'seeker'
 
   useEffect(() => {
     if (user && profile) {
       const role = profile.role
-      // Only auto-redirect if there is no role mismatch with the target path.
-      // If mismatch is true, let the user stay on the login page to login with another account.
-      const isMismatch =
-        (from.startsWith('/admin') && role !== 'admin') ||
-        (from.startsWith('/owner') && role !== 'owner') ||
-        (from.startsWith('/seeker') && role !== 'seeker')
-
-      if (!isMismatch) {
+      // Only auto-redirect if the current user's role matches the target role.
+      // Otherwise, keep the login page open so they can switch accounts.
+      if (role === targetRole) {
         navigate(getRedirectPath(role, from), { replace: true })
       }
     }
-  }, [user, profile, navigate, from])
+  }, [user, profile, navigate, from, targetRole])
 
   const {
     control,
