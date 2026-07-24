@@ -63,7 +63,7 @@ describe('PGDetailPage Component', () => {
     window.scrollTo = vi.fn()
 
     // Setup fetch mock
-    global.fetch = vi.fn().mockImplementation((url: string) => {
+    (globalThis as any).fetch = vi.fn().mockImplementation((url: string) => {
       if (url.includes('/api/pgs/pg-123/reviews')) {
         return Promise.resolve({
           ok: true,
