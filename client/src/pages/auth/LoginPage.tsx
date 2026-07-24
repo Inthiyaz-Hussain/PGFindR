@@ -26,7 +26,9 @@ export function LoginPage() {
   const { login, user, profile } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
-  const from = (location.state as { from?: string })?.from
+  const searchParams = new URLSearchParams(location.search)
+  const from = (location.state as { from?: string })?.from || searchParams.get('from') || ''
+  const targetRole = from.startsWith('/owner') ? 'owner' : from.startsWith('/admin') ? 'admin' : 'seeker'
 
   useEffect(() => {
     if (user && profile) {
@@ -66,12 +68,15 @@ export function LoginPage() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: window.location.origin + '/auth/login',
+          redirectTo: `${window.location.origin}/auth/login?from=${encodeURIComponent(from || '/seeker')}`,
           queryParams: {
             access_type: 'offline',
             prompt: 'select_account',
+          },
+          data: {
+            role: targetRole,
           }
-        }
+        } as any
       })
       if (error) {
         toast.error(error.message || 'Google Sign-In failed')
@@ -100,8 +105,16 @@ export function LoginPage() {
         {/* Card */}
         <Card>
           <CardHeader className="text-center pb-4">
-            <CardTitle className="text-xl">Welcome back</CardTitle>
-            <CardDescription>Sign in to your account to continue</CardDescription>
+            <CardTitle className="text-xl">
+              {targetRole === 'owner' ? 'Owner Sign In' : targetRole === 'admin' ? 'Admin Sign In' : 'Welcome back'}
+            </CardTitle>
+            <CardDescription>
+              {targetRole === 'owner'
+                ? 'Sign in to manage your listings and bookings'
+                : targetRole === 'admin'
+                ? 'Sign in to access control panel'
+                : 'Sign in to your account to continue'}
+            </CardDescription>
           </CardHeader>
 
           <CardContent>
