@@ -252,4 +252,112 @@ router.get('/:id/reviews', async (req, res) => {
   }
 })
 
+// POST /api/pgs/reset-db — development database reset and seed utility
+router.post('/reset-db', async (req, res) => {
+  try {
+    console.log('Starting DB Reset and Seeding via API...');
+
+    // Delete in reverse order of FK constraints
+    await supabase.from('reviews').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+    await supabase.from('bookings').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+    await supabase.from('inquiries').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+    await supabase.from('payments').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+    await supabase.from('beds').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+    await supabase.from('sharing_types').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+    await supabase.from('pg_photos').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+    await supabase.from('amenities').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+    await supabase.from('owner_documents').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+    await supabase.from('owner_kyc').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+    await supabase.from('pg_listings').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+    
+    // Delete non-demo profiles
+    await supabase
+      .from('profiles')
+      .delete()
+      .not('id', 'in', '("00000000-0000-0000-0000-000000000002","00000000-0000-0000-0000-000000000003")');
+
+    // Create owner profile
+    await supabase.from('profiles').upsert({
+      id: '00000000-0000-0000-0000-000000000002',
+      full_name: 'Rajesh Sharma (Bangalore Owner)',
+      phone: '+91 9876543210',
+      role: 'owner',
+    });
+
+    // Create KYC
+    await supabase.from('owner_kyc').upsert({
+      owner_id: '00000000-0000-0000-0000-000000000002',
+      pan_number: 'ABCDE1234F',
+      aadhaar_number: '123456789012',
+      bank_account: '91827364501',
+      bank_ifsc: 'SBIN0001234',
+      bank_name: 'State Bank of India',
+      status: 'approved',
+    });
+
+    // Create PG
+    const { error: pgErr } = await supabase.from('pg_listings').upsert({
+      id: 'b1111111-1111-4111-a111-111111111101',
+      owner_id: '00000000-0000-0000-0000-000000000002',
+      name: 'Starlight Premium Coliving',
+      description: 'Modern luxury PG located in the heart of Koramangala near Sony World Signal. Fully furnished with high-speed WiFi, daily housekeeping, and delicious meals.',
+      address: 'No. 45, 5th Block, 80 Feet Road, Koramangala',
+      city: 'Bangalore',
+      locality: 'Koramangala',
+      latitude: 12.935242,
+      longitude: 77.624462,
+      pg_type: 'co-ed',
+      status: 'approved',
+      total_beds: 4,
+      available_beds: 4,
+      monthly_rent_min: 12500,
+      monthly_rent_max: 18000,
+      deposit_amount: 15000,
+      food_included: true,
+      wifi_included: true,
+      ac_rooms: true,
+      parking: true,
+      laundry: true,
+      security_24x7: true,
+      rules: 'No smoking inside rooms. Visitors allowed till 9 PM.',
+    });
+
+    if (pgErr) throw pgErr;
+
+    // Photos
+    await supabase.from('pg_photos').insert([
+      { pg_id: 'b1111111-1111-4111-a111-111111111101', url: 'https://images.unsplash.com/photo-1555854877-bab0e564b8d5?q=80&w=1200&auto=format&fit=crop', caption: 'Building Exterior', is_primary: true, type: 'exterior' },
+      { pg_id: 'b1111111-1111-4111-a111-111111111101', url: 'https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf?q=80&w=1200&auto=format&fit=crop', caption: 'Spacious Single AC Room', is_primary: false, type: 'room' }
+    ]);
+
+    // Sharing Types
+    await supabase.from('sharing_types').insert([
+      { pg_id: 'b1111111-1111-4111-a111-111111111101', type: 1, price_monthly: 18000, total_beds: 2, occupied_beds: 0 },
+      { pg_id: 'b1111111-1111-4111-a111-111111111101', type: 2, price_monthly: 12500, total_beds: 2, occupied_beds: 0 }
+    ]);
+
+    // Beds
+    await supabase.from('beds').insert([
+      { pg_id: 'b1111111-1111-4111-a111-111111111101', room_number: '101', bed_label: 'Bed 1', sharing_type: 'single', monthly_rent: 18000, status: 'available', floor_number: 1, has_ac: true, has_attached_bath: true },
+      { pg_id: 'b1111111-1111-4111-a111-111111111101', room_number: '101', bed_label: 'Bed 2', sharing_type: 'single', monthly_rent: 18000, status: 'available', floor_number: 1, has_ac: true, has_attached_bath: true },
+      { pg_id: 'b1111111-1111-4111-a111-111111111101', room_number: '102', bed_label: 'Bed 1', sharing_type: 'double', monthly_rent: 12500, status: 'available', floor_number: 1, has_ac: true, has_attached_bath: true },
+      { pg_id: 'b1111111-1111-4111-a111-111111111101', room_number: '102', bed_label: 'Bed 2', sharing_type: 'double', monthly_rent: 12500, status: 'available', floor_number: 1, has_ac: true, has_attached_bath: true }
+    ]);
+
+    // Create Admin Profile
+    await supabase.from('profiles').upsert({
+      id: '00000000-0000-0000-0000-000000000003',
+      full_name: 'Super Admin',
+      phone: '+91 9999999999',
+      role: 'admin',
+    });
+
+    console.log('DB Reset and Seeding completed successfully!');
+    res.json({ status: 'success', message: 'Database reset and seeded with exactly one PG and Super Admin.' });
+  } catch (err) {
+    console.error('Error resetting DB:', err);
+    res.status(500).json({ error: (err as Error).message });
+  }
+});
+
 export default router

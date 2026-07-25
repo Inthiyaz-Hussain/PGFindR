@@ -17,17 +17,16 @@ DELETE FROM public.owner_kyc;
 DELETE FROM public.pg_listings;
 
 -- Delete all profiles except the main demo owner and demo admin
-DELETE FROM public.profiles WHERE role = 'owner' AND id != 'a1111111-1111-4111-a111-111111111101';
-DELETE FROM public.profiles WHERE role = 'admin' AND id != 'admin-demo-id';
+DELETE FROM public.profiles WHERE id NOT IN ('00000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000003');
 
--- 2. SEED ONE DEMO OWNER (v_owner_1 matching owner@swiftpg.demo auth)
+-- 2. SEED ONE DEMO OWNER (matching owner@swiftpg.demo auth)
 INSERT INTO public.profiles (id, full_name, phone, role) 
-VALUES ('a1111111-1111-4111-a111-111111111101', 'Rajesh Sharma (Bangalore Owner)', '+91 9876543210', 'owner')
+VALUES ('00000000-0000-0000-0000-000000000002', 'Rajesh Sharma (Bangalore Owner)', '+91 9876543210', 'owner')
 ON CONFLICT (id) DO UPDATE SET role = 'owner';
 
 -- Approve Owner KYC
 INSERT INTO public.owner_kyc (owner_id, pan_number, aadhaar_number, bank_account, bank_ifsc, bank_name, status)
-VALUES ('a1111111-1111-4111-a111-111111111101', 'ABCDE1234F', '123456789012', '91827364501', 'SBIN0001234', 'State Bank of India', 'approved')
+VALUES ('00000000-0000-0000-0000-000000000002', 'ABCDE1234F', '123456789012', '91827364501', 'SBIN0001234', 'State Bank of India', 'approved')
 ON CONFLICT (owner_id) DO UPDATE SET status = 'approved';
 
 -- 3. SEED ONE PG IN BANGALORE
@@ -57,7 +56,7 @@ INSERT INTO public.pg_listings (
   rules
 ) VALUES (
   'b1111111-1111-4111-a111-111111111101', 
-  'a1111111-1111-4111-a111-111111111101', 
+  '00000000-0000-0000-0000-000000000002', 
   'Starlight Premium Coliving', 
   'Modern luxury PG located in the heart of Koramangala near Sony World Signal. Fully furnished with high-speed WiFi, daily housekeeping, and delicious meals.', 
   'No. 45, 5th Block, 80 Feet Road, Koramangala', 
@@ -103,5 +102,5 @@ ON CONFLICT DO NOTHING;
 
 -- 4. SEED ONE DEMO ADMIN
 INSERT INTO public.profiles (id, full_name, phone, role)
-VALUES ('admin-demo-id', 'Super Admin', '+91 9999999999', 'admin')
+VALUES ('00000000-0000-0000-0000-000000000003', 'Super Admin', '+91 9999999999', 'admin')
 ON CONFLICT (id) DO UPDATE SET role = 'admin';
