@@ -303,6 +303,7 @@ export function PGDetailPage() {
               pg_type={pg.pg_type}
               avg_rating={pg.avg_rating}
               review_count={pg.review_count}
+              is_verified={(pg as any).is_verified}
             />
           </section>
 

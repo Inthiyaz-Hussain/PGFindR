@@ -18,11 +18,15 @@ export function ProtectedRoute({ requiredRole }: ProtectedRouteProps) {
   }
 
   if (!user || !profile) {
-    return <Navigate to="/auth/login" state={{ from: location.pathname }} replace />
+    const roleParam = location.pathname.startsWith('/owner') ? 'owner' : location.pathname.startsWith('/admin') ? 'admin' : 'seeker'
+    const redirectUrl = `/auth/login?role=${roleParam}&from=${encodeURIComponent(location.pathname)}`
+    return <Navigate to={redirectUrl} replace />
   }
 
   if (requiredRole && profile.role !== requiredRole) {
-    return <Navigate to="/auth/login" state={{ from: location.pathname }} replace />
+    const roleParam = location.pathname.startsWith('/owner') ? 'owner' : location.pathname.startsWith('/admin') ? 'admin' : 'seeker'
+    const redirectUrl = `/auth/login?role=${roleParam}&from=${encodeURIComponent(location.pathname)}`
+    return <Navigate to={redirectUrl} replace />
   }
 
   return <Outlet />

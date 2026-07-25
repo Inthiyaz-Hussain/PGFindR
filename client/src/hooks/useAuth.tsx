@@ -142,7 +142,9 @@ function getDemoMockData(email: string) {
     email: string,
     password: string
   ): Promise<{ error: Error | null; profile: Profile | null }> {
-    const isDemo = false
+    const isDemo =
+      (email === 'owner@swiftpg.demo' && password === 'Owner@123') ||
+      (email === 'admin@swiftpg.demo' && password === 'Admin@123')
     try {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) {

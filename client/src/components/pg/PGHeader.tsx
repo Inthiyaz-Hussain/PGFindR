@@ -12,6 +12,7 @@ interface PGHeaderProps {
   pg_type: string
   avg_rating: number
   review_count: number
+  is_verified?: boolean
 }
 
 export function PGHeader({
@@ -24,6 +25,7 @@ export function PGHeader({
   pg_type,
   avg_rating,
   review_count,
+  is_verified,
 }: PGHeaderProps) {
   const genderConfig = {
     boys: { label: 'Boys PG', class: 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-900' },
@@ -42,8 +44,13 @@ export function PGHeader({
   return (
     <div className="space-y-2">
       <div className="flex flex-wrap items-start gap-3">
-        <h1 className="scroll-m-20 text-2xl md:text-3xl font-bold tracking-tight flex-1">
+        <h1 className="scroll-m-20 text-2xl md:text-3xl font-bold tracking-tight flex-1 flex items-center gap-2 flex-wrap">
           {name}
+          {is_verified && (
+            <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 text-xs font-semibold dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-800 shrink-0">
+              Verified
+            </Badge>
+          )}
         </h1>
         <Badge variant="outline" className={cn('text-sm shrink-0', gender.class)}>
           {gender.label}

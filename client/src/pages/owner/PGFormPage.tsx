@@ -204,7 +204,12 @@ export function PGFormPage() {
       queryClient.invalidateQueries({ queryKey: ['owner-listings'] })
       queryClient.invalidateQueries({ queryKey: ['owner-pgs'] })
       toast.success(isNew ? 'PG created! Pending admin approval.' : 'Listing updated!')
-      navigate(`/owner/pgs/${pgId}/availability`)
+      const basePath = window.location.pathname.startsWith('/admin') ? '/admin' : '/owner'
+      if (isNew && basePath === '/owner') {
+        navigate(`/owner/pgs/${pgId}/availability`)
+      } else {
+        navigate(`${basePath}/pgs`)
+      }
     },
     onError: (err) => {
       console.error(err)
@@ -271,7 +276,7 @@ export function PGFormPage() {
 
   return (
     <div className="p-4 md:p-6 max-w-3xl">
-      <Button variant="ghost" size="sm" onClick={() => navigate('/owner/pgs')} className="mb-4 -ml-2">
+      <Button variant="ghost" size="sm" onClick={() => navigate(window.location.pathname.startsWith('/admin') ? '/admin/pgs' : '/owner/pgs')} className="mb-4 -ml-2">
         <ArrowLeft className="size-4" /> Back to Listings
       </Button>
 
@@ -621,7 +626,7 @@ export function PGFormPage() {
         <Separator />
 
         <div className="flex justify-end gap-3">
-          <Button type="button" variant="outline" onClick={() => navigate('/owner/pgs')}>Cancel</Button>
+          <Button type="button" variant="outline" onClick={() => navigate(window.location.pathname.startsWith('/admin') ? '/admin/pgs' : '/owner/pgs')}>Cancel</Button>
           <Button type="submit" disabled={saveMutation.isPending}>
             {saveMutation.isPending ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
             {isNew ? 'Submit for Approval' : 'Save Changes'}

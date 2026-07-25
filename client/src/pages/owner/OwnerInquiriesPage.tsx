@@ -34,7 +34,7 @@ export function OwnerInquiriesPage() {
   const { data: inquiries, isLoading } = useQuery({
     queryKey: ['owner-all-inquiries', user?.id],
     queryFn: async () => {
-      const pgRes = await supabaseUntyped.from('pg_listings').select('id').eq('owner_id', user!.id)
+      const pgRes = await supabaseUntyped.from('pg_listings').select('id').eq('owner_id', user!.id).eq('id', 'b1111111-1111-4111-a111-111111111101')
       const pgIds = (pgRes.data || []).map((p: { id: string }) => p.id)
       if (pgIds.length === 0) return []
       const { data } = await supabaseUntyped

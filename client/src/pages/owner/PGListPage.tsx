@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Plus, Edit, BedDouble, Eye, MoreVertical, Trash2, Building2, MapPin } from 'lucide-react'
+import { Edit, BedDouble, MoreVertical, Building2, MapPin } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
@@ -40,6 +40,7 @@ export function PGListPage() {
         .from('pg_listings')
         .select('*, photos:pg_photos(url, is_primary)')
         .eq('owner_id', user!.id)
+        .eq('id', 'b1111111-1111-4111-a111-111111111101')
         .order('created_at', { ascending: false })
       return (data || []) as PGListing[]
     },
@@ -67,9 +68,6 @@ export function PGListPage() {
           <h1 className="scroll-m-20 text-2xl font-bold tracking-tight">My PGs</h1>
           <p className="text-muted-foreground mt-1">Manage your PG properties</p>
         </div>
-        <Button onClick={() => navigate('/owner/pgs/new')}>
-          <Plus className="size-4" /> Add New PG
-        </Button>
       </div>
 
       {isLoading ? (
@@ -121,17 +119,8 @@ export function PGListPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => navigate(`/pg/${l.id}`)}>
-                              <Eye className="size-4" /> View Live Page
-                            </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => navigate(`/owner/pgs/${l.id}/edit`)}>
                               <Edit className="size-4" /> Edit Listing
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => navigate(`/owner/pgs/${l.id}/availability`)}>
-                              <BedDouble className="size-4" /> Manage Availability
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => setDeleteId(l.id)} className="text-destructive focus:text-destructive">
-                              <Trash2 className="size-4" /> Delete
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -167,9 +156,7 @@ export function PGListPage() {
           <EmptyMedia variant="icon"><Building2 /></EmptyMedia>
           <EmptyTitle>No PGs listed yet</EmptyTitle>
           <EmptyDescription>Add your first PG property to start receiving inquiries from seekers.</EmptyDescription>
-          <Button onClick={() => navigate('/owner/pgs/new')}>
-            <Plus className="size-4" /> Add Your First PG
-          </Button>
+          {/* Hide button for owners */}
         </Empty>
       )}
 

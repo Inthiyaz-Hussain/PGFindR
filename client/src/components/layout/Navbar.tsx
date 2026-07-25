@@ -318,13 +318,15 @@ export function Navbar({
                     <span>Saved PGs ({savedCount})</span>
                   </DropdownMenuItem>
 
-                  <DropdownMenuItem
-                    onClick={() => navigate('/owner')}
-                    className="cursor-pointer py-2 px-3 rounded-lg text-xs sm:text-sm font-medium hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200"
-                  >
-                    <PlusCircle className="h-4 w-4 mr-2.5 text-slate-500" />
-                    <span>List New Property</span>
-                  </DropdownMenuItem>
+                  {profile?.role === 'seeker' && (
+                    <DropdownMenuItem
+                      onClick={() => navigate('/owner')}
+                      className="cursor-pointer py-2 px-3 rounded-lg text-xs sm:text-sm font-medium hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200"
+                    >
+                      <PlusCircle className="h-4 w-4 mr-2.5 text-slate-500" />
+                      <span>List New Property</span>
+                    </DropdownMenuItem>
+                  )}
 
                   <DropdownMenuItem
                     onClick={() => navigate('/seeker/profile')}

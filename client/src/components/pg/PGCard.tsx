@@ -78,8 +78,13 @@ export function PGCard({ pg, liveAvailableBeds = null, className }: PGCardProps)
         </div>
 
         <CardContent className="p-4">
-          <h3 className="font-semibold text-base leading-snug line-clamp-1 group-hover:text-primary transition-colors">
+          <h3 className="font-semibold text-base leading-snug line-clamp-1 group-hover:text-primary transition-colors flex items-center gap-1.5 flex-wrap">
             {pg.name}
+            {(pg as any).is_verified && (
+              <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 text-[10px] py-0 px-1.5 font-semibold dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-800 shrink-0">
+                Verified
+              </Badge>
+            )}
           </h3>
           <div className="mt-1.5 flex items-center gap-1 text-sm text-muted-foreground">
             <MapPin className="size-3.5 shrink-0" />

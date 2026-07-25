@@ -69,6 +69,13 @@ export function App() {
               <Route path="/auth/login" element={<LoginPage />} />
               <Route path="/auth/register" element={<RegisterPage />} />
 
+              {/* Owner Portal - Public Auth Redirects */}
+              <Route path="/owner/login" element={<Navigate to="/auth/login?role=owner&from=/owner" replace />} />
+              <Route path="/owner/signup" element={<Navigate to="/auth/register?role=owner" replace />} />
+
+              {/* Admin Portal - Public Auth Redirects */}
+              <Route path="/admin/login" element={<Navigate to="/auth/login?role=admin&from=/admin" replace />} />
+
               {/* Seeker */}
               <Route element={<SeekerLayout />}>
                 <Route path="/seeker" element={<SeekerDashboard />} />
@@ -81,6 +88,7 @@ export function App() {
               <Route element={<ProtectedRoute requiredRole="owner" />}>
                 <Route element={<OwnerLayout />}>
                   <Route path="/owner" element={<OwnerDashboard />} />
+                  <Route path="/owner/dashboard" element={<OwnerDashboard />} />
                   <Route path="/owner/pgs" element={<PGListPage />} />
                   <Route path="/owner/pgs/new" element={<PGFormPage />} />
                   <Route path="/owner/pgs/:id/edit" element={<PGFormPage />} />
@@ -95,7 +103,10 @@ export function App() {
               <Route element={<ProtectedRoute requiredRole="admin" />}>
                 <Route element={<AdminLayout />}>
                   <Route path="/admin" element={<AdminDashboard />} />
+                  <Route path="/admin/dashboard" element={<AdminDashboard />} />
                   <Route path="/admin/pgs" element={<AdminPGsPage />} />
+                  <Route path="/admin/pgs/new" element={<PGFormPage />} />
+                  <Route path="/admin/pgs/:id/edit" element={<PGFormPage />} />
                   <Route path="/admin/owners" element={<AdminOwnersPage />} />
                   <Route path="/admin/transactions" element={<AdminTransactionsPage />} />
                   <Route path="/admin/commission" element={<AdminCommissionPage />} />

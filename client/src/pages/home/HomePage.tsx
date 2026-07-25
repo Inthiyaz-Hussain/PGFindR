@@ -13,14 +13,18 @@ export function HomePage() {
     return sessionStorage.getItem('pgr_splash_dismissed') !== 'true'
   })
 
-  // Auto-redirect logged-in users to their respective portals
+  // Auto-redirect users to their respective portals after splash screen is dismissed
   useEffect(() => {
-    if (!loading && user && profile) {
-      const role = profile.role
-      const dashboard = role === 'owner' ? '/owner' : role === 'admin' ? '/admin' : '/seeker'
-      navigate(dashboard, { replace: true })
+    if (!showSplash && !loading) {
+      if (user && profile) {
+        const role = profile.role
+        const dashboard = role === 'owner' ? '/owner' : role === 'admin' ? '/admin' : '/seeker'
+        navigate(dashboard, { replace: true })
+      } else {
+        navigate('/search', { replace: true })
+      }
     }
-  }, [user, profile, loading, navigate])
+  }, [showSplash, user, profile, loading, navigate])
 
   function handleSplashDismiss() {
     setShowSplash(false)

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { CheckCircle, XCircle, Eye, MapPin, Building2, Search, ChevronLeft, ChevronRight } from 'lucide-react'
+import { CheckCircle, XCircle, Eye, MapPin, Building2, Search, ChevronLeft, ChevronRight, Edit } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -113,9 +113,14 @@ export function AdminPGsPage() {
 
   return (
     <div className="p-4 md:p-6 max-w-7xl">
-      <div className="mb-6">
-        <h1 className="scroll-m-20 text-2xl font-bold tracking-tight">PG Management</h1>
-        <p className="text-muted-foreground mt-1">Review, approve, or suspend PG listings</p>
+      <div className="mb-6 flex justify-between items-center flex-wrap gap-4">
+        <div>
+          <h1 className="scroll-m-20 text-2xl font-bold tracking-tight">PG Management</h1>
+          <p className="text-muted-foreground mt-1">Review, approve, or suspend PG listings</p>
+        </div>
+        <Button onClick={() => navigate('/admin/pgs/new')} className="rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold">
+          Add PG
+        </Button>
       </div>
 
       {/* Filters */}
@@ -215,6 +220,9 @@ export function AdminPGsPage() {
                         <div className="flex items-center justify-end gap-2">
                           <Button variant="ghost" size="icon-sm" onClick={() => navigate(`/pg/${pg.id}`)} title="View">
                             <Eye className="size-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon-sm" onClick={() => navigate(`/admin/pgs/${pg.id}/edit`)} title="Edit">
+                            <Edit className="size-4" />
                           </Button>
                           {pg.status === 'pending' && (
                             <Button variant="ghost" size="icon-sm" className="text-green-600 hover:text-green-700" onClick={() => updateMutation.mutate({ id: pg.id, status: 'approved' })} title="Approve">

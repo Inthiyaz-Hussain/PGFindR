@@ -12,7 +12,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Field, FieldLabel, FieldError } from '@/components/ui/field'
 import { Separator } from '@/components/ui/separator'
 import { useAuth } from '@/hooks/useAuth'
-import { supabase } from '@/lib/supabase'
 
 const loginSchema = z.object({
   email: z.string().email('Enter a valid email address'),
@@ -21,49 +20,19 @@ const loginSchema = z.object({
 
 type LoginFormValues = z.infer<typeof loginSchema>
 
-function getRedirectPath(role: string, fromPath: string): string {
-  if (fromPath) {
-    if (fromPath.startsWith('/admin')) {
-      return role === 'admin' ? fromPath : `/${role}`
-    }
-    if (fromPath.startsWith('/owner')) {
-      return role === 'owner' ? fromPath : `/${role}`
-    }
-    if (fromPath.startsWith('/seeker')) {
-      return role === 'seeker' ? fromPath : `/${role}`
-    }
-    return fromPath
-  }
-  return `/${role}`
-}
-
-export function LoginPage() {
+export function OwnerLoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const { login, user, profile } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const searchParams = new URLSearchParams(location.search)
-  const from = (location.state as { from?: string })?.from || searchParams.get('from') || ''
-  const queryRole = searchParams.get('role')
-  const targetRole =
-    queryRole === 'owner' || queryRole === 'admin' || queryRole === 'seeker'
-      ? queryRole
-      : from.startsWith('/owner')
-      ? 'owner'
-      : from.startsWith('/admin')
-      ? 'admin'
-      : 'seeker'
+  const from = (location.state as { from?: string })?.from || searchParams.get('from') || '/owner'
 
   useEffect(() => {
-    if (user && profile) {
-      const role = profile.role
-      // Only auto-redirect if the current user's role matches the target role.
-      // Otherwise, keep the login page open so they can switch accounts.
-      if (role === targetRole) {
-        navigate(getRedirectPath(role, from), { replace: true })
-      }
+    if (user && profile && profile.role === 'owner') {
+      navigate(from, { replace: true })
     }
-  }, [user, profile, navigate, from, targetRole])
+  }, [user, profile, navigate, from])
 
   const {
     control,
@@ -75,54 +44,33 @@ export function LoginPage() {
     defaultValues: { email: '', password: '' },
   })
 
-  const handleDemoFill = (email: string, password: string) => {
-    setValue('email', email)
-    setValue('password', password)
-    toast.info('Demo credentials filled!')
-  }
-
-  const isPending = isSubmitting
-
   async function onSubmit(values: LoginFormValues) {
-    const { error, profile } = await login(values.email, values.password)
+    const { error, profile: loggedInProfile } = await login(values.email, values.password)
     if (error) {
       toast.error(error.message || 'Invalid email or password')
       return
     }
-    toast.success('Welcome back!')
-    if (profile) {
-      navigate(getRedirectPath(profile.role, from), { replace: true })
+
+    if (loggedInProfile && loggedInProfile.role !== 'owner') {
+      toast.error('Access denied. This page is only for PG Owners.')
+      return
     }
+
+    toast.success('Welcome back!')
+    navigate('/owner', { replace: true })
   }
 
-  const handleGoogleSignIn = async () => {
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/auth/login?from=${encodeURIComponent(from || '/seeker')}`,
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'select_account',
-          },
-          data: {
-            role: targetRole,
-          }
-        } as any
-      })
-      if (error) {
-        toast.error(error.message || 'Google Sign-In failed')
-      }
-    } catch (e) {
-      console.error(e)
-      toast.error('Google Sign-In error')
-    }
+  const handleDemoFill = () => {
+    setValue('email', 'owner@swiftpg.demo')
+    setValue('password', 'Owner@123')
+    toast.info('Demo owner credentials filled!')
   }
+
+  const isDev = import.meta.env.DEV
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-muted/30 px-4 py-12">
       <div className="w-full max-w-md space-y-6">
-
         {/* Logo */}
         <div className="flex flex-col items-center gap-3">
           <Link to="/" className="flex items-center gap-2.5">
@@ -137,21 +85,14 @@ export function LoginPage() {
         {/* Card */}
         <Card>
           <CardHeader className="text-center pb-4">
-            <CardTitle className="text-xl">
-              {targetRole === 'owner' ? 'Owner Sign In' : targetRole === 'admin' ? 'Admin Sign In' : 'Welcome back'}
-            </CardTitle>
+            <CardTitle className="text-xl">Owner Sign In</CardTitle>
             <CardDescription>
-              {targetRole === 'owner'
-                ? 'Sign in to manage your listings and bookings'
-                : targetRole === 'admin'
-                ? 'Sign in to access control panel'
-                : 'Sign in to your account to continue'}
+              Sign in to manage your listings and bookings
             </CardDescription>
           </CardHeader>
 
           <CardContent>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
-
               {/* Email */}
               <Controller
                 name="email"
@@ -167,7 +108,7 @@ export function LoginPage() {
                       autoComplete="email"
                       autoFocus
                       aria-invalid={fieldState.invalid}
-                      disabled={isPending}
+                      disabled={isSubmitting}
                     />
                     {fieldState.error && (
                       <FieldError errors={[fieldState.error]} />
@@ -184,9 +125,6 @@ export function LoginPage() {
                   <Field data-invalid={fieldState.invalid || undefined}>
                     <div className="flex items-center justify-between">
                       <FieldLabel htmlFor="password">Password</FieldLabel>
-                      <span className="text-xs text-muted-foreground">
-                        Forgot password?
-                      </span>
                     </div>
                     <div className="relative">
                       <Input
@@ -197,7 +135,7 @@ export function LoginPage() {
                         autoComplete="current-password"
                         aria-invalid={fieldState.invalid}
                         className="pr-10"
-                        disabled={isPending}
+                        disabled={isSubmitting}
                       />
                       <button
                         type="button"
@@ -205,7 +143,7 @@ export function LoginPage() {
                         onClick={() => setShowPassword((v) => !v)}
                         className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                         aria-label={showPassword ? 'Hide password' : 'Show password'}
-                        disabled={isPending}
+                        disabled={isSubmitting}
                       >
                         {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                       </button>
@@ -218,58 +156,27 @@ export function LoginPage() {
               />
 
               {/* Submit */}
-              <Button type="submit" className="w-full" disabled={isPending}>
-                {isPending ? (
+              <Button type="submit" className="w-full" disabled={isSubmitting}>
+                {isSubmitting ? (
                   <Loader2 className="size-4 animate-spin" />
                 ) : (
                   <LogIn className="size-4" />
                 )}
-                {isPending ? 'Please wait…' : 'Sign in'}
+                {isSubmitting ? 'Please wait…' : 'Sign in'}
               </Button>
             </form>
 
             {/* Quick Demo Login */}
-            {import.meta.env.DEV && targetRole === 'owner' && (
+            {isDev && (
               <div className="mt-4 p-3 bg-muted rounded-lg text-xs space-y-2 border">
                 <div className="font-semibold text-muted-foreground">Demo Owner Credentials:</div>
                 <div>Email: owner@swiftpg.demo</div>
                 <div>Password: Owner@123</div>
-                <Button variant="outline" size="sm" onClick={() => handleDemoFill('owner@swiftpg.demo', 'Owner@123')} className="w-full mt-1">
+                <Button variant="outline" size="sm" onClick={handleDemoFill} className="w-full mt-1">
                   Quick Fill Demo Owner
                 </Button>
               </div>
             )}
-
-            {import.meta.env.DEV && targetRole === 'admin' && (
-              <div className="mt-4 p-3 bg-muted rounded-lg text-xs space-y-2 border">
-                <div className="font-semibold text-muted-foreground">Demo Admin Credentials:</div>
-                <div>Email: admin@swiftpg.demo</div>
-                <div>Password: Admin@123</div>
-                <Button variant="outline" size="sm" onClick={() => handleDemoFill('admin@swiftpg.demo', 'Admin@123')} className="w-full mt-1">
-                  Quick Fill Demo Admin
-                </Button>
-              </div>
-            )}
-
-            <div className="relative my-5">
-              <Separator />
-              <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-2 text-xs text-muted-foreground">
-                Or continue with
-              </span>
-            </div>
-
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full flex items-center justify-center gap-2"
-              onClick={handleGoogleSignIn}
-              disabled={isPending}
-            >
-              <svg className="h-4 w-4" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="google" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512">
-                <path fill="currentColor" d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z"></path>
-              </svg>
-              Google
-            </Button>
 
             <div className="mt-6">
               <div className="relative">
@@ -280,10 +187,10 @@ export function LoginPage() {
               </div>
               <div className="mt-5 text-center">
                 <Link
-                  to="/auth/register"
+                  to="/owner/signup"
                   className="text-sm font-medium text-primary hover:underline underline-offset-4"
                 >
-                  Create an account
+                  Register Your PG
                 </Link>
               </div>
             </div>
