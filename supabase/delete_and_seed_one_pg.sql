@@ -19,17 +19,60 @@ DELETE FROM public.pg_listings;
 -- Delete all profiles except the main demo owner and demo admin
 DELETE FROM public.profiles WHERE id NOT IN ('00000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000003');
 
--- 2. SEED ONE DEMO OWNER (matching owner@swiftpg.demo auth)
-INSERT INTO public.profiles (id, full_name, phone, role) 
-VALUES ('00000000-0000-0000-0000-000000000002', 'Rajesh Sharma (Bangalore Owner)', '+91 9876543210', 'owner')
-ON CONFLICT (id) DO UPDATE SET role = 'owner';
+-- Delete all auth users except the main demo owner and demo admin
+DELETE FROM auth.users WHERE id NOT IN ('00000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000003');
 
--- Approve Owner KYC
+-- 2. SEED AUTH USERS FIRST (to satisfy profiles foreign key constraint)
+INSERT INTO auth.users (
+  instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,
+  raw_app_meta_data, raw_user_meta_data, created_at, updated_at,
+  confirmation_token, recovery_token
+) VALUES
+  (
+    '00000000-0000-0000-0000-000000000000', 
+    '00000000-0000-0000-0000-000000000002', 
+    'authenticated', 
+    'authenticated', 
+    'owner@swiftpg.demo', 
+    crypt('Owner@123', gen_salt('bf')), 
+    now(), 
+    '{"provider":"email","providers":["email"]}'::jsonb, 
+    '{"full_name":"Rajesh Sharma (Bangalore Owner)","role":"owner"}'::jsonb, 
+    now(), 
+    now(), 
+    '', 
+    ''
+  ),
+  (
+    '00000000-0000-0000-0000-000000000000', 
+    '00000000-0000-0000-0000-000000000003', 
+    'authenticated', 
+    'authenticated', 
+    'admin@swiftpg.demo', 
+    crypt('Admin@123', gen_salt('bf')), 
+    now(), 
+    '{"provider":"email","providers":["email"]}'::jsonb, 
+    '{"full_name":"Super Admin","role":"admin"}'::jsonb, 
+    now(), 
+    now(), 
+    '', 
+    ''
+  )
+ON CONFLICT (id) DO NOTHING;
+
+-- 3. SEED PROFILE RECORDS (Auto-inserted via triggers, but upsert explicitly here to ensure role mapping)
+INSERT INTO public.profiles (id, full_name, phone, role) 
+VALUES 
+  ('00000000-0000-0000-0000-000000000002', 'Rajesh Sharma (Bangalore Owner)', '+91 9876543210', 'owner'),
+  ('00000000-0000-0000-0000-000000000003', 'Super Admin', '+91 9999999999', 'admin')
+ON CONFLICT (id) DO UPDATE SET role = EXCLUDED.role, full_name = EXCLUDED.full_name, phone = EXCLUDED.phone;
+
+-- Seed Owner KYC records
 INSERT INTO public.owner_kyc (owner_id, pan_number, aadhaar_number, bank_account, bank_ifsc, bank_name, status)
 VALUES ('00000000-0000-0000-0000-000000000002', 'ABCDE1234F', '123456789012', '91827364501', 'SBIN0001234', 'State Bank of India', 'approved')
 ON CONFLICT (owner_id) DO UPDATE SET status = 'approved';
 
--- 3. SEED ONE PG IN BANGALORE
+-- 4. SEED ONE PG IN BANGALORE
 INSERT INTO public.pg_listings (
   id, 
   owner_id, 
@@ -99,8 +142,3 @@ INSERT INTO public.beds (pg_id, room_number, bed_label, sharing_type, monthly_re
   ('b1111111-1111-4111-a111-111111111101', '102', 'Bed 1', 'double', 12500, 'available', 1, true, true),
   ('b1111111-1111-4111-a111-111111111101', '102', 'Bed 2', 'double', 12500, 'available', 1, true, true)
 ON CONFLICT DO NOTHING;
-
--- 4. SEED ONE DEMO ADMIN
-INSERT INTO public.profiles (id, full_name, phone, role)
-VALUES ('00000000-0000-0000-0000-000000000003', 'Super Admin', '+91 9999999999', 'admin')
-ON CONFLICT (id) DO UPDATE SET role = 'admin';
