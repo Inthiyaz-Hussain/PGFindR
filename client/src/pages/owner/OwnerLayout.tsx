@@ -1,8 +1,8 @@
 import { NavLink, Outlet } from 'react-router-dom'
-import { Building2, LayoutDashboard, MessageSquare, LogOut, Plus, IndianRupee, FileCheck } from 'lucide-react'
+import { Building2, LayoutDashboard, MessageSquare, LogOut, IndianRupee, FileCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { Separator } from '@/components/ui/separator'
+
 
 import { useAuth } from '@/hooks/useAuth'
 import { useFirebasePush } from '@/hooks/useFirebase'
@@ -50,20 +50,6 @@ export function OwnerLayout() {
               </NavLink>
             ))}
 
-            <Separator className="my-2 bg-sidebar-border" />
-
-            <NavLink
-              to="/owner/pgs/new"
-              className={({ isActive }) => cn(
-                'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors',
-                isActive
-                  ? 'bg-sidebar-accent text-sidebar-accent-foreground font-medium'
-                  : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
-              )}
-            >
-              <Plus className="size-4 shrink-0" />
-              Add New PG
-            </NavLink>
           </div>
 
           <div className="p-3 border-t border-sidebar-border">
