@@ -331,7 +331,7 @@ export function InquiryModal({
                     disabled={isSendingOtp || !emailInputValue}
                     className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs py-1 px-3"
                   >
-                    {isSendingOtp ? 'Sending...' : otpSent ? 'Resend' : 'Send OTP'}
+                    {isSendingOtp ? 'Sending...' : otpSent ? 'Resend' : 'Continue with Email'}
                   </Button>
                   <Button
                     type="button"

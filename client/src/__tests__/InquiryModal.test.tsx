@@ -233,7 +233,7 @@ describe('InquiryModal', () => {
     await user.type(emailInput, 'guest@example.com')
 
     // Click Send OTP
-    const sendOtpBtn = screen.getByRole('button', { name: /Send OTP/i })
+    const sendOtpBtn = screen.getByRole('button', { name: /Continue with Email/i })
     await user.click(sendOtpBtn)
 
     // Type OTP
