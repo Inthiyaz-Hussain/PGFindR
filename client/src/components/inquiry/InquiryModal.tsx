@@ -311,7 +311,7 @@ export function InquiryModal({
         <div className="space-y-3 p-3 bg-indigo-50/40 dark:bg-slate-800/40 rounded-xl border border-indigo-100/50 dark:border-slate-700/50">
           <div className="space-y-1.5">
             <Label htmlFor="email" className="flex items-center gap-1.5 font-semibold text-slate-700 dark:text-slate-200">
-              <span>📧</span> Email Address (OTP Verification)
+              <span>📧</span> Email Address.
             </Label>
             <div className="flex gap-2">
               <Input
