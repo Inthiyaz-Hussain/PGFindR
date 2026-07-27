@@ -66,7 +66,6 @@ export function InquiryModal({
   const [otpVerified, setOtpVerified] = useState(false)
   const [isSendingOtp, setIsSendingOtp] = useState(false)
   const [isVerifyingOtp, setIsVerifyingOtp] = useState(false)
-  const [isDemoFallback, setIsDemoFallback] = useState(false)
 
   const isEmailVerified = !!user || otpVerified
 
@@ -76,7 +75,6 @@ export function InquiryModal({
       setOtpSent(false)
       setOtpVerified(false)
       setOtpInputValue('')
-      setIsDemoFallback(false)
     }
   }, [emailInputValue, user])
 
@@ -121,25 +119,16 @@ export function InquiryModal({
       })
       setIsSendingOtp(false)
       if (error) {
-        console.warn('Supabase OTP send failed, falling back to demo code:', error)
-        setIsDemoFallback(true)
-        setOtpSent(true)
-        toast.info('Email service rate-limited/unconfigured. Falling back to demo mode! Use OTP: 123456', {
-          duration: 10000,
-        })
+        console.error('Supabase OTP send failed:', error)
+        toast.error(error.message || 'Failed to send OTP. Please check your email and try again.')
         return
       }
-      setIsDemoFallback(false)
       setOtpSent(true)
       toast.success('Verification code sent! Please check your email inbox.')
-    } catch (e) {
-      console.warn('Error calling signInWithOtp, falling back to demo code:', e)
+    } catch (e: any) {
+      console.error('Error calling signInWithOtp:', e)
       setIsSendingOtp(false)
-      setIsDemoFallback(true)
-      setOtpSent(true)
-      toast.info('Email service rate-limited/unconfigured. Falling back to demo mode! Use OTP: 123456', {
-        duration: 10000,
-      })
+      toast.error(e?.message || 'An error occurred while sending the OTP.')
     }
   }
 
@@ -151,36 +140,6 @@ export function InquiryModal({
       return
     }
     setIsVerifyingOtp(true)
-
-    // Fallback to anonymous sign-in if the email OTP service is rate-limited/unavailable
-    if (isDemoFallback || token === '123456') {
-      try {
-        const { data, error } = await supabase.auth.signInAnonymously({
-          options: {
-            data: {
-              role: 'seeker',
-              full_name: 'Guest Seeker',
-            }
-          }
-        })
-        setIsVerifyingOtp(false)
-        if (error) {
-          console.error('Anonymous sign-in failed during fallback:', error)
-          toast.error('Verification failed. Please try again.')
-          return
-        }
-        if (data.user) {
-          localStorage.setItem('seeker_id', data.user.id)
-        }
-        setOtpVerified(true)
-        toast.success('Email verified successfully (Demo Fallback)!')
-      } catch (e) {
-        setIsVerifyingOtp(false)
-        console.error(e)
-        toast.error('Verification failed.')
-      }
-      return
-    }
 
     try {
       // First try to verify with type 'email' (for signin)
@@ -199,40 +158,22 @@ export function InquiryModal({
         })
       }
 
-      // If both OTP calls fail, fallback to anonymous sign-in to prevent blocking the user
+      setIsVerifyingOtp(false)
       if (result.error) {
-        console.warn('Real OTP verification failed, falling back to anonymous user session:', result.error)
-        const { data, error: anonError } = await supabase.auth.signInAnonymously({
-          options: {
-            data: {
-              role: 'seeker',
-              full_name: 'Guest Seeker',
-            }
-          }
-        })
-        setIsVerifyingOtp(false)
-        if (anonError) {
-          toast.error(result.error.message || 'Invalid or expired OTP code')
-          return
-        }
-        if (data?.user) {
-          localStorage.setItem('seeker_id', data.user.id)
-        }
-        setOtpVerified(true)
-        toast.success('Email verified successfully (Fail-Safe)!')
+        console.error('OTP verification failed:', result.error)
+        toast.error(result.error.message || 'Invalid or expired OTP code')
         return
       }
 
-      setIsVerifyingOtp(false)
       if (result.data?.user) {
         localStorage.setItem('seeker_id', result.data.user.id)
       }
       setOtpVerified(true)
       toast.success('Email verified successfully!')
-    } catch (e) {
+    } catch (e: any) {
       setIsVerifyingOtp(false)
-      console.error(e)
-      toast.error('Verification failed. Please try again.')
+      console.error('Error verifying OTP:', e)
+      toast.error(e?.message || 'Verification failed. Please try again.')
     }
   }
 
@@ -301,30 +242,24 @@ export function InquiryModal({
         return
       }
 
-      const guestEmail = emailInputValue.trim()
-      const guestName = data.full_name.trim()
-
-      let guestId = localStorage.getItem('seeker_id')
-      if (!guestId) {
-        guestId = '00000000-0000-0000-0000-' + Math.floor(100000000000 + Math.random() * 900000000000).toString()
-        localStorage.setItem('seeker_id', guestId)
+      // Check if we can get the session directly from supabase
+      const { data: { session: latestSession } } = await supabase.auth.getSession()
+      if (latestSession) {
+        activeUser = latestSession.user
+        activeSession = latestSession
       }
+    }
 
-      activeUser = {
-        id: guestId,
-        email: guestEmail,
-        user_metadata: { full_name: guestName, role: 'seeker' }
-      } as any
+    if (!activeUser) {
+      toast.error('Authentication session not found. Please verify your email again.')
+      return
+    }
 
-      activeSession = {
-        access_token: `mock-token-${JSON.stringify({ id: guestId, email: guestEmail, role: 'seeker' })}`,
-        user: activeUser
-      } as any
-
-      // Save seeker details to local storage
-      localStorage.setItem('seeker_fullName', guestName)
+    // Save seeker details to local storage
+    if (activeUser.email) {
+      localStorage.setItem('seeker_fullName', data.full_name.trim())
       localStorage.setItem('seeker_phone', data.mobile)
-      localStorage.setItem('seeker_email', guestEmail)
+      localStorage.setItem('seeker_email', activeUser.email)
     }
 
     const moveIn = new Date(data.move_in_date)
