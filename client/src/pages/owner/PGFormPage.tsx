@@ -15,7 +15,7 @@ import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Field, FieldLabel, FieldError, FieldDescription } from '@/components/ui/field'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { supabase, supabaseUntyped } from '@/lib/supabase'
+import { supabaseUntyped } from '@/lib/supabase'
 import { useAuth } from '@/hooks/useAuth'
 import { toast } from 'sonner'
 import type { PGType, SharingTypeItem, AmenityItem } from '@/types'
@@ -213,56 +213,30 @@ export function PGFormPage() {
         payload.status = isAdmin ? 'approved' : 'pending'
       }
 
-      let pgId = id
+      // Save listing and all relations atomically via the server to bypass RLS/Mock-auth limitations
+      const token = session?.access_token
+      const saveRes = await fetch(`${import.meta.env.VITE_API_URL || 'https://swiftpg-backend.onrender.com'}/api/pg/save-listing`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({
+          id,
+          payload,
+          sharingTypes,
+          amenities,
+          photos,
+          isAdmin
+        })
+      })
 
-      if (isNew) {
-        const { data: res, error } = await supabaseUntyped.from('pg_listings').insert(payload).select('id').single()
-        if (error) throw error
-        pgId = (res as { id: string }).id
-      } else {
-        const { error } = await supabaseUntyped.from('pg_listings').update(payload).eq('id', id!)
-        if (error) throw error
+      const saveResData = await saveRes.json()
+      if (!saveRes.ok) {
+        throw new Error(saveResData.error || 'Failed to save listing details')
       }
 
-      // Save sharing types
-      if (sharingTypes.length > 0 && pgId) {
-        await supabaseUntyped.from('sharing_types').delete().eq('pg_id', pgId)
-        const sharingPayloads = sharingTypes.map((s) => ({
-          pg_id: pgId,
-          type: s.type,
-          price_monthly: Number(s.price_monthly) || 0,
-          price_daily: s.price_daily ? Number(s.price_daily) : null,
-          total_beds: Number(s.total_beds) || 0,
-          occupied_beds: 0,
-        }))
-        await supabaseUntyped.from('sharing_types').insert(sharingPayloads)
-      }
-
-      // Save amenities
-      if (pgId) {
-        await supabaseUntyped.from('amenities').delete().eq('pg_id', pgId)
-        const amenityPayloads = Object.entries(amenities)
-          .filter(([, v]) => v)
-          .map(([key]) => ({ pg_id: pgId, key: key as AmenityItem['key'], is_available: true }))
-        if (amenityPayloads.length > 0) {
-          await supabaseUntyped.from('amenities').insert(amenityPayloads)
-        }
-      }
-
-      // Save photos
-      if (photos.length > 0 && pgId) {
-        await supabaseUntyped.from('pg_photos').delete().eq('pg_id', pgId)
-        const photoPayloads = photos.map((p, i) => ({
-          pg_id: pgId,
-          url: p.url,
-          type: p.type,
-          caption: p.caption,
-          is_primary: i === 0,
-        }))
-        await supabaseUntyped.from('pg_photos').insert(photoPayloads)
-      }
-
-      return pgId
+      return saveResData.pgId
     },
     onSuccess: (pgId) => {
       queryClient.invalidateQueries({ queryKey: ['owner-listings'] })
@@ -292,30 +266,56 @@ export function PGFormPage() {
 
       for (let i = 0; i < files.length; i++) {
         const file = files[i]
+
+        // Read file as base64
+        const reader = new FileReader()
+        const base64Promise = new Promise<string>((resolve, reject) => {
+          reader.onload = () => {
+            const result = reader.result as string
+            const base64Data = result.split(',')[1] || result
+            resolve(base64Data)
+          }
+          reader.onerror = reject
+          reader.readAsDataURL(file)
+        })
+
+        const base64Data = await base64Promise
         const fileExt = file.name.split('.').pop()
         const fileName = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${fileExt}`
 
-        const { error: uploadError } = await supabase.storage
-          .from('pg-photos')
-          .upload(fileName, file)
+        const token = session?.access_token
+        const res = await fetch(`${import.meta.env.VITE_API_URL || 'https://swiftpg-backend.onrender.com'}/api/pg/upload-photo`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+          },
+          body: JSON.stringify({
+            fileName,
+            fileType: file.type,
+            base64Data
+          })
+        })
 
-        if (uploadError) throw uploadError
+        const resData = await res.json()
+        if (!res.ok) {
+          throw new Error(resData.error || 'Upload failed')
+        }
 
-        const { data: { publicUrl } } = supabase.storage.from('pg-photos').getPublicUrl(fileName)
-        uploadedUrls.push(publicUrl)
+        uploadedUrls.push(resData.url)
         setUploadProgress(((i + 1) / totalFiles) * 100)
       }
 
       setPhotos((prev) => [...prev, ...uploadedUrls.map((url) => ({ url, type: 'room' as const }))])
       toast.success(`${uploadedUrls.length} photo(s) uploaded`)
-    } catch (err) {
+    } catch (err: any) {
       console.error(err)
-      toast.error('Failed to upload photos')
+      toast.error(`Failed to upload photos: ${err.message || err}`)
     } finally {
       setUploading(false)
       setUploadProgress(0)
     }
-  }, [user])
+  }, [user, session])
 
   const addSharingType = () => {
     if (sharingTypes.length >= 4) return
