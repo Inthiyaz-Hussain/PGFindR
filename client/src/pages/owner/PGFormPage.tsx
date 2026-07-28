@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { ArrowLeft, Loader2, Save, Upload, X, MapPin, Plus, Trash2 } from 'lucide-react'
+import { ArrowLeft, Loader2, Save, Upload, X, MapPin, Plus, Trash2, User } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -55,9 +55,17 @@ const AMENITY_KEYS: { key: AmenityItem['key']; label: string }[] = [
 export function PGFormPage() {
   const { id } = useParams<{ id: string }>()
   const isNew = !id || id === 'new'
-  const { user } = useAuth()
+  const { user, profile, session } = useAuth()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const isAdmin = profile?.role === 'admin' || window.location.pathname.startsWith('/admin')
+
+  const [ownerMode, setOwnerMode] = useState<'select' | 'create'>('select')
+  const [selectedOwnerId, setSelectedOwnerId] = useState<string>('')
+  const [newOwnerName, setNewOwnerName] = useState('')
+  const [newOwnerEmail, setNewOwnerEmail] = useState('')
+  const [newOwnerPassword, setNewOwnerPassword] = useState('')
+  const [newOwnerPhone, setNewOwnerPhone] = useState('')
 
   const [sharingTypes, setSharingTypes] = useState<{ type: 1 | 2 | 3 | 4; price_monthly: string; price_daily: string; total_beds: string }[]>([])
   const [amenities, setAmenities] = useState<Record<AmenityItem['key'], boolean>>({
@@ -67,6 +75,20 @@ export function PGFormPage() {
   const [photos, setPhotos] = useState<{ url: string; type: 'room' | 'common' | 'exterior' | 'kitchen' | 'washroom'; caption?: string }[]>([])
   const [uploading, setUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
+
+  // Query all owners for admin dropdown
+  const { data: owners } = useQuery({
+    queryKey: ['admin-owners-list'],
+    queryFn: async () => {
+      const { data } = await supabaseUntyped
+        .from('profiles')
+        .select('id, full_name, phone')
+        .eq('role', 'owner')
+        .order('full_name')
+      return data || []
+    },
+    enabled: isAdmin,
+  })
 
   const form = useForm<PGFormData>({
     resolver: zodResolver(pgSchema),
@@ -85,6 +107,9 @@ export function PGFormPage() {
       const { data: pg } = await supabaseUntyped.from('pg_listings').select('*').eq('id', id!).single()
       if (pg) {
         const p = pg as Record<string, unknown>
+        if (p.owner_id) {
+          setSelectedOwnerId(p.owner_id as string)
+        }
         form.reset({
           name: p.name as string,
           description: (p.description as string) || '',
@@ -138,15 +163,54 @@ export function PGFormPage() {
 
   const saveMutation = useMutation({
     mutationFn: async (data: PGFormData) => {
-      const payload = {
+      let finalOwnerId = user!.id
+
+      if (isAdmin) {
+        if (ownerMode === 'create') {
+          if (!newOwnerName || !newOwnerEmail || !newOwnerPassword) {
+            throw new Error('Please fill in the Owner Name, Email, and Password to create a new owner.')
+          }
+
+          const token = session?.access_token
+          const res = await fetch(`${import.meta.env.VITE_API_URL || 'https://swiftpg-backend.onrender.com'}/api/auth/admin/create-owner`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            },
+            body: JSON.stringify({
+              name: newOwnerName,
+              email: newOwnerEmail,
+              password: newOwnerPassword,
+              mobile: newOwnerPhone || undefined,
+            })
+          })
+
+          const resData = await res.json()
+          if (!res.ok) {
+            throw new Error(resData.error || 'Failed to create new owner')
+          }
+          finalOwnerId = resData.user.id
+        } else {
+          if (!selectedOwnerId) {
+            throw new Error('Please select an owner for this PG listing.')
+          }
+          finalOwnerId = selectedOwnerId
+        }
+      }
+
+      const payload: any = {
         ...data,
-        owner_id: user!.id,
+        owner_id: finalOwnerId,
         monthly_rent_min: sharingTypes.length > 0 ? Math.min(...sharingTypes.map((s) => Number(s.price_monthly) || 0)) : 0,
         monthly_rent_max: sharingTypes.length > 0 ? Math.max(...sharingTypes.map((s) => Number(s.price_monthly) || 0)) : 0,
         total_beds: sharingTypes.reduce((sum, s) => sum + (Number(s.total_beds) || 0), 0),
         available_beds: sharingTypes.reduce((sum, s) => sum + (Number(s.total_beds) || 0), 0),
-        status: 'pending' as const,
         updated_at: new Date().toISOString(),
+      }
+
+      if (isNew) {
+        payload.status = isAdmin ? 'approved' : 'pending'
       }
 
       let pgId = id
@@ -288,6 +352,105 @@ export function PGFormPage() {
       </p>
 
       <form onSubmit={form.handleSubmit((data) => saveMutation.mutate(data))} className="space-y-6">
+        {/* Owner Assignment (Admin Only) */}
+        {isAdmin && (
+          <Card className="border-indigo-500/30 shadow-md">
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <User className="size-5 text-indigo-500" />
+                Owner Assignment
+              </CardTitle>
+              <CardDescription>Assign this PG listing to a property owner</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex gap-4">
+                <Button
+                  type="button"
+                  variant={ownerMode === 'select' ? 'default' : 'outline'}
+                  onClick={() => setOwnerMode('select')}
+                  className="flex-1"
+                >
+                  Select Existing Owner
+                </Button>
+                <Button
+                  type="button"
+                  variant={ownerMode === 'create' ? 'default' : 'outline'}
+                  onClick={() => setOwnerMode('create')}
+                  className="flex-1"
+                >
+                  Create New Owner Inline
+                </Button>
+              </div>
+
+              {ownerMode === 'select' ? (
+                <Field>
+                  <FieldLabel htmlFor="owner-select">Select Owner *</FieldLabel>
+                  <Select value={selectedOwnerId} onValueChange={setSelectedOwnerId}>
+                    <SelectTrigger id="owner-select">
+                      <SelectValue placeholder="Choose an owner" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(owners || []).map((o: any) => (
+                        <SelectItem key={o.id} value={o.id}>
+                          {o.full_name} {o.phone ? `(${o.phone})` : ''}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </Field>
+              ) : (
+                <div className="space-y-4 border p-4 rounded-lg bg-muted/20">
+                  <h4 className="font-semibold text-sm">Create New Owner Details</h4>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <Field>
+                      <FieldLabel htmlFor="new-owner-name">Owner Full Name *</FieldLabel>
+                      <Input
+                        id="new-owner-name"
+                        value={newOwnerName}
+                        onChange={(e) => setNewOwnerName(e.target.value)}
+                        placeholder="e.g. Ramesh Kumar"
+                      />
+                    </Field>
+                    <Field>
+                      <FieldLabel htmlFor="new-owner-phone">Owner Phone</FieldLabel>
+                      <Input
+                        id="new-owner-phone"
+                        value={newOwnerPhone}
+                        onChange={(e) => setNewOwnerPhone(e.target.value)}
+                        placeholder="e.g. +919876543210"
+                      />
+                    </Field>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <Field>
+                      <FieldLabel htmlFor="new-owner-email">Owner Email *</FieldLabel>
+                      <Input
+                        id="new-owner-email"
+                        type="email"
+                        value={newOwnerEmail}
+                        onChange={(e) => setNewOwnerEmail(e.target.value)}
+                        placeholder="e.g. ramesh@example.com"
+                      />
+                    </Field>
+                    <Field>
+                      <FieldLabel htmlFor="new-owner-password">Owner Password *</FieldLabel>
+                      <Input
+                        id="new-owner-password"
+                        type="password"
+                        value={newOwnerPassword}
+                        onChange={(e) => setNewOwnerPassword(e.target.value)}
+                        placeholder="Min 6 characters"
+                      />
+                    </Field>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
         {/* Basic Info */}
         <Card>
           <CardHeader>

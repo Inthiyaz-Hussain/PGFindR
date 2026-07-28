@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import { createClient } from '@supabase/supabase-js'
 import { supabase } from '../index.js'
+import { authenticateToken, requireRole } from '../middleware/auth.js'
 
 const router = Router()
 
@@ -79,6 +80,63 @@ router.post('/register', async (req, res) => {
       expires_at: session.session!.expires_at,
     },
   })
+})
+
+// ─── POST /api/auth/admin/create-owner ───────────────────────────────────────
+
+interface CreateOwnerBody {
+  name: string
+  email: string
+  password: string
+  mobile?: string
+}
+
+router.post('/admin/create-owner', authenticateToken, requireRole('admin'), async (req, res) => {
+  const { name, email, password, mobile }: CreateOwnerBody = req.body
+
+  if (!name || !email || !password) {
+    return res.status(400).json({ error: 'name, email, and password are required' })
+  }
+  if (password.length < 6) {
+    return res.status(400).json({ error: 'Password must be at least 6 characters' })
+  }
+
+  try {
+    // Create user via admin API (auto-confirms email so they can log in immediately)
+    const { data: created, error: createErr } = await supabase.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+      user_metadata: { full_name: name, role: 'owner' },
+      ...(mobile ? { phone: mobile } : {}),
+    })
+
+    if (createErr) {
+      const status = createErr.message.includes('already') ? 409 : 400
+      return res.status(status).json({ error: createErr.message })
+    }
+
+    // Update the auto-created profile row with phone number
+    if (created.user) {
+      await supabase
+        .from('profiles')
+        .update({ phone: mobile || null })
+        .eq('id', created.user.id)
+    }
+
+    return res.status(201).json({
+      user: {
+        id: created.user.id,
+        email: created.user.email,
+        name,
+        role: 'owner',
+        mobile: mobile ?? null,
+      },
+    })
+  } catch (err: any) {
+    console.error('Create owner error:', err)
+    return res.status(500).json({ error: err.message || 'Internal server error' })
+  }
 })
 
 // ─── POST /api/auth/login ────────────────────────────────────────────────────
