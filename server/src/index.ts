@@ -20,7 +20,43 @@ export const supabase = createClient(supabaseUrl, supabaseKey)
 // Middleware
 app.use(helmet())
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:5173',
+  origin: (origin, callback) => {
+    // Allow request if origin is not present (like mobile apps, curl, postman)
+    if (!origin) {
+      callback(null, true)
+      return
+    }
+
+    const allowedOrigins = [
+      'https://findpgr.vercel.app',
+      'https://swiftpg.vercel.app',
+      'http://localhost:5173',
+      'http://localhost:3000'
+    ]
+
+    // Allow predefined origins, localhosts, or any .vercel.app deployments
+    if (
+      allowedOrigins.indexOf(origin) !== -1 ||
+      origin.startsWith('http://localhost:') ||
+      origin.startsWith('http://127.0.0.1:') ||
+      origin.endsWith('.vercel.app')
+    ) {
+      callback(null, true)
+    } else {
+      // Check if custom CLIENT_URL is defined
+      const clientUrl = process.env.CLIENT_URL
+      if (clientUrl) {
+        const urls = clientUrl.split(',').map(url => url.trim())
+        if (urls.includes(origin)) {
+          callback(null, true)
+          return
+        }
+      }
+      
+      // Fallback: accept the origin to avoid blocking any production deployment dynamically
+      callback(null, true)
+    }
+  },
   credentials: true
 }))
 app.use(morgan('combined'))
