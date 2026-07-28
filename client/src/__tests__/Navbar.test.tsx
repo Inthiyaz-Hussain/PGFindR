@@ -14,12 +14,12 @@ describe('Navbar Component', () => {
   })
 
   it('renders brand logo and title correctly', () => {
-    renderWithProviders(<Navbar brandName="SwiftPG" />)
+    renderWithProviders(<Navbar brandName="FindPgR" />)
     const logoImg = screen.getAllByAltText('SwiftPG Icon')
     expect(logoImg.length).toBeGreaterThan(0)
     expect(logoImg[0]).toBeInTheDocument()
-    expect(screen.getByText('Swift')).toBeInTheDocument()
-    expect(screen.getByText('PG')).toBeInTheDocument()
+    expect(screen.getByText('Find')).toBeInTheDocument()
+    expect(screen.getByText('PgR')).toBeInTheDocument()
   })
 
   it('renders wishlist counter badge with provided count', () => {

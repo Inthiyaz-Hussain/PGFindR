@@ -388,7 +388,13 @@ export function PGDetailPage() {
                 return (
                   <div key={idx} className="flex items-center justify-between p-3 rounded-lg border border-border bg-card">
                     <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-md bg-primary/10 text-primary">
+                      <div className={cn(
+                        "p-2 rounded-md shrink-0",
+                        (landmark.icon === Train || landmark.icon === Bus) && "bg-sky-500/10 text-sky-600 dark:text-sky-400",
+                        landmark.icon === ShoppingBag && "bg-amber-500/10 text-amber-600 dark:text-amber-400",
+                        landmark.icon === Hospital && "bg-rose-500/10 text-rose-600 dark:text-rose-400",
+                        landmark.icon === Utensils && "bg-orange-500/10 text-orange-600 dark:text-orange-400"
+                      )}>
                         <Icon className="size-4" />
                       </div>
                       <div>

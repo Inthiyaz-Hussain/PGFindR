@@ -126,10 +126,14 @@ export function LoginPage() {
         {/* Logo */}
         <div className="flex flex-col items-center gap-3">
           <Link to="/" className="flex items-center gap-2.5">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
-              <Building2 className="size-5" />
-            </div>
-            <span className="text-2xl font-bold tracking-tight">PGFindR</span>
+            <img
+              src="/logo-swiftpg.png"
+              alt="FindPgR Icon"
+              className="h-11 w-11 rounded-xl object-cover ring-1 ring-slate-200 dark:ring-slate-800 shadow-xs"
+            />
+            <span className="text-2xl font-bold tracking-tight text-indigo-950 dark:text-slate-100">
+              Find<span className="text-indigo-600 dark:text-indigo-400 font-extrabold">PgR</span>
+            </span>
           </Link>
           <p className="text-sm text-muted-foreground">India's trusted PG discovery platform</p>
         </div>

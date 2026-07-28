@@ -46,7 +46,7 @@ export function HomePage() {
         {/* Header Section */}
         <div className="space-y-4 max-w-2xl mx-auto">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-xs font-semibold uppercase tracking-wider mb-2">
-            ✨ Welcome to SwiftPG
+            ✨ Welcome to FindPgR
           </div>
           <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-white leading-tight">
             Choose Your Portal to Get Started

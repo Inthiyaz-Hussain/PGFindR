@@ -35,7 +35,7 @@ export function SplashScreen({ onDismiss }: SplashScreenProps) {
         fading ? 'opacity-0' : 'opacity-100'
       }`}
       onClick={handleTap}
-      aria-label="Loading SwiftPG"
+      aria-label="Loading FindPgR"
     >
       {/* Radial gradient overlay */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_40%,rgba(99,102,241,0.12)_0%,transparent_100%)]" />
@@ -51,7 +51,7 @@ export function SplashScreen({ onDismiss }: SplashScreenProps) {
         {/* Brand name */}
         <div className="text-center animate-in fade-in slide-in-from-bottom-3 duration-700 delay-200">
           <h1 className="text-4xl font-extrabold tracking-tight text-white">
-            Swift<span className="text-indigo-450 dark:text-indigo-400 font-extrabold">PG</span>
+            Find<span className="text-indigo-450 dark:text-indigo-400 font-extrabold">PgR</span>
           </h1>
           <p className="mt-2 text-sm text-indigo-200/70">
             India's trusted PG discovery platform

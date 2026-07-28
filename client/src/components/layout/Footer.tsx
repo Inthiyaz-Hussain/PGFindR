@@ -67,7 +67,7 @@ export function Footer({ compact = false }: FooterProps) {
                     className="h-10 w-10 rounded-xl object-cover ring-1 ring-slate-800 shadow-xs group-hover:scale-105 transition-transform"
                   />
                   <span className="text-xl font-bold tracking-tight text-white">
-                    Swift<span className="text-indigo-400 font-extrabold">PG</span>
+                    Find<span className="text-indigo-400 font-extrabold">PgR</span>
                   </span>
                 </Link>
                 <p className="text-sm text-slate-400 leading-relaxed pr-4">
@@ -364,7 +364,7 @@ export function Footer({ compact = false }: FooterProps) {
         {/* Bottom Bar */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-xs text-slate-500 text-center sm:text-left">
-            &copy; {new Date().getFullYear()} SwiftPG. All rights reserved.
+            &copy; {new Date().getFullYear()} FindPgR. All rights reserved.
           </p>
           <div className="flex items-center gap-1.5 py-1 px-3 rounded-full bg-slate-800/40 border border-slate-800/60 text-slate-500 text-[11px] font-medium">
             <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" />

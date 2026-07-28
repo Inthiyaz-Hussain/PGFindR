@@ -23,7 +23,7 @@ export function DesignSystemPage() {
       {/* Live Sticky Navbar Preview */}
       <div className="mb-8">
         <Navbar
-          brandName="SwiftPG"
+          brandName="FindPgR"
           wishlistCount={3}
         />
       </div>
@@ -31,7 +31,7 @@ export function DesignSystemPage() {
       <div className="px-4 max-w-4xl mx-auto space-y-14">
         <section>
           <h1 className="scroll-m-20 text-3xl font-extrabold tracking-tight mb-1 text-foreground">
-            SwiftPG Design System
+            FindPgR Design System
           </h1>
           <p className="text-muted-foreground">Brand tokens, Navbar, + reusable components</p>
         </section>
