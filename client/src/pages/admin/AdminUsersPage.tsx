@@ -66,8 +66,8 @@ export function AdminUsersPage() {
           phone,
           email,
           created_at,
-          inquiries:inquiries(count),
-          bookings:bookings(count)
+          inquiries:inquiries!inquiries_seeker_id_fkey(count),
+          bookings:bookings!bookings_seeker_id_fkey(count)
         `, { count: 'exact' })
         .eq('role', 'seeker')
         .order('created_at', { ascending: false })
@@ -77,7 +77,8 @@ export function AdminUsersPage() {
         query = query.or(`full_name.ilike.%${searchQuery}%,phone.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%`)
       }
 
-      const { data, count } = await query
+      const { data, count, error } = await query
+      if (error) throw error
       return { seekers: (data || []) as SeekerRow[], total: count || 0 }
     },
   })
