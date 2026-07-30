@@ -107,7 +107,7 @@ export function SearchPage() {
 
       params.set('limit', '50')
 
-      const rawUrl = import.meta.env.VITE_API_URL || ''
+      const rawUrl = import.meta.env.VITE_API_URL || 'https://swiftpg-backend.onrender.com'
       const baseUrl = rawUrl.replace(/\/api\/?$/, '').replace(/\/$/, '')
       const res = await fetch(`${baseUrl}/api/pgs?${params}`)
       

@@ -50,7 +50,7 @@ async function fetchPGs({
   if (filters.availableOnly) params.set('available_only', 'true')
   params.set('limit', '20')
   params.set('offset', String(pageParam))
-  const rawUrl = import.meta.env.VITE_API_URL || ''
+  const rawUrl = import.meta.env.VITE_API_URL || 'https://swiftpg-backend.onrender.com'
   const baseUrl = rawUrl.replace(/\/api\/?$/, '').replace(/\/$/, '')
   const res = await fetch(`${baseUrl}/api/pgs?${params}`)
   if (!res.ok) throw new Error('Failed to fetch PGs')

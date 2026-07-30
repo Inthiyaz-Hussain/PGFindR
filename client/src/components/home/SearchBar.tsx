@@ -52,7 +52,7 @@ export function SearchBar({
     }
 
     const controller = new AbortController()
-    const rawUrl = import.meta.env.VITE_API_URL || ''
+    const rawUrl = import.meta.env.VITE_API_URL || 'https://swiftpg-backend.onrender.com'
     const baseUrl = rawUrl.replace(/\/api\/?$/, '').replace(/\/$/, '')
 
     fetch(`${baseUrl}/api/pgs/cities?q=${encodeURIComponent(query)}`, {

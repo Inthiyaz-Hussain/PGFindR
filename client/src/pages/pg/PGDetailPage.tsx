@@ -196,7 +196,7 @@ export function PGDetailPage() {
   } = useQuery<PGDetailData>({
     queryKey: ['pg-detail', id],
     queryFn: async () => {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/pgs/${id}`)
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'https://swiftpg-backend.onrender.com'}/api/pgs/${id}`)
       if (!res.ok) throw new Error('Failed to load PG details')
       return res.json()
     },
@@ -209,7 +209,7 @@ export function PGDetailPage() {
   } = useQuery<ReviewsResponse>({
     queryKey: ['pg-reviews', id, reviewOffset],
     queryFn: async () => {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/pgs/${id}/reviews?limit=${REVIEW_LIMIT}&offset=${reviewOffset}`)
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'https://swiftpg-backend.onrender.com'}/api/pgs/${id}/reviews?limit=${REVIEW_LIMIT}&offset=${reviewOffset}`)
       if (!res.ok) throw new Error('Failed to load reviews')
       return res.json()
     },
@@ -228,13 +228,13 @@ export function PGDetailPage() {
     queryKey: ['nearby-pgs', pg?.city, pg?.locality, id],
     queryFn: async () => {
       if (!pg) return { data: [] }
-      let res = await fetch(`${import.meta.env.VITE_API_URL}/api/pgs?q=${encodeURIComponent(pg.locality)}&limit=10`)
+      let res = await fetch(`${import.meta.env.VITE_API_URL || 'https://swiftpg-backend.onrender.com'}/api/pgs?q=${encodeURIComponent(pg.locality)}&limit=10`)
       if (!res.ok) throw new Error('Failed to load nearby PGs')
       let result = await res.json()
       
       const filtered = (result.data || []).filter((item: any) => item.id !== pg.id)
       if (filtered.length === 0) {
-        res = await fetch(`${import.meta.env.VITE_API_URL}/api/pgs?q=${encodeURIComponent(pg.city)}&limit=10`)
+        res = await fetch(`${import.meta.env.VITE_API_URL || 'https://swiftpg-backend.onrender.com'}/api/pgs?q=${encodeURIComponent(pg.city)}&limit=10`)
         if (!res.ok) throw new Error('Failed to load nearby PGs')
         result = await res.json()
       }
