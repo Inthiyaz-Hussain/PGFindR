@@ -304,13 +304,15 @@ export function Navbar({
                     <span>Dashboard</span>
                   </DropdownMenuItem>
 
-                  <DropdownMenuItem
-                    onClick={() => navigate('/seeker/profile?tab=saved')}
-                    className="cursor-pointer py-2 px-3 rounded-lg text-xs sm:text-sm font-medium hover:bg-rose-50 dark:hover:bg-rose-950/50 text-slate-700 dark:text-slate-200"
-                  >
-                    <Bookmark className="h-4 w-4 mr-2.5 text-rose-500" />
-                    <span>Saved PGs ({savedCount})</span>
-                  </DropdownMenuItem>
+                  {profile?.role === 'seeker' && (
+                    <DropdownMenuItem
+                      onClick={() => navigate('/seeker/profile?tab=saved')}
+                      className="cursor-pointer py-2 px-3 rounded-lg text-xs sm:text-sm font-medium hover:bg-rose-50 dark:hover:bg-rose-950/50 text-slate-700 dark:text-slate-200"
+                    >
+                      <Bookmark className="h-4 w-4 mr-2.5 text-rose-500" />
+                      <span>Saved PGs ({savedCount})</span>
+                    </DropdownMenuItem>
+                  )}
 
                   {profile?.role === 'seeker' && (
                     <DropdownMenuItem
@@ -493,19 +495,21 @@ export function Navbar({
                           <Compass className="h-5 w-5 text-amber-500 dark:text-amber-400" />
                           <span>Explore PGs</span>
                         </Link>
-                        <Link
-                          to="/seeker/profile?tab=saved"
-                          onClick={() => setMobileMenuOpen(false)}
-                          className="flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                        >
-                          <div className="flex items-center gap-3">
-                            <Heart className="h-5 w-5 text-rose-500" />
-                            <span>Wishlist / Saved PGs</span>
-                          </div>
-                          {savedCount > 0 && (
-                            <Badge className="bg-rose-500 text-white text-xs">{savedCount}</Badge>
-                          )}
-                        </Link>
+                        {profile?.role === 'seeker' && (
+                          <Link
+                            to="/seeker/profile?tab=saved"
+                            onClick={() => setMobileMenuOpen(false)}
+                            className="flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                          >
+                            <div className="flex items-center gap-3">
+                              <Heart className="h-5 w-5 text-rose-500" />
+                              <span>Wishlist / Saved PGs</span>
+                            </div>
+                            {savedCount > 0 && (
+                              <Badge className="bg-rose-500 text-white text-xs">{savedCount}</Badge>
+                            )}
+                          </Link>
+                        )}
                       </>
                     )}
                   </nav>

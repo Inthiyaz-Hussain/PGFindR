@@ -28,7 +28,7 @@ interface SeekerRow {
   phone: string | null
   email: string
   created_at: string
-  inquiries: { count: number }[]
+  inquiries: { city_of_origin: string | null }[]
   bookings: { count: number }[]
 }
 
@@ -66,7 +66,7 @@ export function AdminUsersPage() {
           phone,
           email,
           created_at,
-          inquiries:inquiries(count),
+          inquiries:inquiries(city_of_origin),
           bookings:bookings!bookings_seeker_id_fkey(count)
         `, { count: 'exact' })
         .eq('role', 'seeker')
@@ -172,6 +172,7 @@ export function AdminUsersPage() {
                 <TableRow>
                   <TableHead>Name</TableHead>
                   <TableHead>Phone</TableHead>
+                  <TableHead>Address / Origin</TableHead>
                   <TableHead>Inquiries</TableHead>
                   <TableHead>Bookings</TableHead>
                   <TableHead>Joined</TableHead>
@@ -179,29 +180,33 @@ export function AdminUsersPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {usersData.seekers.map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell>
-                      <div className="font-medium">{user.full_name || 'Unnamed'}</div>
-                      <div className="text-xs text-muted-foreground">{user.email || '—'}</div>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">{user.phone || '—'}</TableCell>
-                    <TableCell>
-                      <Badge variant="secondary">{user.inquiries?.[0]?.count || 0}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{user.bookings?.[0]?.count || 0}</Badge>
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {new Date(user.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button variant="ghost" size="icon-sm" onClick={() => setSelectedUser(user)} title="View Inquiries">
-                        <Eye className="size-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {usersData.seekers.map((user) => {
+                  const address = user.inquiries?.find((i) => i.city_of_origin)?.city_of_origin || '—'
+                  return (
+                    <TableRow key={user.id}>
+                      <TableCell>
+                        <div className="font-medium">{user.full_name || 'Unnamed'}</div>
+                        <div className="text-xs text-muted-foreground">{user.email || '—'}</div>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">{user.phone || '—'}</TableCell>
+                      <TableCell className="text-muted-foreground">{address}</TableCell>
+                      <TableCell>
+                        <Badge variant="secondary">{user.inquiries?.length || 0}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline">{user.bookings?.[0]?.count || 0}</Badge>
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {new Date(user.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button variant="ghost" size="icon-sm" onClick={() => setSelectedUser(user)} title="View Inquiries">
+                          <Eye className="size-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  )
+                })}
               </TableBody>
             </Table>
           ) : (
