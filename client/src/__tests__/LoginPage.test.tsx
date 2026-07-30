@@ -43,7 +43,7 @@ describe('LoginPage', () => {
     expect(screen.getByLabelText(/email address/i)).toBeInTheDocument()
     // Use anchored regex to avoid matching the "Show password" aria-label button
     expect(screen.getByLabelText(/^password$/i)).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /sign in/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^sign in$/i })).toBeInTheDocument()
   })
 
   it('shows error toast on invalid credentials', async () => {
@@ -59,7 +59,7 @@ describe('LoginPage', () => {
 
     await user.type(screen.getByLabelText(/email address/i), 'bad@test.com')
     await user.type(screen.getByLabelText(/^password$/i), 'wrongpassword')
-    await user.click(screen.getByRole('button', { name: /sign in/i }))
+    await user.click(screen.getByRole('button', { name: /^sign in$/i }))
 
     await waitFor(() => {
       expect(toast.error).toHaveBeenCalledWith('Invalid login credentials')
@@ -80,7 +80,7 @@ describe('LoginPage', () => {
 
     await user.type(screen.getByLabelText(/email address/i), 'owner@test.com')
     await user.type(screen.getByLabelText(/^password$/i), 'pass123')
-    await user.click(screen.getByRole('button', { name: /sign in/i }))
+    await user.click(screen.getByRole('button', { name: /^sign in$/i }))
 
     await waitFor(() => {
       expect(toast.success).toHaveBeenCalledWith('Welcome back!')
@@ -95,7 +95,7 @@ describe('LoginPage', () => {
 
     await user.type(screen.getByLabelText(/email address/i), 'seeker@test.com')
     await user.type(screen.getByLabelText(/^password$/i), 'pass123')
-    await user.click(screen.getByRole('button', { name: /sign in/i }))
+    await user.click(screen.getByRole('button', { name: /^sign in$/i }))
 
     await waitFor(() => {
       expect(mockNavigate).toHaveBeenCalledWith('/seeker', { replace: true })
@@ -109,7 +109,7 @@ describe('LoginPage', () => {
 
     await user.type(screen.getByLabelText(/email address/i), 'not-an-email')
     // Submit to trigger validation
-    await user.click(screen.getByRole('button', { name: /sign in/i }))
+    await user.click(screen.getByRole('button', { name: /^sign in$/i }))
 
     await waitFor(() => {
       expect(screen.getByText(/valid email/i)).toBeInTheDocument()
