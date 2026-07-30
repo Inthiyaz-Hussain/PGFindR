@@ -66,7 +66,7 @@ export function AdminUsersPage() {
           phone,
           email,
           created_at,
-          inquiries:inquiries!inquiries_seeker_id_fkey(count),
+          inquiries:inquiries(count),
           bookings:bookings!bookings_seeker_id_fkey(count)
         `, { count: 'exact' })
         .eq('role', 'seeker')
