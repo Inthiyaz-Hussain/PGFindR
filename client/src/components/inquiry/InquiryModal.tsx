@@ -59,24 +59,7 @@ export function InquiryModal({
   const isMobile = useIsMobile()
   const { user, profile, session } = useAuth()
 
-  // Guest validation states
-  const [emailInputValue, setEmailInputValue] = useState('')
-  const [otpSent, setOtpSent] = useState(false)
-  const [otpInputValue, setOtpInputValue] = useState('')
-  const [otpVerified, setOtpVerified] = useState(false)
-  const [isSendingOtp, setIsSendingOtp] = useState(false)
-  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false)
-
-  const isEmailVerified = !!user || otpVerified
-
-  // Reset verification states if email input is modified
-  useEffect(() => {
-    if (!user) {
-      setOtpSent(false)
-      setOtpVerified(false)
-      setOtpInputValue('')
-    }
-  }, [emailInputValue, user])
+  const isEmailVerified = !!user
 
   const handleGoogleSignIn = async () => {
     try {
@@ -96,84 +79,6 @@ export function InquiryModal({
     } catch (e) {
       console.error(e)
       toast.error('Google Sign-In error')
-    }
-  }
-
-  const handleSendOtp = async () => {
-    const email = emailInputValue.trim()
-    if (!email || !email.includes('@') || !email.includes('.')) {
-      toast.error('Please enter a valid email address first')
-      return
-    }
-    setIsSendingOtp(true)
-    try {
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: {
-          shouldCreateUser: true,
-          data: {
-            role: 'seeker',
-            full_name: 'Guest Seeker',
-          }
-        }
-      })
-      setIsSendingOtp(false)
-      if (error) {
-        console.error('Supabase OTP send failed:', error)
-        toast.error(error.message || 'Failed to send OTP. Please check your email and try again.')
-        return
-      }
-      setOtpSent(true)
-      toast.success('Verification code sent! Please check your email inbox.')
-    } catch (e: any) {
-      console.error('Error calling signInWithOtp:', e)
-      setIsSendingOtp(false)
-      toast.error(e?.message || 'An error occurred while sending the OTP.')
-    }
-  }
-
-  const handleVerifyOtp = async () => {
-    const email = emailInputValue.trim()
-    const token = otpInputValue.trim()
-    if (token.length !== 6) {
-      toast.error('Please enter a valid 6-digit OTP code')
-      return
-    }
-    setIsVerifyingOtp(true)
-
-    try {
-      // First try to verify with type 'email' (for signin)
-      let result = await supabase.auth.verifyOtp({
-        email,
-        token,
-        type: 'email',
-      })
-
-      // If it fails, fallback to 'signup' type (in case it is a new signup confirmation)
-      if (result.error) {
-        result = await supabase.auth.verifyOtp({
-          email,
-          token,
-          type: 'signup',
-        })
-      }
-
-      setIsVerifyingOtp(false)
-      if (result.error) {
-        console.error('OTP verification failed:', result.error)
-        toast.error(result.error.message || 'Invalid or expired OTP code')
-        return
-      }
-
-      if (result.data?.user) {
-        localStorage.setItem('seeker_id', result.data.user.id)
-      }
-      setOtpVerified(true)
-      toast.success('Email verified successfully!')
-    } catch (e: any) {
-      setIsVerifyingOtp(false)
-      console.error('Error verifying OTP:', e)
-      toast.error(e?.message || 'Verification failed. Please try again.')
     }
   }
 
@@ -224,9 +129,7 @@ export function InquiryModal({
         duration_unit: 'months',
         message: '',
       })
-      if (!user) {
-        setEmailInputValue('')
-      }
+      // No guest email state to reset
     }
   }, [open, profile, sharingTypes, reset, user])
 
@@ -308,91 +211,28 @@ export function InquiryModal({
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
       {/* Guest Email Field (Unauthenticated Users only) */}
       {!user && (
-        <div className="space-y-3 p-3 bg-indigo-50/40 dark:bg-slate-800/40 rounded-xl border border-indigo-100/50 dark:border-slate-700/50">
-          <div className="space-y-1.5">
-            <Label htmlFor="email" className="flex items-center gap-1.5 font-semibold text-slate-700 dark:text-slate-200">
-              <span>📧</span> Email Address.
-            </Label>
-            <div className="flex gap-2">
-              <Input
-                id="email"
-                type="email"
-                placeholder="you@example.com"
-                value={emailInputValue}
-                onChange={(e) => setEmailInputValue(e.target.value)}
-                disabled={otpVerified}
-                className="bg-background text-sm flex-1"
-              />
-              {!otpVerified ? (
-                <div className="flex gap-2 shrink-0">
-                  <Button
-                    type="button"
-                    onClick={handleSendOtp}
-                    disabled={isSendingOtp || !emailInputValue}
-                    className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs py-1 px-3"
-                  >
-                    {isSendingOtp ? 'Sending...' : otpSent ? 'Resend' : 'Continue with Email'}
-                  </Button>
-                  <Button
-                    type="button"
-                    onClick={handleGoogleSignIn}
-                    className="bg-white hover:bg-slate-50 text-slate-900 border border-slate-200 text-xs py-1 px-3 flex items-center gap-1.5 shadow-xs"
-                  >
-                    <svg className="h-3.5 w-3.5" viewBox="0 0 24 24">
-                      <path
-                        fill="#4285F4"
-                        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                      />
-                      <path
-                        fill="#34A853"
-                        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                      />
-                      <path
-                        fill="#FBBC05"
-                        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-                      />
-                      <path
-                        fill="#EA4335"
-                        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-                      />
-                    </svg>
-                    Google
-                  </Button>
-                </div>
-              ) : (
-                <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-250 dark:bg-emerald-950/30 dark:text-emerald-400">
-                  ✓ Verified
-                </span>
-              )}
-            </div>
+        <div className="space-y-3.5 p-4 bg-indigo-50/30 dark:bg-slate-800/30 rounded-xl border border-indigo-100/50 dark:border-slate-700/50 text-center">
+          <div className="space-y-1">
+            <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+              Identity Verification Required
+            </h4>
+            <p className="text-xs text-muted-foreground">
+              Please sign in with Google to verify your email and submit this inquiry.
+            </p>
           </div>
-
-          {otpSent && !otpVerified && (
-            <div className="space-y-1.5 border-t border-dashed border-indigo-200 dark:border-slate-700 pt-3">
-              <Label htmlFor="otp" className="text-xs font-medium text-slate-600 dark:text-slate-300">
-                Enter 6-digit OTP code (received via email)
-              </Label>
-              <div className="flex gap-2">
-                <Input
-                  id="otp"
-                  type="text"
-                  placeholder="e.g. 123456"
-                  maxLength={6}
-                  value={otpInputValue}
-                  onChange={(e) => setOtpInputValue(e.target.value)}
-                  className="bg-background text-sm flex-1"
-                />
-                <Button
-                  type="button"
-                  onClick={handleVerifyOtp}
-                  disabled={isVerifyingOtp || otpInputValue.length !== 6}
-                  className="bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 shrink-0 text-xs py-1"
-                >
-                  {isVerifyingOtp ? 'Verifying...' : 'Verify'}
-                </Button>
-              </div>
-            </div>
-          )}
+          <Button
+            type="button"
+            onClick={handleGoogleSignIn}
+            className="w-full bg-white hover:bg-slate-50 text-slate-900 border border-slate-200 py-2 flex items-center justify-center gap-2 font-medium shadow-xs hover:scale-[1.01] transition-all"
+          >
+            <svg className="h-4 w-4" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path d="M21.35,11.1H12v2.7h5.38c-0.24,1.28 -0.96,2.37 -2.04,3.1v2.6h3.29c1.92,-1.78 3.02,-4.4 3.02,-7.4C21.65,11.8 21.55,11.4 21.35,11.1z" fill="#4285F4" />
+              <path d="M12,20.8c2.6,0 4.8,-0.8 6.4,-2.3l-3.29,-2.6c-0.9,0.6 -2.07,1 -3.11,1c-3.11,0 -5.74,-2.11 -6.68,-4.96H2.03v2.7C3.65,17.9 7.56,20.8 12,20.8z" fill="#34A853" />
+              <path d="M5.32,11.94c-0.24,-0.72 -0.38,-1.5 -0.38,-2.3s0.14,-1.58 0.38,-2.3V4.64H2.03C1.22,6.26 0.76,8.08 0.76,10s0.46,3.74 1.27,5.36L5.32,11.94z" fill="#FBBC05" />
+              <path d="M12,4.8c1.44,0 2.72,0.5 3.73,1.46l2.8,-2.8C16.8,1.9 14.6,1.2 12,1.2c-4.44,0 -8.35,2.9 -9.97,7.06l3.29,2.7C6.26,8.11 8.89,6 12,4.8z" fill="#EA4335" />
+            </svg>
+            Verify with Google
+          </Button>
         </div>
       )}
       {/* Full Name */}

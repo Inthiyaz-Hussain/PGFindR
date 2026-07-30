@@ -184,97 +184,41 @@ describe('InquiryModal', () => {
     })
   })
 
-  it('shows email verification and handles submit for unauthenticated users', async () => {
+  it('shows Google Sign-In card and handles Google sign-in for unauthenticated users', async () => {
     const user = userEvent.setup()
     mockAuthContext.user = null as any
     mockAuthContext.profile = null as any
 
-    // Mock register and login context callbacks
-    mockAuthContext.register = vi.fn().mockResolvedValue({ error: null })
-    mockAuthContext.login = vi.fn().mockImplementation(async (email) => {
-      mockAuthContext.user = { id: 'user-guest-456', email } as any
-      mockAuthContext.profile = { id: 'user-guest-456', full_name: 'Guest User', role: 'seeker' } as any
-      return { error: null, profile: mockAuthContext.profile }
-    })
-
-    const spyGetSession = vi.spyOn(supabase.auth, 'getSession').mockResolvedValue({
-      data: {
-        session: {
-          access_token: 'mock-token',
-          user: { id: 'user-guest-456', email: 'guest@example.com' } as any
-        } as any
-      },
+    const spySignIn = vi.spyOn(supabase.auth, 'signInWithOAuth').mockResolvedValue({
+      data: {} as any,
       error: null
     })
 
-    let capturedBody: any
-    server.use(
-      http.post('*/api/inquiry', async ({ request }) => {
-        capturedBody = await request.json()
-        return HttpResponse.json(
-          { id: 'inq-guest', message: 'Inquiry submitted successfully' },
-          { status: 201 }
-        )
-      })
-    )
-
-    localStorage.setItem('seeker_id', 'user-guest-456')
     renderWithProviders(<InquiryModal {...defaultProps} />)
 
-    // Verify email field is shown
-    expect(screen.getByLabelText(/Email Address/i)).toBeInTheDocument()
+    // Verify Google sign-in prompt is shown
+    expect(screen.getByText(/Identity Verification Required/i)).toBeInTheDocument()
+    expect(screen.getByText(/Please sign in with Google to verify your email/i)).toBeInTheDocument()
 
-    // Submit button is disabled by default (no email or valid data yet)
+    // Submit button is disabled by default (no user yet)
     const submitBtn = screen.getByRole('button', { name: /submit inquiry/i })
     expect(submitBtn).toBeDisabled()
 
-    // Type email
-    const emailInput = screen.getByPlaceholderText(/you@example.com/i)
-    await user.type(emailInput, 'guest@example.com')
+    // Click Google verify button
+    const googleBtn = screen.getByRole('button', { name: /Verify with Google/i })
+    await user.click(googleBtn)
 
-    // Click Send OTP
-    const sendOtpBtn = screen.getByRole('button', { name: /Continue with Email/i })
-    await user.click(sendOtpBtn)
-
-    // Type OTP
-    const otpInput = await screen.findByPlaceholderText(/e.g. 123456/i)
-    await user.type(otpInput, '123456')
-
-    // Click Verify
-    const verifyBtn = screen.getByRole('button', { name: /Verify/i })
-    await user.click(verifyBtn)
-
-    // Fill other fields
-    const nameInput = screen.getByPlaceholderText(/your full name/i)
-    await user.type(nameInput, 'Guest User')
-
-    const mobileInput = screen.getByPlaceholderText(/10 digits/i)
-    await user.type(mobileInput, '9876543210')
-
-    const dateInput = screen.getByLabelText(/move.in date/i)
-    await user.type(dateInput, tomorrow())
-
-    const cityInput = screen.getByPlaceholderText(/where are you from/i)
-    await user.type(cityInput, 'Pune')
-
-    // Submit button should now be enabled
-    await waitFor(() => {
-      expect(submitBtn).not.toBeDisabled()
+    expect(spySignIn).toHaveBeenCalledWith({
+      provider: 'google',
+      options: {
+        redirectTo: expect.any(String),
+        queryParams: {
+          access_type: 'offline',
+          prompt: 'select_account',
+        }
+      }
     })
 
-    await user.click(submitBtn)
-
-    await waitFor(() => {
-      expect(defaultProps.onSuccess).toHaveBeenCalledWith('inq-guest')
-    })
-
-    expect(capturedBody).toMatchObject({
-      pg_id: 'pg-001',
-      seeker_id: 'user-guest-456',
-      mobile: '9876543210',
-      city_of_origin: 'Pune',
-    })
-
-    spyGetSession.mockRestore()
+    spySignIn.mockRestore()
   })
 })

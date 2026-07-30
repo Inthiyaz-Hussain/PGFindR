@@ -27,6 +27,7 @@ vi.mock('@/lib/supabase', () => ({
         },
         error: null
       }),
+      signInWithOAuth: vi.fn().mockResolvedValue({ data: {}, error: null }),
     },
     from: vi.fn().mockReturnValue({
       select: vi.fn().mockReturnThis(),
