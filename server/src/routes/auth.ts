@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import { createClient } from '@supabase/supabase-js'
-import { supabase } from '../index.js'
+import { supabase, getSupabaseClient } from '../index.js'
 import { authenticateToken, requireRole } from '../middleware/auth.js'
 
 const router = Router()
@@ -102,13 +102,21 @@ router.post('/admin/create-owner', authenticateToken, requireRole('admin'), asyn
   }
 
   try {
-    // Create user via admin API (auto-confirms email so they can log in immediately)
-    const { data: created, error: createErr } = await supabase.auth.admin.createUser({
+    // Create user via standard signUp using a temporary client to avoid global session pollution
+    const tempClient = createClient(
+      process.env.VITE_SUPABASE_URL!,
+      process.env.VITE_SUPABASE_ANON_KEY!,
+      { auth: { persistSession: false } }
+    )
+    const { data: created, error: createErr } = await tempClient.auth.signUp({
       email,
       password,
-      email_confirm: true,
-      user_metadata: { full_name: name, role: 'owner' },
-      ...(mobile ? { phone: mobile } : {}),
+      options: {
+        data: {
+          full_name: name,
+          role: 'owner',
+        }
+      }
     })
 
     if (createErr) {
@@ -116,23 +124,26 @@ router.post('/admin/create-owner', authenticateToken, requireRole('admin'), asyn
       return res.status(status).json({ error: createErr.message })
     }
 
-    // Update the auto-created profile row with phone number
+    // Update the auto-created profile row with phone number using the authenticated admin client
     if (created.user) {
-      await supabase
+      const db = getSupabaseClient(req)
+      await db
         .from('profiles')
         .update({ phone: mobile || null })
         .eq('id', created.user.id)
+
+      return res.status(201).json({
+        user: {
+          id: created.user.id,
+          email: created.user.email || '',
+          name,
+          role: 'owner',
+          mobile: mobile ?? null,
+        },
+      })
     }
 
-    return res.status(201).json({
-      user: {
-        id: created.user.id,
-        email: created.user.email,
-        name,
-        role: 'owner',
-        mobile: mobile ?? null,
-      },
-    })
+    return res.status(400).json({ error: 'Failed to create owner user' })
   } catch (err: any) {
     console.error('Create owner error:', err)
     return res.status(500).json({ error: err.message || 'Internal server error' })

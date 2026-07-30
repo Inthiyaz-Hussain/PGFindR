@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { supabase } from '../index.js'
+import { supabase, getSupabaseClient } from '../index.js'
 
 const router = Router()
 
@@ -62,7 +62,8 @@ router.post('/upload-photo', async (req, res) => {
 
     const buffer = Buffer.from(base64Data, 'base64')
 
-    const { data, error } = await supabase.storage
+    const db = getSupabaseClient(req)
+    const { data, error } = await db.storage
       .from('pg-photos')
       .upload(fileName, buffer, {
         contentType: fileType,
@@ -71,7 +72,7 @@ router.post('/upload-photo', async (req, res) => {
 
     if (error) throw error
 
-    const { data: { publicUrl } } = supabase.storage.from('pg-photos').getPublicUrl(fileName)
+    const { data: { publicUrl } } = db.storage.from('pg-photos').getPublicUrl(fileName)
 
     return res.json({ url: publicUrl })
   } catch (err: any) {
@@ -115,9 +116,10 @@ router.post('/save-listing', async (req, res) => {
     const isNew = !id || id === 'new'
 
     let pgId = id
+    const db = getSupabaseClient(req)
 
     if (isNew) {
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from('pg_listings')
         .insert(payload)
         .select('id')
@@ -126,7 +128,7 @@ router.post('/save-listing', async (req, res) => {
       if (error) throw error
       pgId = data.id
     } else {
-      const { error } = await supabase
+      const { error } = await db
         .from('pg_listings')
         .update(payload)
         .eq('id', id)
@@ -136,7 +138,7 @@ router.post('/save-listing', async (req, res) => {
 
     // Save sharing types
     if (sharingTypes && sharingTypes.length > 0 && pgId) {
-      await supabase.from('sharing_types').delete().eq('pg_id', pgId)
+      await db.from('sharing_types').delete().eq('pg_id', pgId)
       const sharingPayloads = sharingTypes.map((s: any) => ({
         pg_id: pgId,
         type: s.type,
@@ -145,25 +147,25 @@ router.post('/save-listing', async (req, res) => {
         total_beds: Number(s.total_beds) || 0,
         occupied_beds: 0,
       }))
-      const { error: sharingErr } = await supabase.from('sharing_types').insert(sharingPayloads)
+      const { error: sharingErr } = await db.from('sharing_types').insert(sharingPayloads)
       if (sharingErr) throw sharingErr
     }
 
     // Save amenities
     if (pgId) {
-      await supabase.from('amenities').delete().eq('pg_id', pgId)
+      await db.from('amenities').delete().eq('pg_id', pgId)
       const amenityPayloads = Object.entries(amenities || {})
         .filter(([, v]) => v)
         .map(([key]) => ({ pg_id: pgId, key, is_available: true }))
       if (amenityPayloads.length > 0) {
-        const { error: amenityErr } = await supabase.from('amenities').insert(amenityPayloads)
+        const { error: amenityErr } = await db.from('amenities').insert(amenityPayloads)
         if (amenityErr) throw amenityErr
       }
     }
 
     // Save photos
     if (photos && photos.length > 0 && pgId) {
-      await supabase.from('pg_photos').delete().eq('pg_id', pgId)
+      await db.from('pg_photos').delete().eq('pg_id', pgId)
       const photoPayloads = photos.map((p: any, i: number) => ({
         pg_id: pgId,
         url: p.url,
@@ -171,13 +173,13 @@ router.post('/save-listing', async (req, res) => {
         caption: p.caption,
         is_primary: i === 0,
       }))
-      const { error: photoErr } = await supabase.from('pg_photos').insert(photoPayloads)
+      const { error: photoErr } = await db.from('pg_photos').insert(photoPayloads)
       if (photoErr) throw photoErr
     }
 
     // Trigger CEO Email Notification and In-App notification on submission for approval (status is pending)
     if (payload.status === 'pending') {
-      const { data: ownerProfile } = await supabase
+      const { data: ownerProfile } = await db
         .from('profiles')
         .select('full_name')
         .eq('id', payload.owner_id)
@@ -188,7 +190,7 @@ router.post('/save-listing', async (req, res) => {
       await sendCEONotificationEmail(payload.name, ownerName, pgId)
 
       // Add in-app notification to the Admin/CEO user's profile
-      await supabase
+      await db
         .from('notifications')
         .insert({
           user_id: '00000000-0000-0000-0000-000000000003', // CEO/Admin ID in seeded db
