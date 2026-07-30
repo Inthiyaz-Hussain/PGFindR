@@ -24,6 +24,7 @@ const KYC_STATUS_CONFIG: Record<KYCStatus, { label: string; class: string }> = {
 const ITEMS_PER_PAGE = 10
 
 interface OwnerWithDetails extends Profile {
+  email?: string | null
   kyc?: {
     id: string
     status: KYCStatus
@@ -60,7 +61,7 @@ export function AdminOwnersPage() {
         .range((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE - 1)
 
       if (searchQuery) {
-        query = query.ilike('full_name', `%${searchQuery}%`)
+        query = query.or(`full_name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%`)
       }
 
       const { data, count } = await query
@@ -200,6 +201,7 @@ export function AdminOwnersPage() {
                     <TableRow key={owner.id}>
                       <TableCell>
                         <div className="font-medium">{owner.full_name}</div>
+                        <div className="text-xs text-muted-foreground">{owner.email || '—'}</div>
                       </TableCell>
                       <TableCell>{owner.phone || '—'}</TableCell>
                       <TableCell>
@@ -269,6 +271,10 @@ export function AdminOwnersPage() {
                   <div className="font-medium">{selectedOwner.full_name}</div>
                 </div>
                 <div>
+                  <div className="text-sm text-muted-foreground">Email</div>
+                  <div className="font-medium">{selectedOwner.email || '—'}</div>
+                </div>
+                <div>
                   <div className="text-sm text-muted-foreground">Phone</div>
                   <div className="font-medium">{selectedOwner.phone || '—'}</div>
                 </div>
@@ -276,7 +282,7 @@ export function AdminOwnersPage() {
                   <div className="text-sm text-muted-foreground">Total PGs</div>
                   <div className="font-medium">{selectedOwner.pg_count}</div>
                 </div>
-                <div>
+                <div className="col-span-2">
                   <div className="text-sm text-muted-foreground">Joined</div>
                   <div className="font-medium">{new Date(selectedOwner.created_at).toLocaleDateString('en-IN')}</div>
                 </div>

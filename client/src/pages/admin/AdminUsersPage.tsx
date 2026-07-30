@@ -64,6 +64,7 @@ export function AdminUsersPage() {
           id,
           full_name,
           phone,
+          email,
           created_at,
           inquiries:inquiries(count),
           bookings:bookings(count)
@@ -73,7 +74,7 @@ export function AdminUsersPage() {
         .range((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE - 1)
 
       if (searchQuery) {
-        query = query.or(`full_name.ilike.%${searchQuery}%,phone.ilike.%${searchQuery}%`)
+        query = query.or(`full_name.ilike.%${searchQuery}%,phone.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%`)
       }
 
       const { data, count } = await query
@@ -181,6 +182,7 @@ export function AdminUsersPage() {
                   <TableRow key={user.id}>
                     <TableCell>
                       <div className="font-medium">{user.full_name || 'Unnamed'}</div>
+                      <div className="text-xs text-muted-foreground">{user.email || '—'}</div>
                     </TableCell>
                     <TableCell className="text-muted-foreground">{user.phone || '—'}</TableCell>
                     <TableCell>
