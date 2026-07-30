@@ -6,7 +6,10 @@ const supabaseAnonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJI
 
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   db: { schema: 'public' },
+  auth: { flowType: 'implicit' },
 })
 
 // Untyped client for dynamic table access
-export const supabaseUntyped = createClient(supabaseUrl, supabaseAnonKey)
+export const supabaseUntyped = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: { flowType: 'implicit' },
+})
