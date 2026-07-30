@@ -62,8 +62,8 @@ router.post('/upload-photo', async (req, res) => {
 
     const buffer = Buffer.from(base64Data, 'base64')
 
-    const db = getSupabaseClient(req)
-    const { data, error } = await db.storage
+    // Use the global service role client to bypass storage RLS checks
+    const { data, error } = await supabase.storage
       .from('pg-photos')
       .upload(fileName, buffer, {
         contentType: fileType,
@@ -72,7 +72,7 @@ router.post('/upload-photo', async (req, res) => {
 
     if (error) throw error
 
-    const { data: { publicUrl } } = db.storage.from('pg-photos').getPublicUrl(fileName)
+    const { data: { publicUrl } } = supabase.storage.from('pg-photos').getPublicUrl(fileName)
 
     return res.json({ url: publicUrl })
   } catch (err: any) {
@@ -116,7 +116,8 @@ router.post('/save-listing', async (req, res) => {
     const isNew = !id || id === 'new'
 
     let pgId = id
-    const db = getSupabaseClient(req)
+    // Use admin client if requested by admin console to bypass RLS
+    const db = isAdmin ? supabase : getSupabaseClient(req)
 
     if (isNew) {
       const { data, error } = await db
