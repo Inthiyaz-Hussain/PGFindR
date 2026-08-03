@@ -65,7 +65,7 @@ router.get('/', async (req, res) => {
     let query = supabase
       .from('pg_listings')
       .select('*, photos:pg_photos(url, is_primary)')
-      .eq('id', 'b1111111-1111-4111-a111-111111111101')
+      .eq('status', 'approved')
 
     if (q) {
       query = query.or(
@@ -134,18 +134,22 @@ router.get('/', async (req, res) => {
         .sort((a, b) => (a.distance_meters ?? Infinity) - (b.distance_meters ?? Infinity))
     }
 
-    const { data: confirmedInqs } = await supabase
-      .from('inquiries')
-      .select('id')
-      .eq('pg_id', 'b1111111-1111-4111-a111-111111111101')
-      .eq('status', 'confirmed')
-
-    const isVerifiedByOwner = confirmedInqs && confirmedInqs.length > 0
+    const pgIdsOnPage = results.slice(pgOffset, pgOffset + pgLimit).map(pg => pg.id)
+    let verifiedPgIds = new Set<string>()
+    if (pgIdsOnPage.length > 0) {
+      const { data: confirmedInqs } = await supabase
+        .from('inquiries')
+        .select('pg_id')
+        .in('pg_id', pgIdsOnPage)
+        .eq('status', 'confirmed')
+      
+      verifiedPgIds = new Set((confirmedInqs || []).map(inq => inq.pg_id))
+    }
 
     const total = results.length
     const page = results.slice(pgOffset, pgOffset + pgLimit).map(pg => ({
       ...pg,
-      is_verified: isVerifiedByOwner
+      is_verified: verifiedPgIds.has(pg.id)
     }))
 
     res.json({ data: page, total, limit: pgLimit, offset: pgOffset })
@@ -164,7 +168,7 @@ router.get('/cities', async (req, res) => {
     const { data } = await supabase
       .from('pg_listings')
       .select('city, locality')
-      .eq('id', 'b1111111-1111-4111-a111-111111111101')
+      .eq('status', 'approved')
       .or(`city.ilike.%${q}%,locality.ilike.%${q}%`)
       .limit(20)
 
