@@ -103,68 +103,66 @@ router.post('/admin/create-owner', authenticateToken, requireRole('admin'), asyn
   }
 
   try {
-    // Create user via standard signUp using a temporary client to avoid global session pollution
-    const tempClient = createClient(
-      process.env.VITE_SUPABASE_URL!,
-      process.env.VITE_SUPABASE_ANON_KEY!,
-      { auth: { persistSession: false } }
-    )
-    const { data: created, error: createErr } = await tempClient.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
+    let createdUser: any = null
+    let createErr: any = null
+
+    // Try creating via admin API first (bypasses email rate limits and confirmation)
+    try {
+      const { data, error } = await supabase.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true,
+        user_metadata: {
           full_name: name,
           role: 'owner',
         }
-      }
-    })
+      })
+      createdUser = data.user
+      createErr = error
+    } catch (adminApiErr: any) {
+      console.warn('Admin createUser failed or service role not configured, trying temp client signup:', adminApiErr.message)
+      createErr = adminApiErr
+    }
 
-    if (createErr) {
-      if (createErr.message.toLowerCase().includes('rate limit')) {
-        console.warn('Supabase sign up rate limit hit. Creating mock user profile in public.profiles table as fallback...')
-        const mockUserId = crypto.randomUUID()
-        const db = getSupabaseClient(req)
-        
-        const { error: profileErr } = await db
-          .from('profiles')
-          .insert({
-            id: mockUserId,
+    // Fallback to standard signUp using tempClient if admin API fails or is unauthorized
+    if (createErr && (createErr.message.toLowerCase().includes('service_role') || createErr.message.toLowerCase().includes('not allowed') || createErr.status === 401)) {
+      console.log('Falling back to standard temp client signUp...')
+      const tempClient = createClient(
+        process.env.VITE_SUPABASE_URL!,
+        process.env.VITE_SUPABASE_ANON_KEY!,
+        { auth: { persistSession: false } }
+      )
+      const { data, error: signUpErr } = await tempClient.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
             full_name: name,
             role: 'owner',
-            phone: mobile || null
-          })
-          
-        if (profileErr) {
-          throw profileErr
+          }
         }
+      })
+      createdUser = data.user
+      createErr = signUpErr
+    }
 
-        return res.status(201).json({
-          user: {
-            id: mockUserId,
-            email,
-            name,
-            role: 'owner',
-            mobile: mobile ?? null,
-          },
-        })
-      }
+    if (createErr) {
       const status = createErr.message.includes('already') ? 409 : 400
       return res.status(status).json({ error: createErr.message })
     }
 
-    // Update the auto-created profile row with phone number using the authenticated admin client
-    if (created.user) {
+    // Update the profile row with phone number using the authenticated admin client
+    if (createdUser) {
       const db = getSupabaseClient(req)
       await db
         .from('profiles')
         .update({ phone: mobile || null })
-        .eq('id', created.user.id)
+        .eq('id', createdUser.id)
 
       return res.status(201).json({
         user: {
-          id: created.user.id,
-          email: created.user.email || '',
+          id: createdUser.id,
+          email: createdUser.email || '',
           name,
           role: 'owner',
           mobile: mobile ?? null,
