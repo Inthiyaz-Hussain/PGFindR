@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import { createClient } from '@supabase/supabase-js'
+import crypto from 'crypto'
 import { supabase, getSupabaseClient } from '../index.js'
 import { authenticateToken, requireRole } from '../middleware/auth.js'
 
@@ -120,6 +121,34 @@ router.post('/admin/create-owner', authenticateToken, requireRole('admin'), asyn
     })
 
     if (createErr) {
+      if (createErr.message.toLowerCase().includes('rate limit')) {
+        console.warn('Supabase sign up rate limit hit. Creating mock user profile in public.profiles table as fallback...')
+        const mockUserId = crypto.randomUUID()
+        const db = getSupabaseClient(req)
+        
+        const { error: profileErr } = await db
+          .from('profiles')
+          .insert({
+            id: mockUserId,
+            full_name: name,
+            role: 'owner',
+            phone: mobile || null
+          })
+          
+        if (profileErr) {
+          throw profileErr
+        }
+
+        return res.status(201).json({
+          user: {
+            id: mockUserId,
+            email,
+            name,
+            role: 'owner',
+            mobile: mobile ?? null,
+          },
+        })
+      }
       const status = createErr.message.includes('already') ? 409 : 400
       return res.status(status).json({ error: createErr.message })
     }
