@@ -51,36 +51,6 @@ router.get('/:id/availability', async (req, res) => {
   }
 })
 
-// POST /api/pg/upload-photo - Upload base64 image to Supabase Storage from server side
-router.post('/upload-photo', async (req, res) => {
-  try {
-    const { fileName, fileType, base64Data } = req.body
-
-    if (!fileName || !fileType || !base64Data) {
-      return res.status(400).json({ error: 'fileName, fileType, and base64Data are required' })
-    }
-
-    const buffer = Buffer.from(base64Data, 'base64')
-
-    // Use the global service role client to bypass storage RLS checks
-    const { data, error } = await supabase.storage
-      .from('pg-photos')
-      .upload(fileName, buffer, {
-        contentType: fileType,
-        upsert: true,
-      })
-
-    if (error) throw error
-
-    const { data: { publicUrl } } = supabase.storage.from('pg-photos').getPublicUrl(fileName)
-
-    return res.json({ url: publicUrl })
-  } catch (err: any) {
-    console.error('Upload photo error:', err)
-    return res.status(500).json({ error: err.message || 'Failed to upload photo' })
-  }
-})
-
 // Helper to simulate email dispatch to the CEO
 async function sendCEONotificationEmail(pgName: string, ownerName: string, pgId: string) {
   const dummyCEOMail = 'ceo@findpgr.demo'

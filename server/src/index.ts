@@ -114,8 +114,34 @@ app.use((_req, res) => {
   res.status(404).json({ error: 'Not found' })
 })
 
+// Ensure storage buckets exist
+async function initializeStorageBuckets() {
+  try {
+    const buckets = ['pg-images', 'pg-photos']
+    for (const bucket of buckets) {
+      const { data, error } = await supabase.storage.getBucket(bucket)
+      if (error || !data) {
+        console.log(`Storage bucket ${bucket} not found. Creating...`)
+        const { error: createError } = await supabase.storage.createBucket(bucket, {
+          public: true,
+        })
+        if (createError) {
+          console.error(`Failed to create bucket ${bucket}:`, createError)
+        } else {
+          console.log(`Storage bucket ${bucket} created successfully.`)
+        }
+      }
+    }
+  } catch (err) {
+    console.error('Error during storage bucket initialization:', err)
+  }
+}
+
 if (process.env.NODE_ENV !== 'test') {
   let currentPort = Number(PORT) || 3001
+
+  // Initialize storage buckets
+  initializeStorageBuckets()
 
   const startServer = (portToTry: number) => {
     const server = app.listen(portToTry, () => {

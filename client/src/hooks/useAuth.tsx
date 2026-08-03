@@ -145,19 +145,21 @@ function getDemoMockData(email: string) {
     const isDemo =
       (email === 'owner@swiftpg.demo' && password === 'Owner@123') ||
       (email === 'admin@swiftpg.demo' && password === 'Admin@123')
+
+    if (isDemo) {
+      console.log('Demo credentials used, bypassing Supabase and using local mock login.')
+      const mock = getDemoMockData(email)
+      if (mounted.current) {
+        setUser(mock.user)
+        setProfile(mock.profile)
+        setSession(mock.session)
+      }
+      return { error: null, profile: mock.profile }
+    }
+
     try {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) {
-        if (isDemo) {
-          console.warn('Demo login failed with Supabase, falling back to mock login:', error.message)
-          const mock = getDemoMockData(email)
-          if (mounted.current) {
-            setUser(mock.user)
-            setProfile(mock.profile)
-            setSession(mock.session)
-          }
-          return { error: null, profile: mock.profile }
-        }
         return { error: error as Error | null, profile: null }
       }
       if (!data.user) {
@@ -166,16 +168,6 @@ function getDemoMockData(email: string) {
       const p = await fetchProfile(data.user.id)
       return { error: null, profile: p }
     } catch (e: any) {
-      if (isDemo) {
-        console.warn('Demo login caught exception, falling back to mock:', e.message)
-        const mock = getDemoMockData(email)
-        if (mounted.current) {
-          setUser(mock.user)
-          setProfile(mock.profile)
-          setSession(mock.session)
-        }
-        return { error: null, profile: mock.profile }
-      }
       return { error: e as Error | null, profile: null }
     }
   }

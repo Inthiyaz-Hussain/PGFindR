@@ -15,7 +15,7 @@ import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Field, FieldLabel, FieldError, FieldDescription } from '@/components/ui/field'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { supabaseUntyped } from '@/lib/supabase'
+import { supabase, supabaseUntyped, compressImage, ensureBucketExists } from '@/lib/supabase'
 import { useAuth } from '@/hooks/useAuth'
 import { toast } from 'sonner'
 import type { PGType, SharingTypeItem, AmenityItem } from '@/types'
@@ -261,61 +261,79 @@ export function PGFormPage() {
     setUploadProgress(0)
 
     try {
+      // Ensure the pg-images bucket exists on Supabase (safely handled client-side if permissions allow)
+      await ensureBucketExists('pg-images')
+
       const uploadedUrls: string[] = []
       const totalFiles = files.length
+
+      const allowedMimeTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
+      const allowedExtensions = ['jpg', 'jpeg', 'png', 'webp']
 
       for (let i = 0; i < files.length; i++) {
         const file = files[i]
 
-        // Read file as base64
-        const reader = new FileReader()
-        const base64Promise = new Promise<string>((resolve, reject) => {
-          reader.onload = () => {
-            const result = reader.result as string
-            const base64Data = result.split(',')[1] || result
-            resolve(base64Data)
-          }
-          reader.onerror = reject
-          reader.readAsDataURL(file)
-        })
-
-        const base64Data = await base64Promise
-        const fileExt = file.name.split('.').pop()
-        const fileName = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${fileExt}`
-
-        const token = session?.access_token
-        const res = await fetch(`${import.meta.env.VITE_API_URL || 'https://swiftpg-backend.onrender.com'}/api/pg/upload-photo`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-          },
-          body: JSON.stringify({
-            fileName,
-            fileType: file.type,
-            base64Data
-          })
-        })
-
-        const resData = await res.json()
-        if (!res.ok) {
-          throw new Error(resData.error || 'Upload failed')
+        // 1. Validate file extension and MIME type
+        const fileExt = file.name.split('.').pop()?.toLowerCase()
+        if (!fileExt || !allowedExtensions.includes(fileExt) || !allowedMimeTypes.includes(file.type)) {
+          throw new Error(`Unsupported file type for "${file.name}". Only JPG, JPEG, PNG, and WEBP formats are allowed.`)
         }
 
-        uploadedUrls.push(resData.url)
+        // 2. Client-side image compression if the file exceeds the 5MB size limit
+        let fileToUpload = file
+        const maxSizeBytes = 5 * 1024 * 1024 // 5MB
+        if (file.size > maxSizeBytes) {
+          try {
+            toast.info(`Compressing "${file.name}"...`)
+            fileToUpload = await compressImage(file, maxSizeBytes)
+          } catch (compressErr: any) {
+            throw new Error(`Failed to compress image "${file.name}": ${compressErr.message || compressErr}`)
+          }
+        }
+
+        // 3. File size validation after compression
+        if (fileToUpload.size > maxSizeBytes) {
+          throw new Error(`File "${file.name}" exceeds the 5MB limit even after compression.`)
+        }
+
+        // 4. Generate a unique filename to avoid collisions
+        const uniqueFileName = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${fileToUpload.name.split('.').pop()?.toLowerCase()}`
+
+        // 5. Upload directly to Supabase Storage pg-images bucket
+        const { error: uploadError } = await supabase.storage
+          .from('pg-images')
+          .upload(uniqueFileName, fileToUpload, {
+            cacheControl: '3600',
+            upsert: true,
+          })
+
+        if (uploadError) {
+          throw new Error(`Upload failed for "${file.name}": ${uploadError.message}`)
+        }
+
+        // 6. Retrieve the public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from('pg-images')
+          .getPublicUrl(uniqueFileName)
+
+        if (!publicUrl) {
+          throw new Error(`Failed to get public URL for "${file.name}".`)
+        }
+
+        uploadedUrls.push(publicUrl)
         setUploadProgress(((i + 1) / totalFiles) * 100)
       }
 
       setPhotos((prev) => [...prev, ...uploadedUrls.map((url) => ({ url, type: 'room' as const }))])
-      toast.success(`${uploadedUrls.length} photo(s) uploaded`)
+      toast.success(`${uploadedUrls.length} photo(s) uploaded successfully.`)
     } catch (err: any) {
-      console.error(err)
-      toast.error(`Failed to upload photos: ${err.message || err}`)
+      console.error('File upload error:', err)
+      toast.error(`Upload failed: ${err.message || err}`)
     } finally {
       setUploading(false)
       setUploadProgress(0)
     }
-  }, [user, session])
+  }, [user])
 
   const addSharingType = () => {
     if (sharingTypes.length >= 4) return

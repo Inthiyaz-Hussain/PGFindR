@@ -270,6 +270,37 @@ CREATE TABLE IF NOT EXISTS public.commission_history (
 INSERT INTO storage.buckets (id, name, public) VALUES ('pg-photos', 'pg-photos', true) ON CONFLICT (id) DO NOTHING;
 INSERT INTO storage.buckets (id, name, public) VALUES ('owner-documents', 'owner-documents', false) ON CONFLICT (id) DO NOTHING;
 INSERT INTO storage.buckets (id, name, public) VALUES ('avatars', 'avatars', true) ON CONFLICT (id) DO NOTHING;
+INSERT INTO storage.buckets (id, name, public) VALUES ('pg-images', 'pg-images', true) ON CONFLICT (id) DO NOTHING;
+
+-- Enable RLS on storage.objects
+ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
+
+-- Storage policies for pg-images
+DROP POLICY IF EXISTS "Public Select pg-images" ON storage.objects;
+CREATE POLICY "Public Select pg-images" ON storage.objects FOR SELECT USING (bucket_id = 'pg-images');
+
+DROP POLICY IF EXISTS "Authenticated Insert pg-images" ON storage.objects;
+CREATE POLICY "Authenticated Insert pg-images" ON storage.objects FOR INSERT TO authenticated WITH CHECK (bucket_id = 'pg-images');
+
+DROP POLICY IF EXISTS "Authenticated Update pg-images" ON storage.objects;
+CREATE POLICY "Authenticated Update pg-images" ON storage.objects FOR UPDATE TO authenticated USING (bucket_id = 'pg-images');
+
+DROP POLICY IF EXISTS "Authenticated Delete pg-images" ON storage.objects;
+CREATE POLICY "Authenticated Delete pg-images" ON storage.objects FOR DELETE TO authenticated USING (bucket_id = 'pg-images');
+
+-- Storage policies for pg-photos
+DROP POLICY IF EXISTS "Public Select pg-photos" ON storage.objects;
+CREATE POLICY "Public Select pg-photos" ON storage.objects FOR SELECT USING (bucket_id = 'pg-photos');
+
+DROP POLICY IF EXISTS "Authenticated Insert pg-photos" ON storage.objects;
+CREATE POLICY "Authenticated Insert pg-photos" ON storage.objects FOR INSERT TO authenticated WITH CHECK (bucket_id = 'pg-photos');
+
+DROP POLICY IF EXISTS "Authenticated Update pg-photos" ON storage.objects;
+CREATE POLICY "Authenticated Update pg-photos" ON storage.objects FOR UPDATE TO authenticated USING (bucket_id = 'pg-photos');
+
+DROP POLICY IF EXISTS "Authenticated Delete pg-photos" ON storage.objects;
+CREATE POLICY "Authenticated Delete pg-photos" ON storage.objects FOR DELETE TO authenticated USING (bucket_id = 'pg-photos');
+
 
 -- 5. INDEXES
 CREATE INDEX IF NOT EXISTS idx_pg_listings_lat_lng ON public.pg_listings (latitude, longitude);
