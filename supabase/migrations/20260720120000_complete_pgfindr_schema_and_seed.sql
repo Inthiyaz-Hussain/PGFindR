@@ -271,30 +271,32 @@ INSERT INTO storage.buckets (id, name, public) VALUES ('pg-images', 'pg-images',
 ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
 
 -- Storage policies for pg-images
-DROP POLICY IF EXISTS "Public Select pg-images" ON storage.objects;
-CREATE POLICY "Public Select pg-images" ON storage.objects FOR SELECT USING (bucket_id = 'pg-images');
-
 DROP POLICY IF EXISTS "Authenticated Insert pg-images" ON storage.objects;
-CREATE POLICY "Authenticated Insert pg-images" ON storage.objects FOR INSERT TO authenticated WITH CHECK (bucket_id = 'pg-images');
-
 DROP POLICY IF EXISTS "Authenticated Update pg-images" ON storage.objects;
-CREATE POLICY "Authenticated Update pg-images" ON storage.objects FOR UPDATE TO authenticated USING (bucket_id = 'pg-images');
-
 DROP POLICY IF EXISTS "Authenticated Delete pg-images" ON storage.objects;
-CREATE POLICY "Authenticated Delete pg-images" ON storage.objects FOR DELETE TO authenticated USING (bucket_id = 'pg-images');
+DROP POLICY IF EXISTS "Public Select pg-images" ON storage.objects;
+DROP POLICY IF EXISTS "Public Insert pg-images" ON storage.objects;
+DROP POLICY IF EXISTS "Public Update pg-images" ON storage.objects;
+DROP POLICY IF EXISTS "Public Delete pg-images" ON storage.objects;
+
+CREATE POLICY "Public Select pg-images" ON storage.objects FOR SELECT USING (bucket_id = 'pg-images');
+CREATE POLICY "Public Insert pg-images" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'pg-images');
+CREATE POLICY "Public Update pg-images" ON storage.objects FOR UPDATE USING (bucket_id = 'pg-images');
+CREATE POLICY "Public Delete pg-images" ON storage.objects FOR DELETE USING (bucket_id = 'pg-images');
 
 -- Storage policies for pg-photos
-DROP POLICY IF EXISTS "Public Select pg-photos" ON storage.objects;
-CREATE POLICY "Public Select pg-photos" ON storage.objects FOR SELECT USING (bucket_id = 'pg-photos');
-
 DROP POLICY IF EXISTS "Authenticated Insert pg-photos" ON storage.objects;
-CREATE POLICY "Authenticated Insert pg-photos" ON storage.objects FOR INSERT TO authenticated WITH CHECK (bucket_id = 'pg-photos');
-
 DROP POLICY IF EXISTS "Authenticated Update pg-photos" ON storage.objects;
-CREATE POLICY "Authenticated Update pg-photos" ON storage.objects FOR UPDATE TO authenticated USING (bucket_id = 'pg-photos');
-
 DROP POLICY IF EXISTS "Authenticated Delete pg-photos" ON storage.objects;
-CREATE POLICY "Authenticated Delete pg-photos" ON storage.objects FOR DELETE TO authenticated USING (bucket_id = 'pg-photos');
+DROP POLICY IF EXISTS "Public Select pg-photos" ON storage.objects;
+DROP POLICY IF EXISTS "Public Insert pg-photos" ON storage.objects;
+DROP POLICY IF EXISTS "Public Update pg-photos" ON storage.objects;
+DROP POLICY IF EXISTS "Public Delete pg-photos" ON storage.objects;
+
+CREATE POLICY "Public Select pg-photos" ON storage.objects FOR SELECT USING (bucket_id = 'pg-photos');
+CREATE POLICY "Public Insert pg-photos" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'pg-photos');
+CREATE POLICY "Public Update pg-photos" ON storage.objects FOR UPDATE USING (bucket_id = 'pg-photos');
+CREATE POLICY "Public Delete pg-photos" ON storage.objects FOR DELETE USING (bucket_id = 'pg-photos');
 
 
 -- 5. INDEXES
