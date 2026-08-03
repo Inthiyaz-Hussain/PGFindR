@@ -249,9 +249,9 @@ export function PGFormPage() {
         navigate(`${basePath}/pgs`)
       }
     },
-    onError: (err) => {
+    onError: (err: any) => {
       console.error(err)
-      toast.error('Failed to save listing')
+      toast.error(err.message || 'Failed to save listing')
     },
   })
 
