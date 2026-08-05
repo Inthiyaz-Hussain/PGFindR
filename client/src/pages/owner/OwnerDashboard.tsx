@@ -20,7 +20,6 @@ export function OwnerDashboard() {
         .from('pg_listings')
         .select('*')
         .eq('owner_id', user!.id)
-        .eq('id', 'b1111111-1111-4111-a111-111111111101')
         .order('created_at', { ascending: false })
       return (data || []) as PGListing[]
     },
@@ -34,7 +33,6 @@ export function OwnerDashboard() {
         .from('inquiries')
         .select('*, pg:pg_listings!inner(owner_id, name), seeker:profiles!inquiries_seeker_id_fkey(full_name)')
         .eq('pg.owner_id', user!.id)
-        .eq('pg_id', 'b1111111-1111-4111-a111-111111111101')
         .eq('status', 'pending')
         .order('created_at', { ascending: false })
         .limit(5)
