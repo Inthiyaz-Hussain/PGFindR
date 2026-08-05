@@ -79,14 +79,12 @@ export function App() {
               <Route path="/admin/login" element={<Navigate to="/auth/login?role=admin&from=/admin" replace />} />
 
               {/* Seeker */}
-              <Route element={<ProtectedRoute requiredRole="seeker" />}>
-                <Route element={<SeekerLayout />}>
-                  <Route path="/seeker" element={<SeekerDashboard />} />
-                  <Route path="/seeker/inquiries" element={<InquiriesPage />} />
-                  <Route path="/seeker/bookings" element={<BookingsPage />} />
-                  <Route path="/seeker/profile" element={<ProfilePage />} />
-                  <Route path="/seeker/about" element={<SeekerAboutPage />} />
-                </Route>
+              <Route element={<SeekerLayout />}>
+                <Route path="/seeker" element={<SeekerDashboard />} />
+                <Route path="/seeker/inquiries" element={<InquiriesPage />} />
+                <Route path="/seeker/bookings" element={<BookingsPage />} />
+                <Route path="/seeker/profile" element={<ProfilePage />} />
+                <Route path="/seeker/about" element={<SeekerAboutPage />} />
               </Route>
 
               {/* Owner */}

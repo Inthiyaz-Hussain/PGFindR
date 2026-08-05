@@ -19,19 +19,22 @@ const STATUS_CONFIG: Record<string, { label: string; class: string }> = {
 }
 
 export function BookingsPage() {
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
   const navigate = useNavigate()
+
+  const isSeeker = profile?.role === 'seeker'
+  const seekerUser = isSeeker ? user : null
 
   const savedBookingIds = JSON.parse(localStorage.getItem('pgr_saved_bookings') || '[]')
 
   const { data: bookings, isLoading } = useQuery({
-    queryKey: ['seeker-bookings-all', user?.id, savedBookingIds],
+    queryKey: ['seeker-bookings-all', seekerUser?.id, savedBookingIds],
     queryFn: async () => {
-      if (user) {
+      if (seekerUser) {
         const { data } = await supabase
           .from('bookings')
           .select('*, pg:pg_listings(id, name, city, locality), bed:beds(room_number, bed_label, sharing_type)')
-          .eq('seeker_id', user.id)
+          .eq('seeker_id', seekerUser.id)
           .order('created_at', { ascending: false })
         return (data || []) as Booking[]
       } else {
@@ -44,7 +47,7 @@ export function BookingsPage() {
         return (data || []) as Booking[]
       }
     },
-    enabled: !!user || savedBookingIds.length > 0,
+    enabled: !!seekerUser || savedBookingIds.length > 0,
   })
 
   return (

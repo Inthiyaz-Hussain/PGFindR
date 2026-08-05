@@ -22,7 +22,8 @@ export function SeekerLayout() {
   const { user, profile, signOut } = useAuth()
   useFirebasePush()
 
-  const seekerName = profile?.full_name || localStorage.getItem('seeker_fullName') || 'Guest Seeker'
+  const isSeeker = profile?.role === 'seeker'
+  const seekerName = (isSeeker ? profile?.full_name : null) || localStorage.getItem('seeker_fullName') || 'Guest Seeker'
   const initials = seekerName
     ? seekerName.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()
     : 'GS'
@@ -80,7 +81,7 @@ export function SeekerLayout() {
                   <div className="text-sm font-medium truncate">{seekerName}</div>
                   <div className="text-xs text-sidebar-foreground/60">Seeker</div>
                 </div>
-                {user && (
+                {user && isSeeker && (
                   <div className="flex items-center gap-1 shrink-0">
                     <NotificationBell />
                     <Button variant="ghost" size="icon-sm" onClick={signOut} title="Sign out">

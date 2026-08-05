@@ -12,18 +12,20 @@ import type { Inquiry, Booking } from '@/types'
 export function SeekerDashboard() {
   const { user, profile } = useAuth()
   const navigate = useNavigate()
+  const isSeeker = profile?.role === 'seeker'
+  const seekerUser = isSeeker ? user : null
 
   const savedInquiryIds = JSON.parse(localStorage.getItem('pgr_saved_inquiries') || '[]')
   const savedBookingIds = JSON.parse(localStorage.getItem('pgr_saved_bookings') || '[]')
 
   const { data: inquiries, isLoading: loadingInq } = useQuery({
-    queryKey: ['seeker-inquiries', user?.id, savedInquiryIds],
+    queryKey: ['seeker-inquiries', seekerUser?.id, savedInquiryIds],
     queryFn: async () => {
-      if (user) {
+      if (seekerUser) {
         const { data } = await supabase
           .from('inquiries')
           .select('*, pg:pg_listings(name, city, locality)')
-          .eq('seeker_id', user.id)
+          .eq('seeker_id', seekerUser.id)
           .order('created_at', { ascending: false })
           .limit(3)
         return (data || []) as Inquiry[]
@@ -38,17 +40,17 @@ export function SeekerDashboard() {
         return (data || []) as Inquiry[]
       }
     },
-    enabled: !!user || savedInquiryIds.length > 0,
+    enabled: !!seekerUser || savedInquiryIds.length > 0,
   })
 
   const { data: bookings, isLoading: loadingBook } = useQuery({
-    queryKey: ['seeker-bookings', user?.id, savedBookingIds],
+    queryKey: ['seeker-bookings', seekerUser?.id, savedBookingIds],
     queryFn: async () => {
-      if (user) {
+      if (seekerUser) {
         const { data } = await supabase
           .from('bookings')
           .select('*, pg:pg_listings(name, city, locality), bed:beds(room_number, bed_label)')
-          .eq('seeker_id', user.id)
+          .eq('seeker_id', seekerUser.id)
           .order('created_at', { ascending: false })
           .limit(3)
         return (data || []) as Booking[]
@@ -63,7 +65,7 @@ export function SeekerDashboard() {
         return (data || []) as Booking[]
       }
     },
-    enabled: !!user || savedBookingIds.length > 0,
+    enabled: !!seekerUser || savedBookingIds.length > 0,
   })
 
   const inquiryStatusColor: Record<string, string> = {

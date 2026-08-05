@@ -11,6 +11,7 @@ import { toast } from 'sonner'
 
 export function ProfilePage() {
   const { user, profile, refreshProfile } = useAuth()
+  const isSeeker = profile?.role === 'seeker'
   const [fullName, setFullName] = useState('')
   const [phone, setPhone] = useState('')
   const [email, setEmail] = useState('')
@@ -18,7 +19,7 @@ export function ProfilePage() {
 
   // Sync state with profile or localStorage
   useEffect(() => {
-    if (profile) {
+    if (isSeeker && profile) {
       setFullName(profile.full_name || '')
       setPhone(profile.phone || '')
       setEmail(user?.email || '')
@@ -27,7 +28,7 @@ export function ProfilePage() {
       setPhone(localStorage.getItem('seeker_phone') || '')
       setEmail(localStorage.getItem('seeker_email') || '')
     }
-  }, [profile, user])
+  }, [profile, user, isSeeker])
 
   const initials = fullName
     ? fullName.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()
@@ -36,7 +37,7 @@ export function ProfilePage() {
   async function handleSave(e: React.FormEvent) {
     e.preventDefault()
     setSaving(true)
-    if (user) {
+    if (isSeeker && user) {
       const { error } = await (supabase
         .from('profiles') as any)
         .update({ full_name: fullName, phone, updated_at: new Date().toISOString() })

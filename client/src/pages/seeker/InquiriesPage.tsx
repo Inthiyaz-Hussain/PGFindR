@@ -20,21 +20,24 @@ const STATUS_CONFIG: Record<string, { label: string; class: string }> = {
 }
 
 export function InquiriesPage() {
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [payingInqId, setPayingInqId] = useState<string | null>(null)
 
+  const isSeeker = profile?.role === 'seeker'
+  const seekerUser = isSeeker ? user : null
+
   const savedInquiryIds = JSON.parse(localStorage.getItem('pgr_saved_inquiries') || '[]')
 
   const { data: inquiries, isLoading } = useQuery({
-    queryKey: ['seeker-inquiries-all', user?.id, savedInquiryIds],
+    queryKey: ['seeker-inquiries-all', seekerUser?.id, savedInquiryIds],
     queryFn: async () => {
-      if (user) {
+      if (seekerUser) {
         const { data } = await supabase
           .from('inquiries')
           .select('*, pg:pg_listings(id, name, city, locality, monthly_rent_min, owner_id), bed:beds(room_number, bed_label, monthly_rent)')
-          .eq('seeker_id', user.id)
+          .eq('seeker_id', seekerUser.id)
           .order('created_at', { ascending: false })
         return (data || []) as Inquiry[]
       } else {
@@ -47,7 +50,7 @@ export function InquiriesPage() {
         return (data || []) as Inquiry[]
       }
     },
-    enabled: !!user || savedInquiryIds.length > 0,
+    enabled: !!seekerUser || savedInquiryIds.length > 0,
   })
 
   async function handlePay(inq: Inquiry) {
