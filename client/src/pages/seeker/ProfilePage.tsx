@@ -73,7 +73,7 @@ export function ProfilePage() {
             </Avatar>
             <div>
               <CardTitle className="text-lg">{fullName || 'Guest Seeker'}</CardTitle>
-              <p className="text-sm text-muted-foreground capitalize">{profile?.role || 'Guest Seeker'}</p>
+              <p className="text-sm text-muted-foreground capitalize">{(isSeeker ? profile?.role : null) || 'Guest Seeker'}</p>
             </div>
           </div>
         </CardHeader>

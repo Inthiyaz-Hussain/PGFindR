@@ -83,7 +83,7 @@ export function SeekerDashboard() {
     cancelled: 'bg-red-100 text-red-800',
   }
 
-  const seekerName = profile?.full_name || localStorage.getItem('seeker_fullName')
+  const seekerName = (isSeeker ? profile?.full_name : null) || localStorage.getItem('seeker_fullName')
 
   return (
     <div className="p-4 md:p-6 max-w-4xl">
