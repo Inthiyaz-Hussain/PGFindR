@@ -1,5 +1,5 @@
 import { NavLink, Outlet } from 'react-router-dom'
-import { Building2, LayoutDashboard, MessageSquare, LogOut, IndianRupee, FileCheck, Info } from 'lucide-react'
+import { Building2, LayoutDashboard, MessageSquare, LogOut, IndianRupee, FileCheck, Info, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 
@@ -32,7 +32,12 @@ export function OwnerLayout() {
       <Navbar />
       <div className="flex flex-1">
         {/* Desktop Sidebar */}
-        <aside className="hidden md:flex w-64 flex-col border-r bg-sidebar text-sidebar-foreground pt-4">
+        <aside className="hidden md:flex fixed left-0 top-16 bottom-0 z-40 w-64 flex-col border-r bg-sidebar text-sidebar-foreground pt-4 shadow-xl transition-transform duration-300 ease-in-out -translate-x-[calc(100%-12px)] hover:translate-x-0 group">
+          {/* Protruding Chevron indicator when collapsed */}
+          <div className="absolute top-1/2 -translate-y-1/2 -right-3.5 flex h-12 w-4 items-center justify-center rounded-r-md border-y border-r bg-sidebar text-sidebar-foreground/60 shadow-sm cursor-pointer transition-opacity group-hover:opacity-0 duration-200">
+            <ChevronRight className="size-3 animate-pulse" />
+          </div>
+
           <div className="flex-1 p-3 space-y-1">
             {NAV_ITEMS.map(({ to, label, icon: Icon, end }) => (
               <NavLink
@@ -71,7 +76,7 @@ export function OwnerLayout() {
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 min-w-0 bg-background">
+        <main className="flex-1 min-w-0 bg-background md:pl-6">
           <Outlet />
         </main>
       </div>
