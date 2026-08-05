@@ -60,7 +60,7 @@ export function PGFormPage() {
   const queryClient = useQueryClient()
   const isAdmin = profile?.role === 'admin' || window.location.pathname.startsWith('/admin')
 
-  const [ownerMode, setOwnerMode] = useState<'select' | 'create'>('select')
+  const [ownerMode, setOwnerMode] = useState<'select' | 'create' | 'edit'>('select')
   const [selectedOwnerId, setSelectedOwnerId] = useState<string>('')
   const [newOwnerName, setNewOwnerName] = useState('')
   const [newOwnerEmail, setNewOwnerEmail] = useState('')
@@ -82,7 +82,7 @@ export function PGFormPage() {
     queryFn: async () => {
       const { data } = await supabaseUntyped
         .from('profiles')
-        .select('id, full_name, phone')
+        .select('id, full_name, phone, email')
         .eq('role', 'owner')
         .order('full_name')
       return data || []
@@ -191,6 +191,22 @@ export function PGFormPage() {
             throw new Error(resData.error || 'Failed to create new owner')
           }
           finalOwnerId = resData.user.id
+        } else if (ownerMode === 'edit') {
+          if (!newOwnerName) {
+            throw new Error('Owner Full Name is required.')
+          }
+          const { error: updateErr } = await supabaseUntyped
+            .from('profiles')
+            .update({
+              full_name: newOwnerName,
+              phone: newOwnerPhone || null,
+            })
+            .eq('id', selectedOwnerId)
+
+          if (updateErr) {
+            throw new Error(`Failed to update owner profile: ${updateErr.message}`)
+          }
+          finalOwnerId = selectedOwnerId
         } else {
           if (!selectedOwnerId) {
             throw new Error('Please select an owner for this PG listing.')
@@ -384,7 +400,7 @@ export function PGFormPage() {
               <div className="flex gap-4">
                 <Button
                   type="button"
-                  variant={ownerMode === 'select' ? 'default' : 'outline'}
+                  variant={ownerMode === 'select' || ownerMode === 'edit' ? 'default' : 'outline'}
                   onClick={() => setOwnerMode('select')}
                   className="flex-1"
                 >
@@ -393,7 +409,13 @@ export function PGFormPage() {
                 <Button
                   type="button"
                   variant={ownerMode === 'create' ? 'default' : 'outline'}
-                  onClick={() => setOwnerMode('create')}
+                  onClick={() => {
+                    setOwnerMode('create')
+                    setNewOwnerName('')
+                    setNewOwnerPhone('')
+                    setNewOwnerEmail('')
+                    setNewOwnerPassword('')
+                  }}
                   className="flex-1"
                 >
                   Create New Owner Inline
@@ -403,22 +425,59 @@ export function PGFormPage() {
               {ownerMode === 'select' ? (
                 <Field>
                   <FieldLabel htmlFor="owner-select">Select Owner *</FieldLabel>
-                  <Select value={selectedOwnerId} onValueChange={setSelectedOwnerId}>
-                    <SelectTrigger id="owner-select">
-                      <SelectValue placeholder="Choose an owner" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {(owners || []).map((o: any) => (
-                        <SelectItem key={o.id} value={o.id}>
-                          {o.full_name} {o.phone ? `(${o.phone})` : ''}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div className="flex gap-3">
+                    <div className="flex-1">
+                      <Select value={selectedOwnerId} onValueChange={setSelectedOwnerId}>
+                        <SelectTrigger id="owner-select">
+                          <SelectValue placeholder="Choose an owner" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {(owners || []).map((o: any) => (
+                            <SelectItem key={o.id} value={o.id}>
+                              {o.full_name} {o.phone ? `(${o.phone})` : ''}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    {selectedOwnerId && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                          const owner = (owners || []).find((o: any) => o.id === selectedOwnerId)
+                          if (owner) {
+                            setNewOwnerName(owner.full_name || '')
+                            setNewOwnerPhone(owner.phone || '')
+                            setNewOwnerEmail(owner.email || '')
+                            setOwnerMode('edit')
+                          }
+                        }}
+                        className="shrink-0"
+                      >
+                        Edit Selected Owner
+                      </Button>
+                    )}
+                  </div>
                 </Field>
               ) : (
                 <div className="space-y-4 border p-4 rounded-lg bg-muted/20">
-                  <h4 className="font-semibold text-sm">Create New Owner Details</h4>
+                  <div className="flex justify-between items-center">
+                    <h4 className="font-semibold text-sm">
+                      {ownerMode === 'create' ? 'Create New Owner Details' : 'Edit Owner Details'}
+                    </h4>
+                    {ownerMode === 'edit' && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setOwnerMode('select')}
+                        className="text-xs text-muted-foreground hover:text-foreground"
+                      >
+                        Back to Selection
+                      </Button>
+                    )}
+                  </div>
                   
                   <div className="grid grid-cols-2 gap-4">
                     <Field>
@@ -450,18 +509,21 @@ export function PGFormPage() {
                         value={newOwnerEmail}
                         onChange={(e) => setNewOwnerEmail(e.target.value)}
                         placeholder="e.g. ramesh@example.com"
+                        disabled={ownerMode === 'edit'}
                       />
                     </Field>
-                    <Field>
-                      <FieldLabel htmlFor="new-owner-password">Owner Password *</FieldLabel>
-                      <Input
-                        id="new-owner-password"
-                        type="password"
-                        value={newOwnerPassword}
-                        onChange={(e) => setNewOwnerPassword(e.target.value)}
-                        placeholder="Min 6 characters"
-                      />
-                    </Field>
+                    {ownerMode === 'create' && (
+                      <Field>
+                        <FieldLabel htmlFor="new-owner-password">Owner Password *</FieldLabel>
+                        <Input
+                          id="new-owner-password"
+                          type="password"
+                          value={newOwnerPassword}
+                          onChange={(e) => setNewOwnerPassword(e.target.value)}
+                          placeholder="Min 6 characters"
+                        />
+                      </Field>
+                    )}
                   </div>
                 </div>
               )}
