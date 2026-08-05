@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -67,6 +67,9 @@ export function PGFormPage() {
   const [newOwnerPassword, setNewOwnerPassword] = useState('')
   const [newOwnerPhone, setNewOwnerPhone] = useState('')
 
+  const [filterCity, setFilterCity] = useState<string>('')
+  const [filterLocality, setFilterLocality] = useState<string>('')
+
   const [sharingTypes, setSharingTypes] = useState<{ type: 1 | 2 | 3 | 4; price_monthly: string; price_daily: string; total_beds: string }[]>([])
   const [amenities, setAmenities] = useState<Record<AmenityItem['key'], boolean>>({
     wifi: false, ac: false, food_veg: false, food_nonveg: false,
@@ -106,6 +109,53 @@ export function PGFormPage() {
       }
     }
   }, [selectedOwnerId, owners, isAdmin])
+
+  // Query all listings for owner filter
+  const { data: pgListingsFilter } = useQuery({
+    queryKey: ['admin-pg-listings-filter'],
+    queryFn: async () => {
+      const { data } = await supabaseUntyped
+        .from('pg_listings')
+        .select('owner_id, city, locality')
+      return data || []
+    },
+    enabled: isAdmin,
+  })
+
+  const uniqueCities = useMemo(() => {
+    return Array.from(
+      new Set((pgListingsFilter || []).map((l: any) => l.city).filter(Boolean))
+    ).sort() as string[]
+  }, [pgListingsFilter])
+
+  const uniqueLocalities = useMemo(() => {
+    if (!filterCity || filterCity === 'all-cities') return []
+    return Array.from(
+      new Set(
+        (pgListingsFilter || [])
+          .filter((l: any) => l.city === filterCity)
+          .map((l: any) => l.locality)
+          .filter(Boolean)
+      )
+    ).sort() as string[]
+  }, [pgListingsFilter, filterCity])
+
+  const filteredOwners = useMemo(() => {
+    if (!owners) return []
+    const hasCityFilter = filterCity && filterCity !== 'all-cities'
+    const hasLocalityFilter = filterLocality && filterLocality !== 'all-localities'
+
+    if (!hasCityFilter) return owners
+
+    const matchingListings = (pgListingsFilter || []).filter((l: any) => {
+      const matchCity = l.city === filterCity
+      const matchLocality = hasLocalityFilter ? l.locality === filterLocality : true
+      return matchCity && matchLocality
+    })
+    const matchingOwnerIds = new Set(matchingListings.map((l: any) => l.owner_id))
+
+    return owners.filter((o: any) => matchingOwnerIds.has(o.id) || o.id === selectedOwnerId)
+  }, [owners, pgListingsFilter, filterCity, filterLocality, selectedOwnerId])
 
   const form = useForm<PGFormData>({
     resolver: zodResolver(pgSchema),
@@ -441,6 +491,50 @@ export function PGFormPage() {
 
               {ownerMode === 'select' ? (
                 <div className="space-y-4">
+                  {/* City and Locality filters */}
+                  <div className="grid grid-cols-2 gap-4 border p-3 rounded-md bg-muted/10">
+                    <Field>
+                      <FieldLabel htmlFor="filter-city">Filter by City</FieldLabel>
+                      <Select value={filterCity || 'all-cities'} onValueChange={(val) => {
+                        setFilterCity(val)
+                        setFilterLocality('')
+                      }}>
+                        <SelectTrigger id="filter-city">
+                          <SelectValue placeholder="All Cities" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all-cities">All Cities</SelectItem>
+                          {uniqueCities.map((city) => (
+                            <SelectItem key={city} value={city}>
+                              {city}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </Field>
+
+                    <Field>
+                      <FieldLabel htmlFor="filter-locality">Filter by Area</FieldLabel>
+                      <Select
+                        value={filterLocality || 'all-localities'}
+                        onValueChange={setFilterLocality}
+                        disabled={!filterCity || filterCity === 'all-cities'}
+                      >
+                        <SelectTrigger id="filter-locality">
+                          <SelectValue placeholder="All Areas" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all-localities">All Areas</SelectItem>
+                          {uniqueLocalities.map((loc) => (
+                            <SelectItem key={loc} value={loc}>
+                              {loc}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </Field>
+                  </div>
+
                   <Field>
                     <FieldLabel htmlFor="owner-select">Select Owner *</FieldLabel>
                     <div className="flex gap-3">
@@ -450,7 +544,7 @@ export function PGFormPage() {
                             <SelectValue placeholder="Choose an owner" />
                           </SelectTrigger>
                           <SelectContent>
-                            {(owners || []).map((o: any) => (
+                            {filteredOwners.map((o: any) => (
                               <SelectItem key={o.id} value={o.id}>
                                 {o.full_name} {o.phone ? `(${o.phone})` : ''}
                               </SelectItem>
