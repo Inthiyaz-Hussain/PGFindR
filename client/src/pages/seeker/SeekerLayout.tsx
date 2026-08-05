@@ -98,7 +98,9 @@ export function SeekerLayout() {
           <Outlet />
         </main>
       </div>
-      <Footer />
+      <div className="md:pl-16">
+        <Footer />
+      </div>
     </div>
   )
 }
