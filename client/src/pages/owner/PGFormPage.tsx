@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -89,6 +89,23 @@ export function PGFormPage() {
     },
     enabled: isAdmin,
   })
+
+  useEffect(() => {
+    if (isAdmin && owners && owners.length > 0) {
+      if (selectedOwnerId) {
+        const owner = (owners || []).find((o: any) => o.id === selectedOwnerId)
+        if (owner) {
+          setNewOwnerName(owner.full_name || '')
+          setNewOwnerPhone(owner.phone || '')
+          setNewOwnerEmail(owner.email || '')
+        }
+      } else {
+        setNewOwnerName('')
+        setNewOwnerPhone('')
+        setNewOwnerEmail('')
+      }
+    }
+  }, [selectedOwnerId, owners, isAdmin])
 
   const form = useForm<PGFormData>({
     resolver: zodResolver(pgSchema),
@@ -423,43 +440,65 @@ export function PGFormPage() {
               </div>
 
               {ownerMode === 'select' ? (
-                <Field>
-                  <FieldLabel htmlFor="owner-select">Select Owner *</FieldLabel>
-                  <div className="flex gap-3">
-                    <div className="flex-1">
-                      <Select value={selectedOwnerId} onValueChange={setSelectedOwnerId}>
-                        <SelectTrigger id="owner-select">
-                          <SelectValue placeholder="Choose an owner" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {(owners || []).map((o: any) => (
-                            <SelectItem key={o.id} value={o.id}>
-                              {o.full_name} {o.phone ? `(${o.phone})` : ''}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                <div className="space-y-4">
+                  <Field>
+                    <FieldLabel htmlFor="owner-select">Select Owner *</FieldLabel>
+                    <div className="flex gap-3">
+                      <div className="flex-1">
+                        <Select value={selectedOwnerId || undefined} onValueChange={setSelectedOwnerId}>
+                          <SelectTrigger id="owner-select">
+                            <SelectValue placeholder="Choose an owner" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {(owners || []).map((o: any) => (
+                              <SelectItem key={o.id} value={o.id}>
+                                {o.full_name} {o.phone ? `(${o.phone})` : ''}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      {selectedOwnerId && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => {
+                            const owner = (owners || []).find((o: any) => o.id === selectedOwnerId)
+                            if (owner) {
+                              setNewOwnerName(owner.full_name || '')
+                              setNewOwnerPhone(owner.phone || '')
+                              setNewOwnerEmail(owner.email || '')
+                              setOwnerMode('edit')
+                            }
+                          }}
+                          className="shrink-0"
+                        >
+                          Edit Selected Owner
+                        </Button>
+                      )}
                     </div>
-                    {selectedOwnerId && (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => {
-                          const owner = (owners || []).find((o: any) => o.id === selectedOwnerId)
-                          if (owner) {
-                            setNewOwnerName(owner.full_name || '')
-                            setNewOwnerPhone(owner.phone || '')
-                            setNewOwnerEmail(owner.email || '')
-                            setOwnerMode('edit')
-                          }
-                        }}
-                        className="shrink-0"
-                      >
-                        Edit Selected Owner
-                      </Button>
-                    )}
-                  </div>
-                </Field>
+                  </Field>
+
+                  {selectedOwnerId && (
+                    <div className="p-4 rounded-lg border bg-muted/10 space-y-2">
+                      <h4 className="font-semibold text-xs uppercase tracking-wider text-muted-foreground">Autofilled Owner Details</h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm pt-1">
+                        <div>
+                          <span className="text-muted-foreground block text-xs">Full Name</span>
+                          <span className="font-medium">{newOwnerName || 'N/A'}</span>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground block text-xs">Phone</span>
+                          <span className="font-medium">{newOwnerPhone || 'N/A'}</span>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground block text-xs">Email</span>
+                          <span className="font-medium">{newOwnerEmail || 'N/A'}</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
               ) : (
                 <div className="space-y-4 border p-4 rounded-lg bg-muted/20">
                   <div className="flex justify-between items-center">

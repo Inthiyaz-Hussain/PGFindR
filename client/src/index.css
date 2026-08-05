@@ -175,6 +175,15 @@
   body {
     @apply bg-background text-foreground;
     font-family: 'Lora', Georgia, Times, serif;
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+  html {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+  ::-webkit-scrollbar {
+    display: none;
   }
   /* Hide spinner arrows on number inputs */
   input::-webkit-outer-spin-button,
