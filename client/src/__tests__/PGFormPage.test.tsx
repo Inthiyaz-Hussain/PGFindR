@@ -103,6 +103,6 @@ describe('PGFormPage Component - Owner Assignment Buttons', () => {
 
     // Form inputs for owner creation should disappear, and Select field placeholder should be present
     expect(screen.queryByText('Create New Owner Details')).not.toBeInTheDocument()
-    expect(screen.getByText('Choose an owner')).toBeInTheDocument()
+    expect(screen.getByText('John Doe')).toBeInTheDocument()
   })
 })
