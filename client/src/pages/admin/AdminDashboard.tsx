@@ -63,13 +63,17 @@ export function AdminDashboard() {
       {/* Stats Grid */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
         {[
-          { label: 'Total PGs', value: stats?.totalPGs, icon: Building2, color: 'text-blue-600 bg-blue-50 dark:bg-blue-950/30' },
-          { label: 'Active PGs', value: stats?.approvedPGs, icon: ShieldCheck, color: 'text-green-600 bg-green-50 dark:bg-green-950/30' },
-          { label: 'Seekers', value: stats?.totalSeekers, icon: Users, color: 'text-violet-600 bg-violet-50 dark:bg-violet-950/30' },
-          { label: 'Owners', value: stats?.totalOwners, icon: UserCheck, color: 'text-amber-600 bg-amber-50 dark:bg-amber-950/30' },
-          { label: 'This Month Revenue', value: `¥${(stats?.thisMonthRevenue || 0).toLocaleString('en-IN')}`, icon: IndianRupee, color: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30', isString: true },
-        ].map(({ label, value, icon: Icon, color, isString }) => (
-          <Card key={label}>
+          { label: 'Total PGs', value: stats?.totalPGs, icon: Building2, color: 'text-blue-600 bg-blue-50 dark:bg-blue-950/30', route: '/admin/pgs' },
+          { label: 'Active PGs', value: stats?.approvedPGs, icon: ShieldCheck, color: 'text-green-600 bg-green-50 dark:bg-green-950/30', route: '/admin/pgs?status=approved' },
+          { label: 'Seekers', value: stats?.totalSeekers, icon: Users, color: 'text-violet-600 bg-violet-50 dark:bg-violet-950/30', route: '/admin/users' },
+          { label: 'Owners', value: stats?.totalOwners, icon: UserCheck, color: 'text-amber-600 bg-amber-50 dark:bg-amber-950/30', route: '/admin/owners' },
+          { label: 'This Month Revenue', value: `¥${(stats?.thisMonthRevenue || 0).toLocaleString('en-IN')}`, icon: IndianRupee, color: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30', isString: true, route: '/admin/commission' },
+        ].map(({ label, value, icon: Icon, color, isString, route }) => (
+          <Card 
+            key={label}
+            className="cursor-pointer hover:shadow-md hover:border-indigo-500/40 transition-all duration-200 select-none"
+            onClick={() => navigate(route)}
+          >
             <CardContent className="pt-5">
               <div className="flex items-start gap-3">
                 <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${color}`}>
@@ -91,7 +95,10 @@ export function AdminDashboard() {
 
       {/* Secondary Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        <Card>
+        <Card 
+          className="cursor-pointer hover:shadow-md hover:border-indigo-500/40 transition-all duration-200 select-none"
+          onClick={() => navigate('/admin/pgs?status=pending')}
+        >
           <CardContent className="pt-5">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -103,14 +110,17 @@ export function AdminDashboard() {
                   <div className="text-xs text-muted-foreground">PGs Pending Approval</div>
                 </div>
               </div>
-              <Button variant="outline" size="sm" onClick={() => navigate('/admin/pgs?status=pending')}>
+              <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); navigate('/admin/pgs?status=pending'); }}>
                 Review
               </Button>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card 
+          className="cursor-pointer hover:shadow-md hover:border-indigo-500/40 transition-all duration-200 select-none"
+          onClick={() => navigate('/admin/transactions')}
+        >
           <CardContent className="pt-5">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -122,14 +132,17 @@ export function AdminDashboard() {
                   <div className="text-xs text-muted-foreground">Bookings Pending</div>
                 </div>
               </div>
-              <Button variant="outline" size="sm" onClick={() => navigate('/admin/transactions')}>
+              <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); navigate('/admin/transactions'); }}>
                 View
               </Button>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card 
+          className="cursor-pointer hover:shadow-md hover:border-indigo-500/40 transition-all duration-200 select-none"
+          onClick={() => navigate('/admin/transactions')}
+        >
           <CardContent className="pt-5">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -141,7 +154,7 @@ export function AdminDashboard() {
                   <div className="text-xs text-muted-foreground">Completed Bookings</div>
                 </div>
               </div>
-              <Button variant="outline" size="sm" onClick={() => navigate('/admin/transactions')}>
+              <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); navigate('/admin/transactions'); }}>
                 View
               </Button>
             </div>

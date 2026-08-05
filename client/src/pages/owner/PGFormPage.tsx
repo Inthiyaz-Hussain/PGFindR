@@ -170,6 +170,21 @@ export function PGFormPage() {
     },
   })
 
+  const watchedCity = form.watch('city')
+  const watchedLocality = form.watch('locality')
+
+  useEffect(() => {
+    if (watchedCity) {
+      setFilterCity(watchedCity)
+    }
+  }, [watchedCity])
+
+  useEffect(() => {
+    if (watchedLocality) {
+      setFilterLocality(watchedLocality)
+    }
+  }, [watchedLocality])
+
   // Load existing data for edit
   useQuery({
     queryKey: ['pg-edit', id],
