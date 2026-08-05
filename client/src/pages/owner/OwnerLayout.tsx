@@ -1,5 +1,5 @@
 import { NavLink, Outlet } from 'react-router-dom'
-import { Building2, LayoutDashboard, MessageSquare, LogOut, IndianRupee, FileCheck, Info, ChevronRight } from 'lucide-react'
+import { Building2, LayoutDashboard, MessageSquare, LogOut, IndianRupee, FileCheck, Info } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 
@@ -32,12 +32,7 @@ export function OwnerLayout() {
       <Navbar />
       <div className="flex flex-1">
         {/* Desktop Sidebar */}
-        <aside className="hidden md:flex fixed left-0 top-16 bottom-0 z-40 w-64 flex-col border-r bg-sidebar text-sidebar-foreground pt-4 shadow-xl transition-transform duration-300 ease-in-out -translate-x-[calc(100%-12px)] hover:translate-x-0 group">
-          {/* Protruding Chevron indicator when collapsed */}
-          <div className="absolute top-1/2 -translate-y-1/2 -right-3.5 flex h-12 w-4 items-center justify-center rounded-r-md border-y border-r bg-sidebar text-sidebar-foreground/60 shadow-sm cursor-pointer transition-opacity group-hover:opacity-0 duration-200">
-            <ChevronRight className="size-3 animate-pulse" />
-          </div>
-
+        <aside className="hidden md:flex fixed left-0 top-16 bottom-0 z-40 w-16 hover:w-64 flex-col border-r bg-sidebar text-sidebar-foreground pt-4 shadow-xl transition-all duration-300 ease-in-out group overflow-hidden">
           <div className="flex-1 p-3 space-y-1">
             {NAV_ITEMS.map(({ to, label, icon: Icon, end }) => (
               <NavLink
@@ -45,38 +40,46 @@ export function OwnerLayout() {
                 to={to}
                 end={end}
                 className={({ isActive }) => cn(
-                  'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors',
+                  'flex items-center rounded-lg p-2.5 text-sm transition-colors overflow-hidden whitespace-nowrap',
                   isActive
                     ? 'bg-sidebar-accent text-sidebar-accent-foreground font-medium'
                     : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
                 )}
               >
-                <Icon className="size-4 shrink-0" />
-                {label}
+                <div className="flex items-center justify-center size-5 shrink-0 mr-4">
+                  <Icon className="size-5" />
+                </div>
+                <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                  {label}
+                </span>
               </NavLink>
             ))}
 
           </div>
 
-          <div className="p-3 border-t border-sidebar-border">
-            <div className="flex items-center gap-3 rounded-lg p-2 hover:bg-sidebar-accent/50 transition-colors">
-              <Avatar className="size-9">
+          <div className="p-3 border-t border-sidebar-border overflow-hidden">
+            <div className="flex items-center rounded-lg p-1 whitespace-nowrap">
+              <Avatar className="size-9 shrink-0">
                 <AvatarFallback className="text-xs bg-sidebar-accent text-sidebar-accent-foreground">{initials}</AvatarFallback>
               </Avatar>
-              <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium truncate">{profile?.full_name || 'Owner'}</div>
-                <div className="text-xs text-sidebar-foreground/60">PG Owner</div>
+              <div className="flex-1 min-w-0 ml-3 flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                <div className="min-w-0 mr-2">
+                  <div className="text-sm font-medium truncate">{profile?.full_name || 'Owner'}</div>
+                  <div className="text-xs text-sidebar-foreground/60">PG Owner</div>
+                </div>
+                <div className="flex items-center gap-1 shrink-0">
+                  <NotificationBell />
+                  <Button variant="ghost" size="icon-sm" onClick={signOut} title="Sign out" className="text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent">
+                    <LogOut className="size-4" />
+                  </Button>
+                </div>
               </div>
-              <NotificationBell />
-              <Button variant="ghost" size="icon-sm" onClick={signOut} title="Sign out" className="text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent">
-                <LogOut className="size-4" />
-              </Button>
             </div>
           </div>
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 min-w-0 bg-background md:pl-6">
+        <main className="flex-1 min-w-0 bg-background md:pl-16">
           <Outlet />
         </main>
       </div>
