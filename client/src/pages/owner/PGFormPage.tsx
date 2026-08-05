@@ -95,20 +95,22 @@ export function PGFormPage() {
 
   useEffect(() => {
     if (isAdmin && owners && owners.length > 0) {
-      if (selectedOwnerId) {
-        const owner = (owners || []).find((o: any) => o.id === selectedOwnerId)
-        if (owner) {
-          setNewOwnerName(owner.full_name || '')
-          setNewOwnerPhone(owner.phone || '')
-          setNewOwnerEmail(owner.email || '')
+      if (ownerMode === 'select' || ownerMode === 'edit') {
+        if (selectedOwnerId) {
+          const owner = (owners || []).find((o: any) => o.id === selectedOwnerId)
+          if (owner) {
+            setNewOwnerName(owner.full_name || '')
+            setNewOwnerPhone(owner.phone || '')
+            setNewOwnerEmail(owner.email || '')
+          }
+        } else {
+          setNewOwnerName('')
+          setNewOwnerPhone('')
+          setNewOwnerEmail('')
         }
-      } else {
-        setNewOwnerName('')
-        setNewOwnerPhone('')
-        setNewOwnerEmail('')
       }
     }
-  }, [selectedOwnerId, owners, isAdmin])
+  }, [selectedOwnerId, owners, isAdmin, ownerMode])
 
   // Query all listings for owner filter
   const { data: pgListingsFilter } = useQuery({
