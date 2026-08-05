@@ -1,5 +1,5 @@
 import { NavLink, Outlet } from 'react-router-dom'
-import { Building2, Search, MessageSquare, BedDouble, User, LogOut } from 'lucide-react'
+import { Building2, Search, MessageSquare, BedDouble, User, LogOut, Info } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Separator } from '@/components/ui/separator'
@@ -15,6 +15,7 @@ const NAV_ITEMS = [
   { to: '/seeker/inquiries', label: 'My Inquiries', icon: MessageSquare, end: false },
   { to: '/seeker/bookings', label: 'My Bookings', icon: BedDouble, end: false },
   { to: '/seeker/profile', label: 'Profile', icon: User, end: false },
+  { to: '/seeker/about', label: 'About', icon: Info, end: false },
 ]
 
 export function SeekerLayout() {

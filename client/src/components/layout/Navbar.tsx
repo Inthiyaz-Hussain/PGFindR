@@ -13,7 +13,8 @@ import {
   Bookmark,
   ShieldCheck,
   MessageSquare,
-  UserCheck
+  UserCheck,
+  Info
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -161,6 +162,12 @@ export function Navbar({
                 >
                   Earnings
                 </Link>
+                <Link
+                  to="/owner/about"
+                  className="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors px-2 py-1.5 rounded-lg hover:bg-slate-100/60 dark:hover:bg-slate-800/60"
+                >
+                  About
+                </Link>
 
               </>
             ) : isAdminPath ? (
@@ -210,6 +217,12 @@ export function Navbar({
                   className="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors px-2 py-1.5 rounded-lg hover:bg-slate-100/60 dark:hover:bg-slate-800/60"
                 >
                   Inquiries
+                </Link>
+                <Link
+                  to="/seeker/about"
+                  className="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors px-2 py-1.5 rounded-lg hover:bg-slate-100/60 dark:hover:bg-slate-800/60"
+                >
+                  About
                 </Link>
                 <button
                   onClick={() => navigate('/seeker/profile?tab=saved')}
@@ -429,6 +442,14 @@ export function Navbar({
                           <MessageSquare className="h-5 w-5 text-violet-500 dark:text-violet-400" />
                           <span>Inquiries</span>
                         </Link>
+                        <Link
+                          to="/owner/about"
+                          onClick={() => setMobileMenuOpen(false)}
+                          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                        >
+                          <Info className="h-5 w-5 text-blue-500 dark:text-blue-400" />
+                          <span>About</span>
+                        </Link>
 
                       </>
                     ) : isAdminPath ? (
@@ -483,6 +504,14 @@ export function Navbar({
                         >
                           <MessageSquare className="h-5 w-5 text-violet-500 dark:text-violet-400" />
                           <span>Inquiries</span>
+                        </Link>
+                        <Link
+                          to="/seeker/about"
+                          onClick={() => setMobileMenuOpen(false)}
+                          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                        >
+                          <Info className="h-5 w-5 text-blue-500 dark:text-blue-400" />
+                          <span>About</span>
                         </Link>
                       </>
                     ) : (

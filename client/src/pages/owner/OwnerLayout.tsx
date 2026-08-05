@@ -1,5 +1,5 @@
 import { NavLink, Outlet } from 'react-router-dom'
-import { Building2, LayoutDashboard, MessageSquare, LogOut, IndianRupee, FileCheck } from 'lucide-react'
+import { Building2, LayoutDashboard, MessageSquare, LogOut, IndianRupee, FileCheck, Info } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 
@@ -17,6 +17,7 @@ const NAV_ITEMS = [
   { to: '/owner/inquiries', label: 'Inquiries', icon: MessageSquare, end: true },
   { to: '/owner/earnings', label: 'Earnings', icon: IndianRupee, end: true },
   { to: '/owner/kyc', label: 'KYC', icon: FileCheck, end: true },
+  { to: '/owner/about', label: 'About', icon: Info, end: true },
 ]
 
 export function OwnerLayout() {

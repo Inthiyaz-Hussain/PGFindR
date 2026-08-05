@@ -25,6 +25,7 @@ import { SeekerDashboard } from '@/pages/seeker/SeekerDashboard'
 import { InquiriesPage } from '@/pages/seeker/InquiriesPage'
 import { BookingsPage } from '@/pages/seeker/BookingsPage'
 import { ProfilePage } from '@/pages/seeker/ProfilePage'
+import { AboutPage as SeekerAboutPage } from '@/pages/seeker/AboutPage'
 
 // Owner
 import { OwnerLayout } from '@/pages/owner/OwnerLayout'
@@ -35,6 +36,7 @@ import { AvailabilityPage } from '@/pages/owner/AvailabilityPage'
 import { OwnerInquiriesPage } from '@/pages/owner/OwnerInquiriesPage'
 import { OwnerEarningsPage } from '@/pages/owner/OwnerEarningsPage'
 import { KYCPage } from '@/pages/owner/KYCPage'
+import { AboutPage as OwnerAboutPage } from '@/pages/owner/AboutPage'
 
 // Admin
 import { AdminLayout } from '@/pages/admin/AdminLayout'
@@ -82,6 +84,7 @@ export function App() {
                 <Route path="/seeker/inquiries" element={<InquiriesPage />} />
                 <Route path="/seeker/bookings" element={<BookingsPage />} />
                 <Route path="/seeker/profile" element={<ProfilePage />} />
+                <Route path="/seeker/about" element={<SeekerAboutPage />} />
               </Route>
 
               {/* Owner */}
@@ -96,6 +99,7 @@ export function App() {
                   <Route path="/owner/inquiries" element={<OwnerInquiriesPage />} />
                   <Route path="/owner/earnings" element={<OwnerEarningsPage />} />
                   <Route path="/owner/kyc" element={<KYCPage />} />
+                  <Route path="/owner/about" element={<OwnerAboutPage />} />
                 </Route>
               </Route>
 
