@@ -504,7 +504,7 @@ export function PGFormPage() {
                         <SelectTrigger id="filter-city">
                           <SelectValue placeholder="All Cities" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent position="popper">
                           <SelectItem value="all-cities">All Cities</SelectItem>
                           {uniqueCities.map((city) => (
                             <SelectItem key={city} value={city}>
@@ -525,7 +525,7 @@ export function PGFormPage() {
                         <SelectTrigger id="filter-locality">
                           <SelectValue placeholder="All Areas" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent position="popper">
                           <SelectItem value="all-localities">All Areas</SelectItem>
                           {uniqueLocalities.map((loc) => (
                             <SelectItem key={loc} value={loc}>
@@ -545,7 +545,7 @@ export function PGFormPage() {
                           <SelectTrigger id="owner-select">
                             <SelectValue placeholder="Choose an owner" />
                           </SelectTrigger>
-                          <SelectContent>
+                          <SelectContent position="popper">
                             {filteredOwners.map((o: any) => (
                               <SelectItem key={o.id} value={o.id}>
                                 {o.full_name} {o.phone ? `(${o.phone})` : ''}
