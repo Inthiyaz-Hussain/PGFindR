@@ -79,11 +79,34 @@ export function OwnerLayout() {
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 min-w-0 bg-background md:pl-16">
+        <main className="flex-1 min-w-0 bg-background md:pl-16 pb-20 md:pb-0">
           <Outlet />
         </main>
       </div>
-      <div className="md:pl-16">
+
+      {/* Mobile Bottom Navigation */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 h-16 backdrop-blur-md bg-white/90 dark:bg-slate-900/90 border-t border-slate-200 dark:border-slate-800 flex items-center justify-around px-2 shadow-[0_-4px_12px_rgba(0,0,0,0.05)] select-none">
+        {NAV_ITEMS.filter(item => item.to !== '/owner/about').map(({ to, label, icon: Icon, end }) => {
+          return (
+            <NavLink
+              key={to}
+              to={to}
+              end={end}
+              className={({ isActive }) => cn(
+                'flex flex-col items-center justify-center flex-1 h-full py-1 text-[11px] transition-colors',
+                isActive
+                  ? 'text-indigo-600 dark:text-indigo-400 font-semibold'
+                  : 'text-muted-foreground hover:text-foreground'
+              )}
+            >
+              <Icon className="size-5 mb-1" />
+              <span>{label}</span>
+            </NavLink>
+          )
+        })}
+      </nav>
+
+      <div className="md:pl-16 pb-20 md:pb-0">
         <Footer />
       </div>
     </div>
