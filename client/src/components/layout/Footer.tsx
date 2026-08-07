@@ -1,4 +1,7 @@
 import { Link } from 'react-router-dom'
+import { useAuth } from '@/hooks/useAuth'
+import { useQuery } from '@tanstack/react-query'
+import { supabaseUntyped } from '@/lib/supabase'
 import {
   Building2,
   ShieldCheck,
@@ -42,7 +45,7 @@ export function Footer({ compact = false }: FooterProps) {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-
+  const { user } = useAuth()
   const pathname = window.location.pathname
   const role = (
     pathname.startsWith('/admin') ? 'admin' :
@@ -50,6 +53,29 @@ export function Footer({ compact = false }: FooterProps) {
     pathname.startsWith('/seeker') ? 'seeker' :
     'public'
   )
+
+  const isDemoId = user?.id === '00000000-0000-0000-0000-000000000002'
+
+  const { data: kyc } = useQuery({
+    queryKey: ['kyc-status-footer', user?.id],
+    queryFn: async () => {
+      if (!user) return null
+      if (isDemoId) {
+        const savedKyc = localStorage.getItem(`demo_kyc_${user.id}`)
+        if (savedKyc) {
+          return JSON.parse(savedKyc)
+        }
+        return null
+      }
+      const { data } = await supabaseUntyped
+        .from('owner_kyc')
+        .select('status')
+        .eq('owner_id', user.id)
+        .maybeSingle()
+      return data
+    },
+    enabled: !!user && role === 'owner'
+  })
 
   return (
     <footer className="w-full bg-slate-900 text-slate-400 border-t border-slate-800">
@@ -324,15 +350,39 @@ export function Footer({ compact = false }: FooterProps) {
                       <Building2 className="h-5 w-5" />
                       <span className="text-sm font-bold text-white uppercase tracking-wider">Owner Support</span>
                     </div>
-                    <p className="text-xs text-slate-400 leading-relaxed">
-                      Need assistance with your PG listings, payouts, or KYC verification? Contact our dedicated support desk.
-                    </p>
-                    <Link
-                      to="/owner/kyc"
-                      className="w-full flex items-center justify-center gap-2 py-2 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm transition-all shadow-md active:scale-95 duration-150 text-center"
-                    >
-                      Complete KYC
-                    </Link>
+                    {kyc?.status === 'approved' ? (
+                      <>
+                        <p className="text-xs text-slate-400 leading-relaxed">
+                          Your account is verified. For support with listings or payouts, contact our priority helpdesk:
+                        </p>
+                        <div className="space-y-2 text-xs text-slate-300 border-t border-slate-800 pt-3">
+                          <div className="flex items-center justify-between">
+                            <span className="text-slate-500">Helpline:</span>
+                            <span className="font-semibold text-indigo-450">+91 80 4719 3210</span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-slate-500">Email:</span>
+                            <span className="font-semibold hover:text-white transition-colors">support@pgfindr.in</span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-slate-500">Available:</span>
+                            <span className="font-semibold text-emerald-450">9 AM - 6 PM (Mon-Sat)</span>
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-xs text-slate-400 leading-relaxed">
+                          Need assistance with your PG listings, payouts, or KYC verification? Contact our dedicated support desk.
+                        </p>
+                        <Link
+                          to="/owner/kyc"
+                          className="w-full flex items-center justify-center gap-2 py-2 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm transition-all shadow-md active:scale-95 duration-150 text-center"
+                        >
+                          Complete KYC
+                        </Link>
+                      </>
+                    )}
                   </div>
                 </div>
               )}
