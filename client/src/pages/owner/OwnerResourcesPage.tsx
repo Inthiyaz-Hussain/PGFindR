@@ -29,7 +29,7 @@ export function OwnerResourcesPage() {
   const [includeFood, setIncludeFood] = useState(true)
   const [includeWifi, setIncludeWifi] = useState(true)
   const [includeAc, setIncludeAc] = useState(false)
-  const [commissionRate, setCommissionRate] = useState(10) // 10% standard
+  const commissionRate = 10 // 10% standard
 
   const calculatorResults = useMemo(() => {
     const rent = parseFloat(baseRent) || 0

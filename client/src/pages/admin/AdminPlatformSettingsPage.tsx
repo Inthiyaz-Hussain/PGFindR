@@ -1,14 +1,13 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { useAuth } from '@/hooks/useAuth'
 import { supabaseUntyped } from '@/lib/supabase'
-import { Settings, Save, Loader2, CheckCircle2, History, Percent, AlertCircle } from 'lucide-react'
+import { Settings, Save, Loader2, CheckCircle2, History, AlertCircle } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface PlatformSettingRow {
@@ -34,7 +33,7 @@ export function AdminPlatformSettingsPage() {
   })
 
   // Query Settings
-  const { data: dbSettings, isLoading } = useQuery({
+  useQuery({
     queryKey: ['admin-platform-settings'],
     queryFn: async () => {
       if (isDemo) {

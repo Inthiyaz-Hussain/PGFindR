@@ -29,7 +29,7 @@ import { SplashScreen } from '@/components/home/SplashScreen'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useAuth } from '@/hooks/useAuth'
-import { supabase } from '@/lib/supabase'
+import { supabaseUntyped } from '@/lib/supabase'
 import './onboarding.css'
 
 export function HomePage() {
@@ -145,9 +145,9 @@ export function HomePage() {
 
       // Create initial PG listing automatically
       try {
-        const { data: userData } = await supabase.auth.getUser()
+        const { data: userData } = await supabaseUntyped.auth.getUser()
         if (userData?.user) {
-          const { error: listingError } = await supabase
+          const { error: listingError } = await supabaseUntyped
             .from('pg_listings')
             .insert({
               owner_id: userData.user.id,

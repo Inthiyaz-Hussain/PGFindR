@@ -1,7 +1,7 @@
 import { useSearchParams } from 'react-router-dom'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
-import { ShieldCheck, Receipt, HelpCircle, FileText, CheckCircle2, AlertTriangle, AlertCircle, Compass } from 'lucide-react'
+import { ShieldCheck, Receipt, HelpCircle, FileText, CheckCircle2, AlertTriangle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const TABS = [

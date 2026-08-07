@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useRef, useState } from 'react'
 import type { User, Session } from '@supabase/supabase-js'
-import { supabase } from '@/lib/supabase'
-import type { Profile } from '@/types'
+import { supabase, supabaseUntyped } from '@/lib/supabase'
+import type { Profile, UserRole } from '@/types'
 
 interface RegisterOptions {
   email: string
@@ -58,12 +58,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (isDemoId) {
       const role = userId === '00000000-0000-0000-0000-000000000003' ? 'admin' : userId === '00000000-0000-0000-0000-000000000002' ? 'owner' : 'seeker'
       const savedProfile = localStorage.getItem(`demo_profile_${role}`)
-      const p = savedProfile ? JSON.parse(savedProfile) : {
+      const p: Profile = savedProfile ? JSON.parse(savedProfile) : {
         id: userId,
         full_name: role.charAt(0).toUpperCase() + role.slice(1) + ' Test User',
-        role,
+        role: role as UserRole,
         phone: '+91 9999999999',
+        avatar_url: null,
         created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
       }
       if (mounted.current) setProfile(p)
       setProfileLoading(false)
@@ -71,7 +73,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
-      const { data } = await supabase
+      const { data } = await supabaseUntyped
         .from('profiles')
         .select('*')
         .eq('id', userId)
@@ -97,14 +99,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                      user?.id === '00000000-0000-0000-0000-000000000001'
     if (isDemoId && user) {
       const role = user.id === '00000000-0000-0000-0000-000000000003' ? 'admin' : user.id === '00000000-0000-0000-0000-000000000002' ? 'owner' : 'seeker'
-      const currentProfile = profile || {
+      const currentProfile: Profile = profile || {
         id: user.id,
         full_name: role.charAt(0).toUpperCase() + role.slice(1) + ' Test User',
-        role,
+        role: role as UserRole,
         phone: '+91 9999999999',
+        avatar_url: null,
         created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       }
-      const updatedProfile = { ...currentProfile, ...updates, updated_at: new Date().toISOString() }
+      const updatedProfile: Profile = { ...currentProfile, ...updates, updated_at: new Date().toISOString() }
       localStorage.setItem(`demo_profile_${role}`, JSON.stringify(updatedProfile))
       if (mounted.current) setProfile(updatedProfile)
       return { error: null }
@@ -113,7 +117,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!user) return { error: new Error('User not authenticated') }
     
     try {
-      const { error } = await supabase
+      const { error } = await supabaseUntyped
         .from('profiles')
         .update(updates)
         .eq('id', user.id)
@@ -146,7 +150,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const role = rawMetadata?.role || 'seeker'
         
         try {
-          const { error: insertError } = await supabase
+          const { error: insertError } = await supabaseUntyped
             .from('profiles')
             .insert({
               id: session.user.id,
@@ -165,7 +169,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const avatarUrl = session.user.user_metadata.picture || session.user.user_metadata.avatar_url || ''
         if (avatarUrl) {
           try {
-            await supabase
+            await supabaseUntyped
               .from('profiles')
               .update({ avatar_url: avatarUrl })
               .eq('id', session.user.id)
