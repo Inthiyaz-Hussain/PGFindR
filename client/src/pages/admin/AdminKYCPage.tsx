@@ -33,12 +33,80 @@ export function AdminKYCPage() {
         .from('owner_kyc')
         .select('*, owner:profiles!owner_kyc_owner_id_fkey(full_name, phone)')
         .order('created_at', { ascending: false })
-      return (data || []) as KYCWithOwner[]
+      
+      const kList = (data || []) as KYCWithOwner[]
+      const demoOwnerId = '00000000-0000-0000-0000-000000000002'
+      const savedKyc = localStorage.getItem(`demo_kyc_${demoOwnerId}`)
+      
+      if (savedKyc) {
+        const k = JSON.parse(savedKyc)
+        if (!kList.some(item => item.owner_id === demoOwnerId)) {
+          kList.unshift({
+            ...k,
+            owner: {
+              full_name: 'Rajesh Sharma (Bangalore Owner)',
+              phone: '+91 9876543210'
+            }
+          })
+        } else {
+          const index = kList.findIndex(item => item.owner_id === demoOwnerId)
+          kList[index] = {
+            ...kList[index],
+            ...k,
+            owner: kList[index].owner || {
+              full_name: 'Rajesh Sharma (Bangalore Owner)',
+              phone: '+91 9876543210'
+            }
+          }
+        }
+      } else {
+        if (!kList.some(item => item.owner_id === demoOwnerId)) {
+          kList.unshift({
+            id: 'demo-kyc-id',
+            owner_id: demoOwnerId,
+            pan_number: 'ABCDE1234F',
+            aadhaar_number: '123456789012',
+            bank_account: '91827364501',
+            bank_ifsc: 'SBIN0001234',
+            bank_name: 'State Bank of India',
+            status: 'pending',
+            admin_notes: null,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            owner: {
+              full_name: 'Rajesh Sharma (Bangalore Owner)',
+              phone: '+91 9876543210'
+            }
+          })
+        }
+      }
+      
+      return kList
     },
   })
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, status, admin_notes }: { id: string; status: KYCStatus; admin_notes?: string }) => {
+      const demoOwnerId = '00000000-0000-0000-0000-000000000002'
+      const kycItem = kycList?.find(k => k.id === id)
+      
+      if (kycItem?.owner_id === demoOwnerId || id === 'demo-kyc-id' || id.startsWith('demo-')) {
+        const existingKyc = kycItem || {
+          id: id || 'demo-kyc-id',
+          owner_id: demoOwnerId,
+          status: 'pending',
+          created_at: new Date().toISOString(),
+        }
+        const updatedKyc = {
+          ...existingKyc,
+          status,
+          admin_notes: admin_notes || null,
+          updated_at: new Date().toISOString(),
+        }
+        localStorage.setItem(`demo_kyc_${demoOwnerId}`, JSON.stringify(updatedKyc))
+        return
+      }
+
       const { error } = await (supabase
         .from('owner_kyc') as any)
         .update({ status, admin_notes: admin_notes || null, updated_at: new Date().toISOString() })

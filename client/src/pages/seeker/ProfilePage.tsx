@@ -10,8 +10,8 @@ import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
 
 export function ProfilePage() {
-  const { user, profile, refreshProfile } = useAuth()
-  const isSeeker = profile?.role === 'seeker'
+  const { user, profile, updateProfile } = useAuth()
+  const isAuthed = !!profile
   const [fullName, setFullName] = useState('')
   const [phone, setPhone] = useState('')
   const [email, setEmail] = useState('')
@@ -19,7 +19,7 @@ export function ProfilePage() {
 
   // Sync state with profile or localStorage
   useEffect(() => {
-    if (isSeeker && profile) {
+    if (isAuthed && profile) {
       setFullName(profile.full_name || '')
       setPhone(profile.phone || '')
       setEmail(user?.email || '')
@@ -28,7 +28,7 @@ export function ProfilePage() {
       setPhone(localStorage.getItem('seeker_phone') || '')
       setEmail(localStorage.getItem('seeker_email') || '')
     }
-  }, [profile, user, isSeeker])
+  }, [profile, user, isAuthed])
 
   const initials = fullName
     ? fullName.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()
@@ -37,16 +37,16 @@ export function ProfilePage() {
   async function handleSave(e: React.FormEvent) {
     e.preventDefault()
     setSaving(true)
-    if (isSeeker && user) {
-      const { error } = await (supabase
-        .from('profiles') as any)
-        .update({ full_name: fullName, phone, updated_at: new Date().toISOString() })
-        .eq('id', user.id)
+    if (isAuthed && user) {
+      const { error } = await updateProfile({
+        full_name: fullName,
+        phone,
+        updated_at: new Date().toISOString()
+      })
       setSaving(false)
       if (error) {
         toast.error('Failed to save profile')
       } else {
-        await refreshProfile()
         toast.success('Profile updated!')
       }
     } else {
@@ -72,8 +72,8 @@ export function ProfilePage() {
               <AvatarFallback className="text-xl font-semibold">{initials}</AvatarFallback>
             </Avatar>
             <div>
-              <CardTitle className="text-lg">{fullName || 'Guest Seeker'}</CardTitle>
-              <p className="text-sm text-muted-foreground capitalize">{(isSeeker ? profile?.role : null) || 'Guest Seeker'}</p>
+              <CardTitle className="text-lg">{fullName || (isAuthed ? 'User' : 'Guest Seeker')}</CardTitle>
+              <p className="text-sm text-muted-foreground capitalize">{profile?.role || 'Guest Seeker'}</p>
             </div>
           </div>
         </CardHeader>

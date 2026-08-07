@@ -22,10 +22,31 @@ export function KYCPage() {
   const queryClient = useQueryClient()
   const [form, setForm] = useState({ pan_number: '', aadhaar_number: '', bank_account: '', bank_ifsc: '', bank_name: '' })
 
+  const isDemoId = user?.id === '00000000-0000-0000-0000-000000000003' || 
+                   user?.id === '00000000-0000-0000-0000-000000000002' || 
+                   user?.id === '00000000-0000-0000-0000-000000000001'
+
   const { data: kyc, isLoading } = useQuery({
     queryKey: ['kyc', user?.id],
     queryFn: async () => {
-      const { data } = await supabase.from('owner_kyc').select('*').eq('owner_id', user!.id).single()
+      if (isDemoId) {
+        const savedKyc = localStorage.getItem(`demo_kyc_${user!.id}`)
+        if (savedKyc) {
+          const k = JSON.parse(savedKyc) as OwnerKYC
+          setForm({
+            pan_number: k.pan_number || '',
+            aadhaar_number: k.aadhaar_number || '',
+            bank_account: k.bank_account || '',
+            bank_ifsc: k.bank_ifsc || '',
+            bank_name: k.bank_name || '',
+          })
+          return k
+        }
+        return null
+      }
+
+      const { data, error } = await supabase.from('owner_kyc').select('*').eq('owner_id', user!.id).maybeSingle()
+      if (error) throw error
       if (data) {
         const k = data as OwnerKYC
         setForm({
@@ -43,6 +64,23 @@ export function KYCPage() {
 
   const saveMutation = useMutation({
     mutationFn: async () => {
+      if (isDemoId) {
+        const existingKyc = kyc || {
+          id: `demo-kyc-${user!.id}`,
+          owner_id: user!.id,
+          status: 'pending',
+          created_at: new Date().toISOString(),
+        }
+        const updatedKyc = {
+          ...existingKyc,
+          ...form,
+          status: 'pending', // Reset to pending for review when owner updates it
+          updated_at: new Date().toISOString()
+        }
+        localStorage.setItem(`demo_kyc_${user!.id}`, JSON.stringify(updatedKyc))
+        return
+      }
+
       if (kyc) {
         const { error } = await (supabase.from('owner_kyc') as any).update({ ...form, updated_at: new Date().toISOString() }).eq('owner_id', user!.id)
         if (error) throw error

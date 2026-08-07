@@ -68,6 +68,15 @@ export function AdminOwnersPage() {
 
       // Get PG count for each owner
       const owners = (data || []) as OwnerWithDetails[]
+      
+      // Load demo KYC from local storage if available
+      owners.forEach((o) => {
+        const savedKyc = localStorage.getItem(`demo_kyc_${o.id}`)
+        if (savedKyc) {
+          o.kyc = JSON.parse(savedKyc)
+        }
+      })
+
       const ownerIds = owners.map((o) => o.id)
       const { data: pgCounts } = await supabaseUntyped
         .from('pg_listings')
@@ -93,6 +102,24 @@ export function AdminOwnersPage() {
 
   const updateKycMutation = useMutation({
     mutationFn: async ({ kycId, status, adminNotes }: { kycId: string; status: KYCStatus; adminNotes?: string }) => {
+      const ownerId = selectedOwner?.id
+      if (ownerId && (ownerId === '00000000-0000-0000-0000-000000000002' || kycId === 'demo-kyc-id' || kycId.startsWith('demo-'))) {
+        const existingKyc = selectedOwner.kyc || {
+          id: kycId || `demo-kyc-${ownerId}`,
+          owner_id: ownerId,
+          status: 'pending',
+          created_at: new Date().toISOString(),
+        }
+        const updatedKyc = {
+          ...existingKyc,
+          status,
+          admin_notes: adminNotes || null,
+          updated_at: new Date().toISOString(),
+        }
+        localStorage.setItem(`demo_kyc_${ownerId}`, JSON.stringify(updatedKyc))
+        return
+      }
+
       const { error } = await supabaseUntyped
         .from('owner_kyc')
         .update({ status, admin_notes: adminNotes || null, updated_at: new Date().toISOString() })

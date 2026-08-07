@@ -278,6 +278,17 @@ export function LoginPage() {
               </div>
             )}
 
+            {import.meta.env.DEV && targetRole === 'seeker' && (
+              <div className="mt-4 p-3 bg-muted rounded-lg text-xs space-y-2 border">
+                <div className="font-semibold text-muted-foreground">Demo Seeker Credentials:</div>
+                <div>Email: seeker@swiftpg.demo</div>
+                <div>Password: Seeker@123</div>
+                <Button variant="outline" size="sm" onClick={() => handleDemoFill('seeker@swiftpg.demo', 'Seeker@123')} className="w-full mt-1">
+                  Quick Fill Demo Seeker
+                </Button>
+              </div>
+            )}
+
             <div className="mt-6">
               <div className="relative">
                 <Separator />

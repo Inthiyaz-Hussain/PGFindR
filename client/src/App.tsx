@@ -26,6 +26,7 @@ import { InquiriesPage } from '@/pages/seeker/InquiriesPage'
 import { BookingsPage } from '@/pages/seeker/BookingsPage'
 import { ProfilePage } from '@/pages/seeker/ProfilePage'
 import { AboutPage as SeekerAboutPage } from '@/pages/seeker/AboutPage'
+import { HelpDeskPage } from '@/pages/seeker/HelpDeskPage'
 
 // Owner
 import { OwnerLayout } from '@/pages/owner/OwnerLayout'
@@ -37,6 +38,7 @@ import { OwnerInquiriesPage } from '@/pages/owner/OwnerInquiriesPage'
 import { OwnerEarningsPage } from '@/pages/owner/OwnerEarningsPage'
 import { KYCPage } from '@/pages/owner/KYCPage'
 import { AboutPage as OwnerAboutPage } from '@/pages/owner/AboutPage'
+import { OwnerResourcesPage } from '@/pages/owner/OwnerResourcesPage'
 
 // Admin
 import { AdminLayout } from '@/pages/admin/AdminLayout'
@@ -46,6 +48,9 @@ import { AdminOwnersPage } from '@/pages/admin/AdminOwnersPage'
 import { AdminTransactionsPage } from '@/pages/admin/AdminTransactionsPage'
 import { AdminCommissionPage } from '@/pages/admin/AdminCommissionPage'
 import { AdminUsersPage } from '@/pages/admin/AdminUsersPage'
+import { AdminPlatformSettingsPage } from '@/pages/admin/AdminPlatformSettingsPage'
+import { AdminAuditLogsPage } from '@/pages/admin/AdminAuditLogsPage'
+import { AdminKYCPage } from '@/pages/admin/AdminKYCPage'
 
 export function App() {
   return (
@@ -85,6 +90,7 @@ export function App() {
                 <Route path="/seeker/bookings" element={<BookingsPage />} />
                 <Route path="/seeker/profile" element={<ProfilePage />} />
                 <Route path="/seeker/about" element={<SeekerAboutPage />} />
+                <Route path="/seeker/help" element={<HelpDeskPage />} />
               </Route>
 
               {/* Owner */}
@@ -100,6 +106,8 @@ export function App() {
                   <Route path="/owner/earnings" element={<OwnerEarningsPage />} />
                   <Route path="/owner/kyc" element={<KYCPage />} />
                   <Route path="/owner/about" element={<OwnerAboutPage />} />
+                  <Route path="/owner/profile" element={<ProfilePage />} />
+                  <Route path="/owner/resources" element={<OwnerResourcesPage />} />
                 </Route>
               </Route>
 
@@ -115,6 +123,10 @@ export function App() {
                   <Route path="/admin/transactions" element={<AdminTransactionsPage />} />
                   <Route path="/admin/commission" element={<AdminCommissionPage />} />
                   <Route path="/admin/users" element={<AdminUsersPage />} />
+                  <Route path="/admin/profile" element={<ProfilePage />} />
+                  <Route path="/admin/platform-settings" element={<AdminPlatformSettingsPage />} />
+                  <Route path="/admin/audit-logs" element={<AdminAuditLogsPage />} />
+                  <Route path="/admin/kyc" element={<AdminKYCPage />} />
                 </Route>
               </Route>
 

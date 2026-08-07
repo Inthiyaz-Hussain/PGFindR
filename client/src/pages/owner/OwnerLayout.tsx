@@ -1,5 +1,5 @@
 import { NavLink, Outlet } from 'react-router-dom'
-import { Building2, LayoutDashboard, MessageSquare, LogOut, IndianRupee, FileCheck, Info } from 'lucide-react'
+import { Building2, LayoutDashboard, MessageSquare, LogOut, IndianRupee, FileCheck, Info, User } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 
@@ -17,6 +17,7 @@ const NAV_ITEMS = [
   { to: '/owner/inquiries', label: 'Inquiries', icon: MessageSquare, end: true },
   { to: '/owner/earnings', label: 'Earnings', icon: IndianRupee, end: true },
   { to: '/owner/kyc', label: 'KYC', icon: FileCheck, end: true },
+  { to: '/owner/profile', label: 'Profile Settings', icon: User, end: true },
   { to: '/owner/about', label: 'About', icon: Info, end: true },
 ]
 
@@ -59,20 +60,20 @@ export function OwnerLayout() {
 
           <div className="p-3 border-t border-sidebar-border overflow-hidden">
             <div className="flex items-center rounded-lg p-1 whitespace-nowrap">
-              <Avatar className="size-9 shrink-0">
-                <AvatarFallback className="text-xs bg-sidebar-accent text-sidebar-accent-foreground">{initials}</AvatarFallback>
-              </Avatar>
-              <div className="flex-1 min-w-0 ml-3 flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                <div className="min-w-0 mr-2">
+              <NavLink to="/owner/profile" className="flex items-center flex-1 min-w-0 hover:opacity-85 transition-opacity">
+                <Avatar className="size-9 shrink-0">
+                  <AvatarFallback className="text-xs bg-sidebar-accent text-sidebar-accent-foreground">{initials}</AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0 ml-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                   <div className="text-sm font-medium truncate">{profile?.full_name || 'Owner'}</div>
                   <div className="text-xs text-sidebar-foreground/60">PG Owner</div>
                 </div>
-                <div className="flex items-center gap-1 shrink-0">
-                  <NotificationBell />
-                  <Button variant="ghost" size="icon-sm" onClick={signOut} title="Sign out" className="text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent">
-                    <LogOut className="size-4" />
-                  </Button>
-                </div>
+              </NavLink>
+              <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                <NotificationBell />
+                <Button variant="ghost" size="icon-sm" onClick={signOut} title="Sign out" className="text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent">
+                  <LogOut className="size-4" />
+                </Button>
               </div>
             </div>
           </div>

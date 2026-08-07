@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
-import { LayoutDashboard, Users, UserCheck, CreditCard, Percent, LogOut, ChevronDown, ChevronRight, Building } from 'lucide-react'
+import { LayoutDashboard, Users, UserCheck, CreditCard, Percent, LogOut, ChevronDown, ChevronRight, Building, User, Settings, History, ShieldCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { useAuth } from '@/hooks/useAuth'
@@ -14,6 +14,7 @@ const NAV_GROUPS = [
     label: 'Overview',
     items: [
       { to: '/admin', label: 'Dashboard', icon: LayoutDashboard, end: true },
+      { to: '/admin/profile', label: 'Profile Settings', icon: User, end: true },
     ],
   },
   {
@@ -21,6 +22,7 @@ const NAV_GROUPS = [
     items: [
       { to: '/admin/pgs', label: 'PG Listings', icon: Building, end: false },
       { to: '/admin/owners', label: 'Owners', icon: UserCheck, end: false },
+      { to: '/admin/kyc', label: 'KYC Review', icon: ShieldCheck, end: false },
       { to: '/admin/users', label: 'Seekers', icon: Users, end: false },
     ],
   },
@@ -29,6 +31,13 @@ const NAV_GROUPS = [
     items: [
       { to: '/admin/transactions', label: 'Transactions', icon: CreditCard, end: false },
       { to: '/admin/commission', label: 'Commission', icon: Percent, end: false },
+    ],
+  },
+  {
+    label: 'System',
+    items: [
+      { to: '/admin/platform-settings', label: 'Platform Settings', icon: Settings, end: false },
+      { to: '/admin/audit-logs', label: 'Audit Logs', icon: History, end: false },
     ],
   },
 ]
@@ -88,13 +97,15 @@ export function AdminLayout() {
 
           <div className="p-3 border-t border-sidebar-border">
             <div className="flex items-center gap-3 rounded-md p-2">
-              <Avatar size="sm">
-                <AvatarFallback className="text-xs">{initials}</AvatarFallback>
-              </Avatar>
-              <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium truncate">{profile?.full_name}</div>
-                <div className="text-xs text-sidebar-foreground/60">Administrator</div>
-              </div>
+              <NavLink to="/admin/profile" className="flex items-center gap-3 flex-1 min-w-0 hover:opacity-80 transition-opacity">
+                <Avatar size="sm">
+                  <AvatarFallback className="text-xs">{initials}</AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-medium truncate">{profile?.full_name}</div>
+                  <div className="text-xs text-sidebar-foreground/60">Administrator</div>
+                </div>
+              </NavLink>
               <NotificationBell />
               <Button variant="ghost" size="icon-sm" onClick={signOut}>
                 <LogOut className="size-3.5" />

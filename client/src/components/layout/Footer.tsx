@@ -203,10 +203,10 @@ export function Footer({ compact = false }: FooterProps) {
                   </h3>
                   <ul className="space-y-2.5 text-sm">
                     {[
-                      { label: 'Safety Guidelines', to: '/' },
-                      { label: 'Refund Policies', to: '/' },
-                      { label: 'FAQs & Guidelines', to: '/' },
-                      { label: 'Privacy & Terms', to: '/' },
+                      { label: 'Safety Guidelines', to: '/seeker/help?tab=safety' },
+                      { label: 'Refund Policies', to: '/seeker/help?tab=refund' },
+                      { label: 'FAQs & Guidelines', to: '/seeker/help?tab=faqs' },
+                      { label: 'Privacy & Terms', to: '/seeker/help?tab=privacy' },
                     ].map((item) => (
                       <li key={item.label}>
                         <Link to={item.to} className="hover:text-white transition-colors duration-150 flex items-center gap-1.5">
@@ -225,10 +225,10 @@ export function Footer({ compact = false }: FooterProps) {
                   </h3>
                   <ul className="space-y-2.5 text-sm">
                     {[
-                      { label: 'Listing Guide', to: '/' },
-                      { label: 'Pricing Calculator', to: '/' },
-                      { label: 'Rental Agreements', to: '/' },
-                      { label: 'Tax Statements', to: '/' },
+                      { label: 'Listing Guide', to: '/owner/resources?tab=listing' },
+                      { label: 'Pricing Calculator', to: '/owner/resources?tab=calculator' },
+                      { label: 'Rental Agreements', to: '/owner/resources?tab=agreement' },
+                      { label: 'Tax Statements', to: '/owner/resources?tab=tax' },
                     ].map((item) => (
                       <li key={item.label}>
                         <Link to={item.to} className="hover:text-white transition-colors duration-150 flex items-center gap-1.5">
@@ -249,8 +249,8 @@ export function Footer({ compact = false }: FooterProps) {
                     {[
                       { label: 'Commission Settings', to: '/admin/commission' },
                       { label: 'Transaction Ledger', to: '/admin/transactions' },
-                      { label: 'Platform Settings', to: '/' },
-                      { label: 'Audit Logs', to: '/' },
+                      { label: 'Platform Settings', to: '/admin/platform-settings' },
+                      { label: 'Audit Logs', to: '/admin/audit-logs' },
                     ].map((item) => (
                       <li key={item.label}>
                         <Link to={item.to} className="hover:text-white transition-colors duration-150 flex items-center gap-1.5">

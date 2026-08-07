@@ -73,23 +73,23 @@ export function SeekerLayout() {
 
           <div className="p-3 border-t border-sidebar-border overflow-hidden">
             <div className="flex items-center rounded-md p-1.5 whitespace-nowrap">
-              <Avatar size="sm" className="shrink-0">
-                <AvatarFallback className="text-xs">{initials}</AvatarFallback>
-              </Avatar>
-              <div className="flex-1 min-w-0 ml-3 flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                <div className="min-w-0 mr-2">
+              <NavLink to="/seeker/profile" className="flex items-center flex-1 min-w-0 hover:opacity-85 transition-opacity">
+                <Avatar size="sm" className="shrink-0">
+                  <AvatarFallback className="text-xs">{initials}</AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0 ml-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                   <div className="text-sm font-medium truncate">{seekerName}</div>
                   <div className="text-xs text-sidebar-foreground/60">Seeker</div>
                 </div>
-                {user && isSeeker && (
-                  <div className="flex items-center gap-1 shrink-0">
-                    <NotificationBell />
-                    <Button variant="ghost" size="icon-sm" onClick={signOut} title="Sign out">
-                      <LogOut className="size-3.5" />
-                    </Button>
-                  </div>
-                )}
-              </div>
+              </NavLink>
+              {user && isSeeker && (
+                <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                  <NotificationBell />
+                  <Button variant="ghost" size="icon-sm" onClick={signOut} title="Sign out">
+                    <LogOut className="size-3.5" />
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
         </aside>

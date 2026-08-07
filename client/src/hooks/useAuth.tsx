@@ -24,6 +24,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<{ error: Error | null; profile: Profile | null }>
   logout: () => Promise<void>
   register: (opts: RegisterOptions) => Promise<{ error: Error | null }>
+  updateProfile: (updates: Partial<Profile>) => Promise<{ error: Error | null }>
 
   // Legacy aliases kept for backward compat
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>
@@ -51,6 +52,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   async function fetchProfile(userId: string): Promise<Profile | null> {
     setProfileLoading(true)
+    const isDemoId = userId === '00000000-0000-0000-0000-000000000003' || 
+                     userId === '00000000-0000-0000-0000-000000000002' || 
+                     userId === '00000000-0000-0000-0000-000000000001'
+    if (isDemoId) {
+      const role = userId === '00000000-0000-0000-0000-000000000003' ? 'admin' : userId === '00000000-0000-0000-0000-000000000002' ? 'owner' : 'seeker'
+      const savedProfile = localStorage.getItem(`demo_profile_${role}`)
+      const p = savedProfile ? JSON.parse(savedProfile) : {
+        id: userId,
+        full_name: role.charAt(0).toUpperCase() + role.slice(1) + ' Test User',
+        role,
+        phone: '+91 9999999999',
+        created_at: new Date().toISOString(),
+      }
+      if (mounted.current) setProfile(p)
+      setProfileLoading(false)
+      return p
+    }
+
     try {
       const { data } = await supabase
         .from('profiles')
@@ -72,14 +91,100 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (user) await fetchProfile(user.id)
   }
 
+  async function updateProfile(updates: Partial<Profile>): Promise<{ error: Error | null }> {
+    const isDemoId = user?.id === '00000000-0000-0000-0000-000000000003' || 
+                     user?.id === '00000000-0000-0000-0000-000000000002' || 
+                     user?.id === '00000000-0000-0000-0000-000000000001'
+    if (isDemoId && user) {
+      const role = user.id === '00000000-0000-0000-0000-000000000003' ? 'admin' : user.id === '00000000-0000-0000-0000-000000000002' ? 'owner' : 'seeker'
+      const currentProfile = profile || {
+        id: user.id,
+        full_name: role.charAt(0).toUpperCase() + role.slice(1) + ' Test User',
+        role,
+        phone: '+91 9999999999',
+        created_at: new Date().toISOString(),
+      }
+      const updatedProfile = { ...currentProfile, ...updates, updated_at: new Date().toISOString() }
+      localStorage.setItem(`demo_profile_${role}`, JSON.stringify(updatedProfile))
+      if (mounted.current) setProfile(updatedProfile)
+      return { error: null }
+    }
+    
+    if (!user) return { error: new Error('User not authenticated') }
+    
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update(updates)
+        .eq('id', user.id)
+      if (error) return { error: error as Error | null }
+      await refreshProfile()
+      return { error: null }
+    } catch (e: any) {
+      return { error: e as Error | null }
+    }
+  }
+
+    async function syncProfileWithAuthSession(session: Session | null) {
+      if (!session?.user) {
+        if (mounted.current) setProfile(null)
+        return
+      }
+      
+      let p = await fetchProfile(session.user.id)
+      
+      const isDemoId = session.user.id === '00000000-0000-0000-0000-000000000003' || 
+                       session.user.id === '00000000-0000-0000-0000-000000000002' || 
+                       session.user.id === '00000000-0000-0000-0000-000000000001'
+      if (isDemoId) return // Skip sync for demo accounts
+      
+      // Fallback check: if profile is not created or doesn't have details, create/update it
+      if (!p) {
+        const rawMetadata = session.user.user_metadata
+        const fullName = rawMetadata?.full_name || rawMetadata?.name || ''
+        const avatarUrl = rawMetadata?.avatar_url || rawMetadata?.picture || ''
+        const role = rawMetadata?.role || 'seeker'
+        
+        try {
+          const { error: insertError } = await supabase
+            .from('profiles')
+            .insert({
+              id: session.user.id,
+              full_name: fullName,
+              avatar_url: avatarUrl,
+              role: role
+            })
+          if (!insertError) {
+            await fetchProfile(session.user.id)
+          }
+        } catch (err) {
+          console.error('Error creating profile fallback:', err)
+        }
+      } else if (!p.avatar_url && session.user.user_metadata?.picture) {
+        // Sync avatar url if not present in profile but available in Google metadata
+        const avatarUrl = session.user.user_metadata.picture || session.user.user_metadata.avatar_url || ''
+        if (avatarUrl) {
+          try {
+            await supabase
+              .from('profiles')
+              .update({ avatar_url: avatarUrl })
+              .eq('id', session.user.id)
+            await fetchProfile(session.user.id)
+          } catch (err) {
+            console.error('Error syncing profile avatar fallback:', err)
+          }
+        }
+      }
+    }
+
   useEffect(() => {
     // Restore session from localStorage (Supabase handles this automatically)
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!mounted.current) return
       setSession(session)
       setUser(session?.user ?? null)
-      if (session?.user) {
-        fetchProfile(session.user.id).finally(() => {
+      if (session) {
+        syncProfileWithAuthSession(session).finally(() => {
           if (mounted.current) setLoading(false)
         })
       } else {
@@ -87,12 +192,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     })
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (!mounted.current) return
       setSession(session)
       setUser(session?.user ?? null)
-      if (session?.user) {
-        fetchProfile(session.user.id)
+      if (session) {
+        await syncProfileWithAuthSession(session)
       } else {
         setProfile(null)
       }
@@ -105,25 +210,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 function getDemoMockData(email: string) {
   const role = email.includes('admin') ? 'admin' : email.includes('owner') ? 'owner' : 'seeker'
   const id = role === 'admin' ? '00000000-0000-0000-0000-000000000003' : role === 'owner' ? '00000000-0000-0000-0000-000000000002' : '00000000-0000-0000-0000-000000000001'
-  const full_name = role.charAt(0).toUpperCase() + role.slice(1) + ' Test User'
+  
+  const savedProfile = localStorage.getItem(`demo_profile_${role}`)
+  const mockProfile = savedProfile ? JSON.parse(savedProfile) : {
+    id,
+    full_name: role.charAt(0).toUpperCase() + role.slice(1) + ' Test User',
+    role,
+    phone: '+91 9999999999',
+    created_at: new Date().toISOString(),
+  }
   
   const mockUser = {
     id,
     email,
-    user_metadata: { full_name, role },
+    user_metadata: { full_name: mockProfile.full_name, role },
     aud: 'authenticated',
     role: 'authenticated',
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
   } as any
-  
-  const mockProfile = {
-    id,
-    full_name,
-    role,
-    phone: '+91 9999999999',
-    created_at: new Date().toISOString(),
-  } as Profile
   
   const mockSession = {
     access_token: `mock-token-${JSON.stringify({ id, email, role })}`,
@@ -144,7 +249,8 @@ function getDemoMockData(email: string) {
   ): Promise<{ error: Error | null; profile: Profile | null }> {
     const isDemo =
       (email === 'owner@swiftpg.demo' && password === 'Owner@123') ||
-      (email === 'admin@swiftpg.demo' && password === 'Admin@123')
+      (email === 'admin@swiftpg.demo' && password === 'Admin@123') ||
+      (email === 'seeker@swiftpg.demo' && password === 'Seeker@123')
 
     if (isDemo) {
       console.log('Demo credentials used, bypassing Supabase and using local mock login.')
@@ -248,6 +354,7 @@ function getDemoMockData(email: string) {
         login,
         logout,
         register,
+        updateProfile,
         signIn,
         signUp,
         signOut,

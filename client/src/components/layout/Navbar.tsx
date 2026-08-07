@@ -338,7 +338,11 @@ export function Navbar({
                   )}
 
                   <DropdownMenuItem
-                    onClick={() => navigate('/seeker/profile')}
+                    onClick={() => {
+                      if (profile?.role === 'admin') navigate('/admin/profile')
+                      else if (profile?.role === 'owner') navigate('/owner/profile')
+                      else navigate('/seeker/profile')
+                    }}
                     className="cursor-pointer py-2 px-3 rounded-lg text-xs sm:text-sm font-medium hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200"
                   >
                     <User className="h-4 w-4 mr-2.5 text-indigo-500 dark:text-indigo-400" />
@@ -574,6 +578,20 @@ export function Navbar({
                       >
                         <LayoutDashboard className="h-4 w-4 mr-2" />
                         Go to Dashboard
+                      </Button>
+
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setMobileMenuOpen(false)
+                          if (profile?.role === 'admin') navigate('/admin/profile')
+                          else if (profile?.role === 'owner') navigate('/owner/profile')
+                          else navigate('/seeker/profile')
+                        }}
+                        className="w-full cursor-pointer"
+                      >
+                        <User className="h-4 w-4 mr-2 text-indigo-500 dark:text-indigo-400" />
+                        Profile Settings
                       </Button>
 
                       <Button
