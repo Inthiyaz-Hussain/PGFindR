@@ -117,10 +117,15 @@ router.put('/:id/confirm-movein', async (req, res) => {
     if (error) throw error
     if (!booking) return res.status(404).json({ error: 'Booking not found or not in a confirmable state' })
 
-    // Mark bed as occupied
+    // Mark bed as occupied and link the booking details
     await supabase
       .from('beds')
-      .update({ status: 'occupied', updated_at: new Date().toISOString() })
+      .update({
+        status: 'occupied',
+        occupied_by_booking_id: req.params.id,
+        occupied_since: new Date().toISOString().split('T')[0], // YYYY-MM-DD
+        updated_at: new Date().toISOString()
+      })
       .eq('id', booking.bed_id)
 
     // Update PG availability count

@@ -1,5 +1,6 @@
-import { NavLink, Outlet } from 'react-router-dom'
-import { Building2, LayoutDashboard, MessageSquare, LogOut, IndianRupee, FileCheck, Info, User } from 'lucide-react'
+import { useEffect } from 'react'
+import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom'
+import { Building2, LayoutDashboard, MessageSquare, LogOut, IndianRupee, FileCheck, Info, User, Users } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 
@@ -14,6 +15,7 @@ import { Footer } from '@/components/layout/Footer'
 const NAV_ITEMS = [
   { to: '/owner', label: 'Dashboard', icon: LayoutDashboard, end: true },
   { to: '/owner/pgs', label: 'My PGs', icon: Building2, end: true },
+  { to: '/owner/tenants', label: 'My Tenants', icon: Users, end: true },
   { to: '/owner/inquiries', label: 'Inquiries', icon: MessageSquare, end: true },
   { to: '/owner/earnings', label: 'Earnings', icon: IndianRupee, end: true },
   { to: '/owner/kyc', label: 'KYC', icon: FileCheck, end: true },
@@ -22,8 +24,25 @@ const NAV_ITEMS = [
 ]
 
 export function OwnerLayout() {
-  const { profile, signOut } = useAuth()
+  const { profile, signOut, loading } = useAuth()
+  const navigate = useNavigate()
+  const location = useLocation()
   useFirebasePush()
+
+  useEffect(() => {
+    if (!loading && profile && profile.role === 'owner') {
+      const isOnboardingVerified = profile.onboarding_verified
+      const isRegisterCallback = location.pathname === '/owner/register-callback'
+      const isOnboardingCallback = location.pathname === '/owner/onboarding-callback'
+      const isOnboardingPage = location.pathname.startsWith('/owner/onboarding')
+      const isRegisterPage = location.pathname.startsWith('/owner/register')
+
+      if (!isOnboardingVerified && !isOnboardingPage && !isRegisterCallback && !isOnboardingCallback && !isRegisterPage) {
+        navigate('/owner/onboarding')
+      }
+    }
+  }, [profile, loading, location.pathname, navigate])
+
   const initials = profile?.full_name
     ? profile.full_name.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()
     : 'OW'

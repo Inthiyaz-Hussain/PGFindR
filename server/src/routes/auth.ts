@@ -268,4 +268,79 @@ router.post('/verify-otp', async (req, res) => {
   })
 })
 
+// ─── POST /api/auth/register-owner ───────────────────────────────────────────
+
+interface RegisterOwnerBody {
+  fullName: string
+  mobile: string
+  pgName: string
+  address: string
+  pincode: string
+  email: string
+}
+
+router.post('/register-owner', authenticateToken, async (req: any, res) => {
+  try {
+    const { fullName, mobile, pgName, address, pincode, email }: RegisterOwnerBody = req.body
+
+    if (!fullName || !mobile || !pgName || !address || !pincode || !email) {
+      return res.status(400).json({ error: 'All fields are required' })
+    }
+
+    if (req.user?.email !== email) {
+      return res.status(400).json({ error: 'Google account email does not match registration email' })
+    }
+
+    // 1. Update the user profile
+    const { error: profileErr } = await supabase
+      .from('profiles')
+      .update({
+        role: 'owner',
+        full_name: fullName,
+        phone: mobile,
+        google_uid: req.user.id,
+        google_verified: true,
+        google_verified_at: new Date().toISOString(),
+        onboarding_verified: false,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', req.user.id)
+
+    if (profileErr) throw profileErr
+
+    // 2. Create the initial PG listing
+    const { data: pg, error: pgErr } = await supabase
+      .from('pg_listings')
+      .insert({
+        owner_id: req.user.id,
+        name: pgName,
+        address: `${address}, Pincode: ${pincode}`,
+        city: 'Bengaluru', // Default city to be edited during onboarding steps
+        locality: 'Pending Onboarding', // Default locality to be edited
+        status: 'pending',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
+      .select('id')
+      .single()
+
+    if (pgErr) throw pgErr
+
+    return res.status(201).json({
+      message: 'Owner registration successful',
+      user: {
+        id: req.user.id,
+        email: req.user.email,
+        role: 'owner',
+        full_name: fullName,
+      },
+      pg_id: pg?.id
+    })
+  } catch (err: any) {
+    console.error('Owner registration error:', err)
+    return res.status(500).json({ error: err.message || 'Internal server error' })
+  }
+})
+
 export default router
+

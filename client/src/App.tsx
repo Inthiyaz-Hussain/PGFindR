@@ -39,6 +39,11 @@ import { OwnerEarningsPage } from '@/pages/owner/OwnerEarningsPage'
 import { KYCPage } from '@/pages/owner/KYCPage'
 import { AboutPage as OwnerAboutPage } from '@/pages/owner/AboutPage'
 import { OwnerResourcesPage } from '@/pages/owner/OwnerResourcesPage'
+import { OwnerRegistrationPage } from '@/pages/owner/OwnerRegistrationPage'
+import { RegisterCallback } from '@/pages/owner/RegisterCallback'
+import { OnboardingPage } from '@/pages/owner/OnboardingPage'
+import { OnboardingCallback } from '@/pages/owner/OnboardingCallback'
+import { MyTenantsPage } from '@/pages/owner/MyTenantsPage'
 
 // Admin
 import { AdminLayout } from '@/pages/admin/AdminLayout'
@@ -75,10 +80,12 @@ export function App() {
               {/* Auth (no Navbar) */}
               <Route path="/auth/login" element={<LoginPage />} />
               <Route path="/auth/register" element={<RegisterPage />} />
+              <Route path="/owner/register" element={<OwnerRegistrationPage />} />
+              <Route path="/owner/register-callback" element={<RegisterCallback />} />
 
               {/* Owner Portal - Public Auth Redirects */}
               <Route path="/owner/login" element={<Navigate to="/auth/login?role=owner&from=/owner" replace />} />
-              <Route path="/owner/signup" element={<Navigate to="/auth/register?role=owner" replace />} />
+              <Route path="/owner/signup" element={<Navigate to="/owner/register" replace />} />
 
               {/* Admin Portal - Public Auth Redirects */}
               <Route path="/admin/login" element={<Navigate to="/auth/login?role=admin&from=/admin" replace />} />
@@ -95,6 +102,9 @@ export function App() {
 
               {/* Owner */}
               <Route element={<ProtectedRoute requiredRole="owner" />}>
+                <Route path="/owner/onboarding" element={<OnboardingPage />} />
+                <Route path="/owner/onboarding-callback" element={<OnboardingCallback />} />
+
                 <Route element={<OwnerLayout />}>
                   <Route path="/owner" element={<OwnerDashboard />} />
                   <Route path="/owner/dashboard" element={<OwnerDashboard />} />
@@ -102,6 +112,7 @@ export function App() {
                   <Route path="/owner/pgs/new" element={<PGFormPage />} />
                   <Route path="/owner/pgs/:id/edit" element={<PGFormPage />} />
                   <Route path="/owner/pgs/:id/availability" element={<AvailabilityPage />} />
+                  <Route path="/owner/tenants" element={<MyTenantsPage />} />
                   <Route path="/owner/inquiries" element={<OwnerInquiriesPage />} />
                   <Route path="/owner/earnings" element={<OwnerEarningsPage />} />
                   <Route path="/owner/kyc" element={<KYCPage />} />
