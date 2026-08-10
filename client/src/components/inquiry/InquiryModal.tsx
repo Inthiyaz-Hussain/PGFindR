@@ -89,6 +89,7 @@ export function InquiryModal({
     control,
     reset,
     setValue,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<InquiryFormData>({
     resolver: zodResolver(inquirySchema),
@@ -107,6 +108,20 @@ export function InquiryModal({
     },
     mode: 'onChange',
   })
+
+  const selectedSharing = watch('sharing_preference')
+  const currentNumBeds = watch('num_beds')
+
+  // Calculate dynamic options list based on selected sharing type capacity
+  const maxBedsAllowed = selectedSharing === 1 ? 1 : selectedSharing === 2 ? 2 : selectedSharing === 3 ? 3 : 5
+  const bedOptions = Array.from({ length: maxBedsAllowed }, (_, i) => i + 1)
+
+  // Reset num_beds to 1 if user changes sharing preference to one with lower capacity
+  useEffect(() => {
+    if (currentNumBeds > maxBedsAllowed) {
+      setValue('num_beds', 1)
+    }
+  }, [selectedSharing, maxBedsAllowed, currentNumBeds, setValue])
 
   // Pre-fill from profile when available
   useEffect(() => {
@@ -323,11 +338,11 @@ export function InquiryModal({
                 <SelectValue placeholder="Select number of beds" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="1">1 Bed</SelectItem>
-                <SelectItem value="2">2 Beds (Double Pricing)</SelectItem>
-                <SelectItem value="3">3 Beds (Triple Pricing)</SelectItem>
-                <SelectItem value="4">4 Beds (Quadruple Pricing)</SelectItem>
-                <SelectItem value="5">5 Beds (Quintuple Pricing)</SelectItem>
+                {bedOptions.map((num) => (
+                  <SelectItem key={num} value={String(num)}>
+                    {num} {num === 1 ? 'Bed' : 'Beds'}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           )}
