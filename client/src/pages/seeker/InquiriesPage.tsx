@@ -57,6 +57,20 @@ export function InquiriesPage() {
   async function handlePay(inq: Inquiry) {
     setPayingInqId(inq.id)
     try {
+      // 1. Check if a booking already exists for this inquiry to avoid duplicate constraints
+      const { data: existingBooking } = await supabase
+        .from('bookings')
+        .select('id')
+        .eq('inquiry_id', inq.id)
+        .maybeSingle() as any
+
+      if (existingBooking) {
+        toast.success('Redirecting to payment...')
+        navigate(`/payment/${(existingBooking as any).id}`)
+        return
+      }
+
+      // 2. Query available beds matching the seeker sharing preference
       const sharingTypeMap: Record<number, string> = { 1: 'single', 2: 'double', 3: 'triple', 4: 'dormitory' }
       const prefStr = inq.sharing_preference ? sharingTypeMap[inq.sharing_preference] : 'single'
 
@@ -69,8 +83,14 @@ export function InquiriesPage() {
         .limit(1)
 
       const bedId = (beds as any)?.[0]?.id || null
+      if (!bedId) {
+        toast.error('No available beds of this sharing preference are left in this PG. Please contact the owner or support.')
+        return
+      }
+
       const monthlyRent = (beds as any)?.[0]?.monthly_rent || (inq.pg as any)?.monthly_rent_min || 5000
 
+      // 3. Initiate booking
       const res = await fetch(`${import.meta.env.VITE_API_URL || 'https://swiftpg-backend.onrender.com'}/api/booking`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
