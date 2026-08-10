@@ -271,16 +271,76 @@ router.put('/:id', async (req, res) => {
 
     if (seeker && pg) {
       if (status === 'confirmed') {
+        // Automatically find an available bed and initialize a pending booking
+        const sharingTypeMap: Record<number, string> = { 1: 'single', 2: 'double', 3: 'triple', 4: 'dormitory' }
+        const prefStr = existingInquiry.sharing_preference ? sharingTypeMap[existingInquiry.sharing_preference] : 'single'
+
+        const { data: beds } = await supabase
+          .from('beds')
+          .select('id, monthly_rent')
+          .eq('pg_id', existingInquiry.pg_id)
+          .eq('status', 'available')
+          .eq('sharing_type', prefStr)
+          .limit(1)
+
+        const bedId = (beds as any)?.[0]?.id || null
+
+        // Get PG commission rate and deposit
+        const { data: pgDetails } = await supabase
+          .from('pg_listings')
+          .select('commission_rate, deposit_amount, monthly_rent_min')
+          .eq('id', existingInquiry.pg_id)
+          .single()
+
+        const monthlyRent = (beds as any)?.[0]?.monthly_rent || pgDetails?.monthly_rent_min || 5000
+        const commissionRate = pgDetails?.commission_rate || 10
+        const depositAmount = pgDetails?.deposit_amount || 0
+        const commissionAmount = Math.round(depositAmount * (commissionRate / 100))
+        const ownerPayout = depositAmount - commissionAmount
+
+        // Create booking in pending_payment status
+        const { data: booking, error: bookingErr } = await supabase
+          .from('bookings')
+          .insert({
+            inquiry_id: existingInquiry.id,
+            pg_id: existingInquiry.pg_id,
+            seeker_id: existingInquiry.seeker_id,
+            owner_id: pg?.owner_id,
+            bed_id: bedId,
+            monthly_rent: monthlyRent,
+            deposit_amount: depositAmount,
+            amount: depositAmount,
+            commission_pct: commissionRate,
+            commission_amount: commissionAmount,
+            owner_payout: ownerPayout,
+            status: 'pending_payment',
+            move_in_date: existingInquiry.move_in_date || new Date().toISOString().split('T')[0]
+          })
+          .select()
+          .single()
+
+        if (bookingErr) {
+          console.error('[Inquiry Confirm] Booking creation failed:', bookingErr)
+        }
+
+        // Change inquiry status to 'booked' to mark booking has been initialized
+        await supabase
+          .from('inquiries')
+          .update({ status: 'booked', updated_at: new Date().toISOString() })
+          .eq('id', existingInquiry.id)
+
         const seekerFcmToken = await getUserFcmToken(seeker.id)
+        const notificationBody = 'Please pay the advance amount or full amount to confirm your bed.'
 
         if (seekerFcmToken) {
           await sendPushNotification({
             token: seekerFcmToken,
             title: 'Inquiry Confirmed!',
-            body: `Owner confirmed availability at ${pg.name}. Proceed to payment.`,
+            body: notificationBody,
             data: {
               inquiry_id: req.params.id,
               pg_id: existingInquiry.pg_id,
+              booking_id: booking?.id || '',
               type: 'inquiry_confirmed',
             },
           })
@@ -290,10 +350,11 @@ router.put('/:id', async (req, res) => {
           userId: seeker.id,
           type: 'inquiry_confirmed',
           title: 'Inquiry Confirmed!',
-          body: `Owner confirmed availability at ${pg.name}. Proceed to payment.`,
+          body: notificationBody,
           data: {
             inquiry_id: req.params.id,
             pg_id: existingInquiry.pg_id,
+            booking_id: booking?.id || '',
           },
         })
       } else if (status === 'cancelled') {

@@ -86,8 +86,8 @@ export interface Booking {
   owner_payout: number
   status: BookingStatus
   payment_id: string | null
-  razorpay_order_id: string | null
-  razorpay_payment_id: string | null
+  cashfree_order_id: string | null
+  cashfree_payment_id: string | null
   confirmed_at: string | null
   created_at: string
   updated_at: string
@@ -128,8 +128,8 @@ export interface Payment {
   owner_payout: number
   status: 'pending' | 'completed' | 'failed' | 'refunded'
   payment_type: 'deposit' | 'monthly_rent'
-  razorpay_order_id: string | null
-  razorpay_payment_id: string | null
+  cashfree_order_id: string | null
+  cashfree_payment_id: string | null
   created_at: string
 }
 

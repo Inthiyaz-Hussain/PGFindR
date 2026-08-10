@@ -1,32 +1,8 @@
 /**
- * Payment verify route tests:
- *  - valid Razorpay signature → 200
- *  - tampered signature → 400 + marks payment as failed
+ * Payment verify route tests for Cashfree integration
  */
 
-import crypto from 'crypto'
-
-const RAZORPAY_SECRET = 'test_razorpay_secret'
-
 // ── Supabase mock ──────────────────────────────────────────────────────────
-
-const mockPaymentUpdate = jest.fn()
-const mockPaymentUpdateChain = {
-  update: jest.fn().mockReturnValue({
-    eq: jest.fn().mockReturnValue({
-      select: jest.fn().mockReturnValue({
-        single: jest.fn().mockResolvedValue({
-          data: {
-            id: 'pay-001',
-            amount: 12000,
-            booking_id: 'book-001',
-          },
-          error: null,
-        }),
-      }),
-    }),
-  }),
-}
 
 const mockBookingUpdateChain = {
   update: jest.fn().mockReturnValue({
@@ -51,11 +27,6 @@ const mockNotifInsertChain = {
   insert: jest.fn().mockResolvedValue({ error: null }),
 }
 
-// Track failed-payment update
-const mockFailedPaymentUpdate = jest.fn().mockReturnValue({
-  eq: jest.fn().mockResolvedValue({ error: null }),
-})
-
 const mockSupabase = {
   auth: {
     admin: { createUser: jest.fn() },
@@ -68,13 +39,6 @@ const mockSupabase = {
 jest.mock('@supabase/supabase-js', () => ({
   createClient: jest.fn().mockReturnValue(mockSupabase),
 }))
-
-jest.mock('razorpay', () =>
-  jest.fn().mockImplementation(() => ({
-    orders: { create: jest.fn().mockResolvedValue({ id: 'order_test', amount: 1200000, currency: 'INR' }) },
-    payouts: { create: jest.fn() },
-  }))
-)
 
 jest.mock('../lib/firebase', () => ({
   initializeFirebase: jest.fn(),
@@ -98,15 +62,6 @@ beforeAll(async () => {
   app = (await import('../index')).default
 })
 
-// ── Helpers ────────────────────────────────────────────────────────────────
-
-function makeSignature(orderId: string, paymentId: string, secret: string) {
-  const body = `${orderId}|${paymentId}`
-  return crypto.createHmac('sha256', secret).update(body).digest('hex')
-}
-
-const ORDER_ID = 'order_abc123'
-const PAYMENT_ID = 'pay_xyz789'
 const BOOKING_ID = 'book-001'
 
 // ── Tests ──────────────────────────────────────────────────────────────────
@@ -114,20 +69,36 @@ const BOOKING_ID = 'book-001'
 describe('POST /api/payment/verify', () => {
   beforeEach(() => {
     jest.clearAllMocks()
+  })
 
+  test('200 with completed demo order', async () => {
     mockSupabase.from.mockImplementation((table: string) => {
       if (table === 'payments') {
         return {
+          select: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                order: jest.fn().mockReturnValue({
+                  limit: jest.fn().mockReturnValue({
+                    maybeSingle: jest.fn().mockResolvedValue({
+                      data: { id: 'pay-001', amount: 12000, booking_id: BOOKING_ID, cashfree_order_id: 'cf_order_demo_123' },
+                      error: null,
+                    })
+                  })
+                })
+              })
+            })
+          }),
           update: jest.fn().mockReturnValue({
             eq: jest.fn().mockReturnValue({
               select: jest.fn().mockReturnValue({
                 single: jest.fn().mockResolvedValue({
-                  data: { id: 'pay-001', amount: 12000, booking_id: BOOKING_ID },
+                  data: { id: 'pay-001', amount: 12000, booking_id: BOOKING_ID, cashfree_order_id: 'cf_order_demo_123', status: 'completed' },
                   error: null,
-                }),
-              }),
-            }),
-          }),
+                })
+              })
+            })
+          })
         }
       }
       if (table === 'bookings') return mockBookingUpdateChain
@@ -135,17 +106,10 @@ describe('POST /api/payment/verify', () => {
       if (table === 'notifications') return mockNotifInsertChain
       return { update: jest.fn().mockReturnValue({ eq: jest.fn().mockResolvedValue({ error: null }) }) }
     })
-  })
-
-  test('200 with a valid Razorpay signature', async () => {
-    const validSig = makeSignature(ORDER_ID, PAYMENT_ID, RAZORPAY_SECRET)
 
     const res = await request(app)
       .post('/api/payment/verify')
       .send({
-        razorpay_order_id: ORDER_ID,
-        razorpay_payment_id: PAYMENT_ID,
-        razorpay_signature: validSig,
         booking_id: BOOKING_ID,
       })
 
@@ -155,35 +119,48 @@ describe('POST /api/payment/verify', () => {
     expect(res.body.booking_id).toBe(BOOKING_ID)
   })
 
-  test('400 with a tampered (invalid) signature', async () => {
-    const tamperedSig = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
-
-    // When signature fails the payment row should be marked failed
-    const markFailedEq = jest.fn().mockResolvedValue({ error: null })
-    const markFailedUpdate = jest.fn().mockReturnValue({ eq: markFailedEq })
-    mockSupabase.from.mockReturnValue({ update: markFailedUpdate })
+  test('400 when payment status is not paid or verify fails', async () => {
+    mockSupabase.from.mockImplementation((table: string) => {
+      if (table === 'payments') {
+        return {
+          select: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                order: jest.fn().mockReturnValue({
+                  limit: jest.fn().mockReturnValue({
+                    maybeSingle: jest.fn().mockResolvedValue({
+                      data: { id: 'pay-001', amount: 12000, booking_id: BOOKING_ID, cashfree_order_id: 'cf_order_failed_123' },
+                      error: null,
+                    })
+                  })
+                })
+              })
+            })
+          }),
+          update: jest.fn().mockReturnValue({
+            eq: jest.fn().mockResolvedValue({ error: null })
+          })
+        }
+      }
+      return { update: jest.fn().mockReturnValue({ eq: jest.fn().mockResolvedValue({ error: null }) }) }
+    })
 
     const res = await request(app)
       .post('/api/payment/verify')
       .send({
-        razorpay_order_id: ORDER_ID,
-        razorpay_payment_id: PAYMENT_ID,
-        razorpay_signature: tamperedSig,
         booking_id: BOOKING_ID,
       })
 
     expect(res.status).toBe(400)
-    expect(res.body.error).toMatch(/[Ii]nvalid.*signature|signature.*invalid/i)
-    // The failed-payment update should have been called
-    expect(markFailedUpdate).toHaveBeenCalledWith(expect.objectContaining({ status: 'failed' }))
+    expect(res.body.error).toMatch(/failed|not completed/i)
   })
 
-  test('400 when required fields are missing', async () => {
+  test('400 when booking_id is missing', async () => {
     const res = await request(app)
       .post('/api/payment/verify')
-      .send({ razorpay_order_id: ORDER_ID }) // missing payment_id, signature, booking_id
+      .send({})
 
     expect(res.status).toBe(400)
-    expect(res.body.error).toMatch(/[Mm]issing/)
+    expect(res.body.error).toMatch(/required/i)
   })
 })

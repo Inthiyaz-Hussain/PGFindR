@@ -131,8 +131,8 @@ export interface Payment {
   commission_rate: number
   commission_amount: number
   owner_payout: number
-  razorpay_order_id: string | null
-  razorpay_payment_id: string | null
+  cashfree_order_id: string | null
+  cashfree_payment_id: string | null
   status: PaymentStatus
   payment_type: PaymentType
   created_at: string

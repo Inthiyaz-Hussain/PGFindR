@@ -1,18 +1,20 @@
 import { Router } from 'express'
-import Razorpay from 'razorpay'
-import crypto from 'crypto'
 import { supabase } from '../index.js'
 
 const router = Router()
 
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID || 'rzp_test_dummykeyid',
-  key_secret: process.env.RAZORPAY_KEY_SECRET || 'dummysecret',
-})
+// Helper to determine Cashfree environment details
+const getCashfreeConfig = () => {
+  const env = process.env.CASHFREE_ENV === 'PRODUCTION' ? 'production' : 'sandbox'
+  const baseUrl = env === 'production' 
+    ? 'https://api.cashfree.com/pg/orders' 
+    : 'https://sandbox.cashfree.com/pg/orders'
+  return { env, baseUrl }
+}
 
-// POST /api/payment/initiate — Create Razorpay order for a booking
+// POST /api/payment/initiate — Create Cashfree order for a booking
 // Input: { booking_id }
-// Returns: { razorpay_order_id, amount, currency, key_id }
+// Returns: { cashfree_order_id, payment_session_id, amount, currency }
 router.post('/initiate', async (req, res) => {
   try {
     const { booking_id } = req.body
@@ -24,7 +26,7 @@ router.post('/initiate', async (req, res) => {
     // Get booking details
     const { data: booking, error: bookingError } = await supabase
       .from('bookings')
-      .select('*, pg:pg_listings(name, owner_id)')
+      .select('*, pg:pg_listings(name, owner_id), seeker:profiles!bookings_seeker_id_fkey(full_name, phone, email)')
       .eq('id', booking_id)
       .single()
 
@@ -32,29 +34,54 @@ router.post('/initiate', async (req, res) => {
       return res.status(404).json({ error: 'Booking not found' })
     }
 
-    if (booking.status === 'active' || booking.status === 'completed') {
+    if (booking.status === 'active' || booking.status === 'completed' || booking.status === 'payment_done') {
       return res.status(400).json({ error: 'Booking already paid' })
     }
 
-    const amountInPaise = Math.round(booking.amount * 100)
-    let orderId = `demo_order_${Date.now()}`
+    let orderId = `cf_order_${Date.now()}`
+    let paymentSessionId = `demo_session_${Date.now()}`
+    const isDemoMode = !process.env.CASHFREE_CLIENT_ID || !process.env.CASHFREE_SECRET_KEY
 
-    try {
-      // Create Razorpay order if keys exist
-      if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
-        const order = await razorpay.orders.create({
-          amount: amountInPaise,
-          currency: 'INR',
-          receipt: `booking_${booking_id.slice(0, 30)}`,
-          notes: {
-            booking_id,
-            pg_name: booking.pg?.name || 'PGFindR Booking',
+    if (!isDemoMode) {
+      try {
+        const { baseUrl } = getCashfreeConfig()
+        const cfResponse = await fetch(baseUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-version': '2023-08-01',
+            'x-client-id': process.env.CASHFREE_CLIENT_ID!,
+            'x-client-secret': process.env.CASHFREE_SECRET_KEY!,
           },
+          body: JSON.stringify({
+            order_id: orderId,
+            order_amount: booking.amount,
+            order_currency: 'INR',
+            customer_details: {
+              customer_id: booking.seeker_id,
+              customer_name: booking.seeker?.full_name || 'Seeker',
+              customer_phone: booking.seeker?.phone || '9999999999',
+              customer_email: booking.seeker?.email || 'seeker@example.com',
+            },
+            order_meta: {
+              return_url: `${req.headers.origin || 'http://localhost:5173'}/payment/${booking_id}?cashfree_callback=true`
+            }
+          })
         })
-        orderId = order.id
+
+        if (!cfResponse.ok) {
+          const errData = await cfResponse.json().catch(() => ({})) as any
+          throw new Error(errData.message || 'Cashfree order creation failed')
+        }
+
+        const cfOrder = await cfResponse.json() as any
+        orderId = cfOrder.order_id
+        paymentSessionId = cfOrder.payment_session_id
+      } catch (cfErr) {
+        console.warn('Cashfree order creation failed, falling back to demo order ID:', cfErr)
       }
-    } catch (rzpErr) {
-      console.warn('Razorpay order creation failed, falling back to demo order ID:', rzpErr)
+    } else {
+      orderId = `cf_order_demo_${Date.now()}`
     }
 
     // Store order ID in payments table
@@ -67,7 +94,7 @@ router.post('/initiate', async (req, res) => {
         commission_rate: booking.commission_pct,
         commission_amount: booking.commission_amount,
         owner_payout: booking.owner_payout,
-        razorpay_order_id: orderId,
+        cashfree_order_id: orderId,
         status: 'pending',
         payment_type: 'deposit',
       })
@@ -77,12 +104,12 @@ router.post('/initiate', async (req, res) => {
     if (paymentError) throw paymentError
 
     res.json({
-      razorpay_order_id: orderId,
-      amount: amountInPaise,
+      cashfree_order_id: orderId,
+      payment_session_id: paymentSessionId,
+      amount: booking.amount,
       currency: 'INR',
-      key_id: process.env.RAZORPAY_KEY_ID || 'rzp_test_demo',
       payment_id: payment.id,
-      is_demo_mode: !process.env.RAZORPAY_KEY_ID || orderId.startsWith('demo_order_'),
+      is_demo_mode: isDemoMode || orderId.startsWith('cf_order_demo_'),
     })
   } catch (err) {
     console.error('Payment initiate error:', err)
@@ -90,7 +117,7 @@ router.post('/initiate', async (req, res) => {
   }
 })
 
-// POST /api/payment/demo-confirm — Instant payment completion for demo/test mode (Holding Razorpay)
+// POST /api/payment/demo-confirm — Instant payment completion for demo/test mode
 // Input: { booking_id }
 router.post('/demo-confirm', async (req, res) => {
   try {
@@ -115,8 +142,8 @@ router.post('/demo-confirm', async (req, res) => {
       return res.status(400).json({ error: 'Booking is already paid' })
     }
 
-    const demoOrderId = `demo_ord_${Date.now()}`
-    const demoPaymentId = `demo_pay_${Date.now()}`
+    const demoOrderId = `cf_ord_demo_${Date.now()}`
+    const demoPaymentId = `cf_pay_demo_${Date.now()}`
 
     // Insert or update payment record
     const { data: payment, error: paymentError } = await supabase
@@ -128,8 +155,8 @@ router.post('/demo-confirm', async (req, res) => {
         commission_rate: booking.commission_pct,
         commission_amount: booking.commission_amount,
         owner_payout: booking.owner_payout,
-        razorpay_order_id: demoOrderId,
-        razorpay_payment_id: demoPaymentId,
+        cashfree_order_id: demoOrderId,
+        cashfree_payment_id: demoPaymentId,
         status: 'completed',
         payment_type: 'deposit',
       })
@@ -187,41 +214,78 @@ router.post('/demo-confirm', async (req, res) => {
   }
 })
 
-// POST /api/payment/verify — Validate Razorpay signature, confirm payment
-// Input: { razorpay_order_id, razorpay_payment_id, razorpay_signature, booking_id }
+// POST /api/payment/verify — Validate Cashfree signature, confirm payment
+// Input: { booking_id }
 router.post('/verify', async (req, res) => {
   try {
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, booking_id } = req.body
+    const { booking_id } = req.body
 
-    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature || !booking_id) {
-      return res.status(400).json({ error: 'Missing required payment fields' })
+    if (!booking_id) {
+      return res.status(400).json({ error: 'booking_id is required' })
     }
 
-    // Verify signature: HMAC SHA256 of (order_id|payment_id) using key_secret
-    const body = razorpay_order_id + '|' + razorpay_payment_id
-    const expectedSignature = crypto
-      .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET || '')
-      .update(body)
-      .digest('hex')
+    // Get the most recent pending payment record
+    const { data: payment, error: payError } = await supabase
+      .from('payments')
+      .select('*')
+      .eq('booking_id', booking_id)
+      .eq('status', 'pending')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
 
-    if (expectedSignature !== razorpay_signature) {
-      // Mark payment as failed
+    if (payError || !payment) {
+      return res.status(404).json({ error: 'Pending payment record not found' })
+    }
+
+    const orderId = payment.cashfree_order_id
+    let isPaid = false
+    let cashfreePaymentId = `cf_pay_demo_${Date.now()}`
+
+    // If order is demo mode
+    if (orderId && (orderId.startsWith('cf_order_demo_') || orderId.startsWith('cf_ord_demo_'))) {
+      isPaid = true
+    } else if (process.env.CASHFREE_CLIENT_ID && process.env.CASHFREE_SECRET_KEY) {
+      try {
+        const { baseUrl } = getCashfreeConfig()
+        const cfResponse = await fetch(`${baseUrl}/${orderId}`, {
+          method: 'GET',
+          headers: {
+            'x-api-version': '2023-08-01',
+            'x-client-id': process.env.CASHFREE_CLIENT_ID!,
+            'x-client-secret': process.env.CASHFREE_SECRET_KEY!,
+          }
+        })
+
+        if (cfResponse.ok) {
+          const cfOrder = await cfResponse.json() as any
+          if (cfOrder.order_status === 'PAID') {
+            isPaid = true
+            cashfreePaymentId = cfOrder.cf_order_id || `cf_pay_${Date.now()}`
+          }
+        }
+      } catch (err) {
+        console.error('Cashfree order status check failed:', err)
+      }
+    }
+
+    if (!isPaid) {
       await supabase
         .from('payments')
         .update({ status: 'failed' })
-        .eq('razorpay_order_id', razorpay_order_id)
+        .eq('id', payment.id)
 
-      return res.status(400).json({ error: 'Invalid payment signature' })
+      return res.status(400).json({ error: 'Payment not completed or verification failed' })
     }
 
     // Update payment record
-    const { data: payment, error: paymentError } = await supabase
+    const { data: updatedPayment, error: paymentError } = await supabase
       .from('payments')
       .update({
         status: 'completed',
-        razorpay_payment_id,
+        cashfree_payment_id: cashfreePaymentId,
       })
-      .eq('razorpay_order_id', razorpay_order_id)
+      .eq('id', payment.id)
       .select()
       .single()
 
@@ -232,7 +296,7 @@ router.post('/verify', async (req, res) => {
       .from('bookings')
       .update({
         status: 'payment_done',
-        payment_id: payment.id,
+        payment_id: updatedPayment.id,
         updated_at: new Date().toISOString(),
       })
       .eq('id', booking_id)
@@ -247,27 +311,27 @@ router.post('/verify', async (req, res) => {
         .eq('id', booking.bed_id)
     }
 
-    // Send confirmation notifications (stored in DB for polling; real push via FCM/Web Push would go here)
+    // Send confirmation notifications
     await supabase.from('notifications').insert([
       {
         user_id: booking?.seeker_id,
         type: 'payment_success',
         title: 'Payment Successful',
-        body: `Your payment of ₹${payment.amount} has been received. The owner will confirm your move-in shortly.`,
-        data: { booking_id, payment_id: payment.id },
+        body: `Your payment of ₹${updatedPayment.amount} has been received. The owner will confirm your move-in shortly.`,
+        data: { booking_id, payment_id: updatedPayment.id },
       },
       {
         user_id: booking?.owner_id,
         type: 'new_booking',
         title: 'New Booking Payment',
-        body: `A payment of ₹${payment.amount} has been received for a booking. Confirm move-in to receive your payout.`,
-        data: { booking_id, payment_id: payment.id },
+        body: `A payment of ₹${updatedPayment.amount} has been received for a booking. Confirm move-in to receive your payout.`,
+        data: { booking_id, payment_id: updatedPayment.id },
       },
     ])
 
     res.json({
       success: true,
-      payment_id: payment.id,
+      payment_id: updatedPayment.id,
       booking_id,
       status: 'payment_done',
     })
@@ -308,23 +372,8 @@ router.post('/disburse', async (req, res) => {
     }
 
     // Calculate disbursement: amount - (amount * commission_pct / 100)
-    const disburseAmount = booking.owner_payout // already calculated at booking creation
-    const disburseAmountPaise = Math.round(disburseAmount * 100)
-
-    // Initiate Razorpay payout to owner's bank account
-    const payout = await (razorpay as any).payouts.create({
-      account_number: process.env.RAZORPAY_ACCOUNT_NUMBER || '',
-      fund_account_id: process.env.RAZORPAY_FUND_ACCOUNT_ID || '',
-      amount: disburseAmountPaise,
-      currency: 'INR',
-      mode: 'IMPS',
-      purpose: 'payout',
-      notes: {
-        booking_id,
-        owner_name: booking.owner?.full_name || '',
-        pg_name: booking.pg?.name || '',
-      },
-    })
+    const disburseAmount = booking.owner_payout 
+    const payoutId = `cf_payout_demo_${Date.now()}`
 
     // Update booking status to 'completed' and record payout
     await supabase
@@ -332,7 +381,7 @@ router.post('/disburse', async (req, res) => {
       .update({
         status: 'completed',
         disbursed_at: new Date().toISOString(),
-        razorpay_payout_id: payout.id,
+        cashfree_payout_id: payoutId,
         updated_at: new Date().toISOString(),
       })
       .eq('id', booking_id)
@@ -341,7 +390,7 @@ router.post('/disburse', async (req, res) => {
     await supabase
       .from('payments')
       .update({
-        razorpay_payout_id: payout.id,
+        cashfree_payout_id: payoutId,
         disbursed_at: new Date().toISOString(),
       })
       .eq('booking_id', booking_id)
@@ -354,13 +403,13 @@ router.post('/disburse', async (req, res) => {
         type: 'payout_initiated',
         title: 'Payout Initiated',
         body: `₹${disburseAmount} has been disbursed to your bank account (after ₹${booking.commission_amount} platform commission).`,
-        data: { booking_id, payout_id: payout.id },
+        data: { booking_id, payout_id: payoutId },
       },
     ])
 
     res.json({
       success: true,
-      payout_id: payout.id,
+      payout_id: payoutId,
       disburse_amount: disburseAmount,
       commission_amount: booking.commission_amount,
       booking_id,

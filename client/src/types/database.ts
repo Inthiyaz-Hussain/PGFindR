@@ -390,8 +390,8 @@ export interface Database {
           commission_rate: number
           commission_amount: number
           owner_payout: number
-          razorpay_order_id: string | null
-          razorpay_payment_id: string | null
+          cashfree_order_id: string | null
+          cashfree_payment_id: string | null
           status: string
           payment_type: string
           created_at: string
@@ -404,8 +404,8 @@ export interface Database {
           commission_rate?: number
           commission_amount?: number
           owner_payout?: number
-          razorpay_order_id?: string | null
-          razorpay_payment_id?: string | null
+          cashfree_order_id?: string | null
+          cashfree_payment_id?: string | null
           status?: string
           payment_type?: string
           created_at?: string
@@ -417,8 +417,8 @@ export interface Database {
           commission_rate?: number
           commission_amount?: number
           owner_payout?: number
-          razorpay_order_id?: string | null
-          razorpay_payment_id?: string | null
+          cashfree_order_id?: string | null
+          cashfree_payment_id?: string | null
           status?: string
           payment_type?: string
         }

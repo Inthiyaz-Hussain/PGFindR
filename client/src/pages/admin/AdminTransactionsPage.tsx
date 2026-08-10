@@ -33,7 +33,7 @@ interface PaymentRow {
   status: PaymentStatus
   payment_type: string
   created_at: string
-  razorpay_payment_id: string | null
+  cashfree_payment_id: string | null
   booking: {
     pg: { name: string }
     seeker: { full_name: string }
@@ -66,7 +66,7 @@ export function AdminTransactionsPage() {
           status,
           payment_type,
           created_at,
-          razorpay_payment_id,
+          cashfree_payment_id,
           booking:bookings(
             pg:pg_listings(name),
             seeker:profiles!bookings_seeker_id_fkey(full_name),
@@ -138,7 +138,7 @@ export function AdminTransactionsPage() {
           status,
           payment_type,
           created_at,
-          razorpay_payment_id,
+          cashfree_payment_id,
           booking:bookings(
             pg:pg_listings(name),
             seeker:profiles!bookings_seeker_id_fkey(full_name),
@@ -178,7 +178,7 @@ export function AdminTransactionsPage() {
       })
 
       // Build CSV
-      const headers = ['Date', 'Payment ID', 'Booking ID', 'Seeker', 'PG', 'Owner', 'Amount', 'Commission Rate', 'Commission', 'Owner Payout', 'Status', 'Payment Type', 'Razorpay ID']
+      const headers = ['Date', 'Payment ID', 'Booking ID', 'Seeker', 'PG', 'Owner', 'Amount', 'Commission Rate', 'Commission', 'Owner Payout', 'Status', 'Payment Type', 'Cashfree ID']
       const rows = payments.map(p => [
         new Date(p.created_at).toLocaleDateString('en-IN'),
         p.id,
@@ -192,7 +192,7 @@ export function AdminTransactionsPage() {
         p.owner_payout,
         p.status,
         p.payment_type,
-        p.razorpay_payment_id || '—'
+        p.cashfree_payment_id || '—'
       ])
 
       const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n')

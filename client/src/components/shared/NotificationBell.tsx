@@ -55,8 +55,12 @@ export function NotificationBell() {
     const data = notification.data
     if (notification.type === 'inquiry_new' && data.inquiry_id) {
       navigate(`/owner/inquiries`)
-    } else if (notification.type === 'inquiry_confirmed' && data.inquiry_id) {
-      navigate(`/my-inquiries`)
+    } else if (notification.type === 'inquiry_confirmed') {
+      if (data.booking_id) {
+        navigate(`/payment/${data.booking_id}`)
+      } else {
+        navigate(`/my-inquiries`)
+      }
     } else if (notification.type === 'inquiry_declined' && data.inquiry_id) {
       navigate(`/my-inquiries`)
     } else if (notification.type === 'booking_confirmed' && data.booking_id) {

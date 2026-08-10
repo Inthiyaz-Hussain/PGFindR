@@ -17,6 +17,7 @@ const STATUS_CONFIG: Record<string, { label: string; class: string }> = {
   contacted: { label: 'Contacted', class: 'bg-blue-100 text-blue-800 border-blue-200' },
   confirmed: { label: 'Confirmed', class: 'bg-green-100 text-green-800 border-green-200' },
   cancelled: { label: 'Cancelled', class: 'bg-red-100 text-red-800 border-red-200' },
+  booked: { label: 'Booked', class: 'bg-indigo-100 text-indigo-800 border-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-400' },
 }
 
 export function InquiriesPage() {
