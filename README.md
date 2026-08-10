@@ -89,3 +89,40 @@ Run the unit test suite to assert component and endpoint validity:
 ```bash
 npm run test
 ```
+
+---
+
+## 🚀 Development History & New Features
+
+Below is a chronological log of all enhancements, features, and optimizations implemented during the pair programming sessions:
+
+### 1. Cashfree Payment Gateway Migration
+- **Complete Gateway Swap**: Replaced Razorpay with Cashfree across the entire stack (database migrations, backend payment routes, client-side scripts, sharing modules, and automated unit test suites).
+- **Cashfree Web Checkout SDK**: Integrated Cashfree Web SDK for redirect-based order checkouts, supporting live production callbacks and sandbox environments.
+- **Disbursements Ledger**: Enabled automatic calculation and tracking of Cashfree PG disbursements and payouts to property owners.
+
+### 2. Admin KYC Panel Refactoring
+- Rewrote the filtering, schema mappings, and in-memory pagination logic for the Admin Owner KYC verification panel (`AdminOwnersPage.tsx`), enabling administrators to easily inspect and approve pending property owners.
+
+### 3. Query Alignment & 500 Error Fixes
+- Addressed database query compilation errors (500 Internal Server Errors) by removing legacy references to non-existent schema fields (e.g. `email` column in the user profiles table) from all PG and booking SELECT queries.
+
+### 4. Admin Settings Panel & Custom Tiers
+- Built input forms in the Admin Platform Settings panel to manage flat **Platform Fees**, **Service Charges**, and a **3-Tier Owner Commission Rule** based on monthly rent thresholds (e.g., Tier 1 ≤ ₹5k, Tier 2 ≤ ₹10k, Tier 3 > ₹10k).
+- Binds these fee parameters permanently onto booking records at creation time, preserving financial history.
+
+### 5. Seeker Payment Options & Breakdown
+- Integrated a payment plan selector on the Seeker checkout screen (`PaymentPage.tsx`) allowing seekers to choose between paying:
+  - **Option 1**: Security Deposit (Advance) Only.
+  - **Option 2**: Security Deposit + First Month's Rent.
+- Renders an interactive, real-time bill breakdown listing the Security Deposit, First Month's Rent (if selected), Platform Fee, and Service Charge before payment confirmation.
+
+### 6. Owner Onboarding Auto-Bypass
+- Added a self-healing background check on owner profile login (`useAuth.tsx`). If an owner already has active PG listings, they bypass the onboarding questions and land directly on their dashboard.
+
+### 7. Bed Count Selector & Proportional Pricing
+- Added a digit numeric input field in the Seeker Inquiry form.
+- Integrates dynamic Zod validation rules that limit the maximum allowed beds based on the chosen sharing type (e.g. max 1 bed for Single Sharing, up to 2 for Double, up to 3 for Triple).
+- Scales all transaction amounts (monthly rent, deposit, platform fee, service charge, owner payouts, and commission amounts) proportionally by the number of beds booked.
+- Updates status for exactly `num_beds` beds of that sharing type to `'reserved'` on successful checkout.
+
