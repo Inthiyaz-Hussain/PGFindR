@@ -35,7 +35,7 @@ router.get('/:id', async (req, res) => {
   try {
     const { data, error } = await supabase
       .from('bookings')
-      .select('*, pg:pg_listings(*), bed:beds(*), seeker:profiles!bookings_seeker_id_fkey(full_name, phone, email)')
+      .select('*, pg:pg_listings(*), bed:beds(*), seeker:profiles!bookings_seeker_id_fkey(full_name, phone)')
       .eq('id', req.params.id)
       .single()
 
