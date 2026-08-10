@@ -5,6 +5,36 @@ import { createNotification, getUserFcmToken } from '../lib/notifications.js'
 
 const router = Router()
 
+async function getPlatformSettings() {
+  const { data, error } = await supabase
+    .from('platform_settings')
+    .select('*')
+  if (error) {
+    console.error('Error loading platform settings:', error)
+    return {}
+  }
+  return (data || []).reduce((acc: Record<string, string>, item: any) => {
+    acc[item.key] = item.value
+    return acc
+  }, {})
+}
+
+function calculateCommissionRate(monthlyRent: number, settings: Record<string, string>): number {
+  const tier1Max = parseInt(settings['commission_tier_1_max_rent'] || '5000', 10)
+  const tier1Rate = parseFloat(settings['commission_tier_1_rate'] || '8.00')
+  const tier2Max = parseInt(settings['commission_tier_2_max_rent'] || '10000', 10)
+  const tier2Rate = parseFloat(settings['commission_tier_2_rate'] || '10.00')
+  const tier3Rate = parseFloat(settings['commission_tier_3_rate'] || '12.00')
+
+  if (monthlyRent <= tier1Max) {
+    return tier1Rate
+  } else if (monthlyRent <= tier2Max) {
+    return tier2Rate
+  } else {
+    return tier3Rate
+  }
+}
+
 // GET /api/booking - List bookings (filtered by user role)
 router.get('/', async (req, res) => {
   try {
@@ -59,10 +89,15 @@ router.post('/', async (req, res) => {
       .eq('id', pg_id)
       .single()
 
-    const commissionRate = pg?.commission_rate || 10
+    const settings = await getPlatformSettings()
+    const platformFee = parseInt(settings['platform_fee'] || '200', 10)
+    const serviceCharge = parseInt(settings['service_charge'] || '100', 10)
+
+    const commissionRate = calculateCommissionRate(monthly_rent, settings)
     const depositAmount = pg?.deposit_amount || 0
     const commissionAmount = Math.round(depositAmount * (commissionRate / 100))
     const ownerPayout = depositAmount - commissionAmount
+    const totalInitialAmount = depositAmount + platformFee + serviceCharge
 
     const { data, error } = await supabase
       .from('bookings')
@@ -74,10 +109,13 @@ router.post('/', async (req, res) => {
         bed_id,
         monthly_rent,
         deposit_amount: depositAmount,
-        amount: depositAmount,
+        amount: totalInitialAmount,
         commission_pct: commissionRate,
         commission_amount: commissionAmount,
         owner_payout: ownerPayout,
+        platform_fee: platformFee,
+        service_charge: serviceCharge,
+        include_rent: false,
         status: 'pending_payment',
         move_in_date
       })

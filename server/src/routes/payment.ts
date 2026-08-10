@@ -13,11 +13,11 @@ const getCashfreeConfig = () => {
 }
 
 // POST /api/payment/initiate — Create Cashfree order for a booking
-// Input: { booking_id }
+// Input: { booking_id, include_rent }
 // Returns: { cashfree_order_id, payment_session_id, amount, currency }
 router.post('/initiate', async (req, res) => {
   try {
-    const { booking_id } = req.body
+    const { booking_id, include_rent } = req.body
 
     if (!booking_id || typeof booking_id !== 'string') {
       return res.status(400).json({ error: 'booking_id is required' })
@@ -26,7 +26,7 @@ router.post('/initiate', async (req, res) => {
     // Get booking details
     const { data: booking, error: bookingError } = await supabase
       .from('bookings')
-      .select('*, pg:pg_listings(name, owner_id), seeker:profiles!bookings_seeker_id_fkey(full_name, phone, email)')
+      .select('*, pg:pg_listings(name, owner_id), seeker:profiles!bookings_seeker_id_fkey(full_name, phone)')
       .eq('id', booking_id)
       .single()
 
@@ -37,6 +37,31 @@ router.post('/initiate', async (req, res) => {
     if (booking.status === 'active' || booking.status === 'completed' || booking.status === 'payment_done') {
       return res.status(400).json({ error: 'Booking already paid' })
     }
+
+    const platformFee = booking.platform_fee || 0
+    const serviceCharge = booking.service_charge || 0
+    const depositAmount = booking.deposit_amount || 0
+    const monthlyRent = booking.monthly_rent || 0
+    const commissionRate = booking.commission_pct || 10
+
+    const paidRent = include_rent === true
+    const totalAmount = depositAmount + (paidRent ? monthlyRent : 0) + platformFee + serviceCharge
+    const commissionAmount = Math.round(depositAmount * (commissionRate / 100))
+    const ownerPayout = (depositAmount - commissionAmount) + (paidRent ? monthlyRent : 0)
+
+    // Update booking record first with the selection details
+    const { error: bookingUpdateErr } = await supabase
+      .from('bookings')
+      .update({
+        amount: totalAmount,
+        include_rent: paidRent,
+        owner_payout: ownerPayout,
+        commission_amount: commissionAmount,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', booking_id)
+
+    if (bookingUpdateErr) throw bookingUpdateErr
 
     let orderId = `cf_order_${Date.now()}`
     let paymentSessionId = `demo_session_${Date.now()}`
@@ -55,13 +80,13 @@ router.post('/initiate', async (req, res) => {
           },
           body: JSON.stringify({
             order_id: orderId,
-            order_amount: booking.amount,
+            order_amount: totalAmount,
             order_currency: 'INR',
             customer_details: {
               customer_id: booking.seeker_id,
               customer_name: booking.seeker?.full_name || 'Seeker',
               customer_phone: booking.seeker?.phone || '9999999999',
-              customer_email: booking.seeker?.email || 'seeker@example.com',
+              customer_email: 'seeker@example.com',
             },
             order_meta: {
               return_url: `${req.headers.origin || 'http://localhost:5173'}/payment/${booking_id}?cashfree_callback=true`
@@ -90,13 +115,16 @@ router.post('/initiate', async (req, res) => {
       .insert({
         booking_id,
         seeker_id: booking.seeker_id,
-        amount: booking.amount,
-        commission_rate: booking.commission_pct,
-        commission_amount: booking.commission_amount,
-        owner_payout: booking.owner_payout,
+        amount: totalAmount,
+        commission_rate: commissionRate,
+        commission_amount: commissionAmount,
+        owner_payout: ownerPayout,
         cashfree_order_id: orderId,
         status: 'pending',
-        payment_type: 'deposit',
+        payment_type: paidRent ? 'monthly_rent' : 'deposit',
+        platform_fee: platformFee,
+        service_charge: serviceCharge,
+        include_rent: paidRent,
       })
       .select()
       .single()
@@ -106,7 +134,7 @@ router.post('/initiate', async (req, res) => {
     res.json({
       cashfree_order_id: orderId,
       payment_session_id: paymentSessionId,
-      amount: booking.amount,
+      amount: totalAmount,
       currency: 'INR',
       payment_id: payment.id,
       is_demo_mode: isDemoMode || orderId.startsWith('cf_order_demo_'),
@@ -118,10 +146,10 @@ router.post('/initiate', async (req, res) => {
 })
 
 // POST /api/payment/demo-confirm — Instant payment completion for demo/test mode
-// Input: { booking_id }
+// Input: { booking_id, include_rent }
 router.post('/demo-confirm', async (req, res) => {
   try {
-    const { booking_id } = req.body
+    const { booking_id, include_rent } = req.body
 
     if (!booking_id) {
       return res.status(400).json({ error: 'booking_id is required' })
@@ -142,6 +170,30 @@ router.post('/demo-confirm', async (req, res) => {
       return res.status(400).json({ error: 'Booking is already paid' })
     }
 
+    const platformFee = booking.platform_fee || 0
+    const serviceCharge = booking.service_charge || 0
+    const depositAmount = booking.deposit_amount || 0
+    const monthlyRent = booking.monthly_rent || 0
+    const commissionRate = booking.commission_pct || 10
+
+    const paidRent = include_rent === true
+    const totalAmount = depositAmount + (paidRent ? monthlyRent : 0) + platformFee + serviceCharge
+    const commissionAmount = Math.round(depositAmount * (commissionRate / 100))
+    const ownerPayout = (depositAmount - commissionAmount) + (paidRent ? monthlyRent : 0)
+
+    // Update booking record first with the selection details
+    const { error: bookingUpdateErr } = await supabase
+      .from('bookings')
+      .update({
+        amount: totalAmount,
+        include_rent: paidRent,
+        owner_payout: ownerPayout,
+        commission_amount: commissionAmount,
+      })
+      .eq('id', booking_id)
+
+    if (bookingUpdateErr) throw bookingUpdateErr
+
     const demoOrderId = `cf_ord_demo_${Date.now()}`
     const demoPaymentId = `cf_pay_demo_${Date.now()}`
 
@@ -151,14 +203,17 @@ router.post('/demo-confirm', async (req, res) => {
       .insert({
         booking_id,
         seeker_id: booking.seeker_id,
-        amount: booking.amount,
-        commission_rate: booking.commission_pct,
-        commission_amount: booking.commission_amount,
-        owner_payout: booking.owner_payout,
+        amount: totalAmount,
+        commission_rate: commissionRate,
+        commission_amount: commissionAmount,
+        owner_payout: ownerPayout,
         cashfree_order_id: demoOrderId,
         cashfree_payment_id: demoPaymentId,
         status: 'completed',
-        payment_type: 'deposit',
+        payment_type: paidRent ? 'monthly_rent' : 'deposit',
+        platform_fee: platformFee,
+        service_charge: serviceCharge,
+        include_rent: paidRent,
       })
       .select()
       .single()

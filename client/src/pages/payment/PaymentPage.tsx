@@ -3,7 +3,7 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { ChevronLeft, Shield, CheckCircle2, Loader2, Home, IndianRupee } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { toast } from 'sonner'
 
@@ -26,6 +26,8 @@ interface BookingDetail {
   pg: { id: string; name: string; city: string; locality: string }
   bed: { room_number: string; bed_label: string; sharing_type: string } | null
   seeker: { full_name: string }
+  platform_fee?: number
+  service_charge?: number
 }
 
 const CASHFREE_SCRIPT = 'https://sdk.cashfree.com/js/v3/cashfree.js'
@@ -37,6 +39,7 @@ export function PaymentPage() {
   const [initiating, setInitiating] = useState(false)
   const [verifying, setVerifying] = useState(false)
   const [scriptLoaded, setScriptLoaded] = useState(false)
+  const [includeRent, setIncludeRent] = useState(false)
 
   const isCallback = searchParams.get('cashfree_callback') === 'true'
 
@@ -104,11 +107,11 @@ export function PaymentPage() {
     setInitiating(true)
 
     try {
-      // Step 1: Initiate payment — create Cashfree order on backend
+      // Step 1: Initiate payment — create Cashfree order on backend with selected rent option
       const initiateRes = await fetch(`${import.meta.env.VITE_API_URL || 'https://swiftpg-backend.onrender.com'}/api/payment/initiate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ booking_id: booking.id }),
+        body: JSON.stringify({ booking_id: booking.id, include_rent: includeRent }),
       })
 
       if (!initiateRes.ok) {
@@ -136,7 +139,7 @@ export function PaymentPage() {
       toast.error((err as Error).message)
       setInitiating(false)
     }
-  }, [booking, scriptLoaded, navigate])
+  }, [booking, scriptLoaded, navigate, includeRent])
 
   const handleDemoPayment = useCallback(async () => {
     if (!booking) return
@@ -147,7 +150,7 @@ export function PaymentPage() {
       const res = await fetch(`${import.meta.env.VITE_API_URL || 'https://swiftpg-backend.onrender.com'}/api/payment/demo-confirm`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ booking_id: booking.id }),
+        body: JSON.stringify({ booking_id: booking.id, include_rent: includeRent }),
       })
 
       if (!res.ok) {
@@ -161,7 +164,7 @@ export function PaymentPage() {
       toast.error((err as Error).message)
       setInitiating(false)
     }
-  }, [booking, navigate])
+  }, [booking, navigate, includeRent])
 
   if (isLoading || verifying) {
     return (
@@ -186,6 +189,12 @@ export function PaymentPage() {
   }
 
   const alreadyPaid = booking.status === 'payment_done' || booking.status === 'active' || booking.status === 'completed'
+
+  const platformFee = booking.platform_fee ?? 200
+  const serviceCharge = booking.service_charge ?? 100
+  const depositAmount = booking.deposit_amount || 0
+  const monthlyRent = booking.monthly_rent || 0
+  const totalPayable = depositAmount + (includeRent ? monthlyRent : 0) + platformFee + serviceCharge
 
   return (
     <div className="container mx-auto max-w-lg px-4 py-6">
@@ -225,21 +234,112 @@ export function PaymentPage() {
               })}
             </span>
           </div>
+        </CardContent>
+      </Card>
 
-          <Separator />
+      {/* Option Selector */}
+      {!alreadyPaid && (
+        <Card className="mb-4">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Select Payment Plan</CardTitle>
+            <CardDescription>Choose how much you want to pay upfront.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3 pt-0">
+            <div className="grid grid-cols-1 gap-3">
+              <div
+                onClick={() => setIncludeRent(false)}
+                className={`p-3 border rounded-xl cursor-pointer transition ${
+                  !includeRent
+                    ? 'border-indigo-600 bg-indigo-50/20 dark:bg-indigo-950/10'
+                    : 'hover:border-slate-300 dark:hover:border-slate-700'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      checked={!includeRent}
+                      onChange={() => setIncludeRent(false)}
+                      className="accent-indigo-600"
+                    />
+                    <span className="font-semibold text-sm">Security Deposit (Advance) Only</span>
+                  </div>
+                  <span className="text-sm font-bold flex items-center">
+                    <IndianRupee className="size-3" />
+                    {(depositAmount + platformFee + serviceCharge).toLocaleString('en-IN')}
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1 ml-5">
+                  Pay only the advance amount along with platform fees. Rent will be due on move-in.
+                </p>
+              </div>
 
-          {/* Price breakdown */}
+              <div
+                onClick={() => setIncludeRent(true)}
+                className={`p-3 border rounded-xl cursor-pointer transition ${
+                  includeRent
+                    ? 'border-indigo-600 bg-indigo-50/20 dark:bg-indigo-950/10'
+                    : 'hover:border-slate-300 dark:hover:border-slate-700'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      checked={includeRent}
+                      onChange={() => setIncludeRent(true)}
+                      className="accent-indigo-600"
+                    />
+                    <span className="font-semibold text-sm">Security Deposit + 1 Month Rent</span>
+                  </div>
+                  <span className="text-sm font-bold flex items-center">
+                    <IndianRupee className="size-3" />
+                    {(depositAmount + monthlyRent + platformFee + serviceCharge).toLocaleString('en-IN')}
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1 ml-5">
+                  Secure your bed and pay your first month's rent upfront to save time on move-in.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Bill Breakdown */}
+      <Card className="mb-4">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">Bill Breakdown</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
           <div className="space-y-2">
             <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Monthly Rent</span>
+              <span className="text-muted-foreground">Security Deposit (Advance)</span>
               <span className="font-medium flex items-center">
-                <IndianRupee className="size-3" />{booking.monthly_rent.toLocaleString('en-IN')}
+                <IndianRupee className="size-3" />{depositAmount.toLocaleString('en-IN')}
               </span>
             </div>
+
+            {includeRent && (
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">First Month's Rent</span>
+                <span className="font-medium flex items-center">
+                  <IndianRupee className="size-3" />{monthlyRent.toLocaleString('en-IN')}
+                </span>
+              </div>
+            )}
+
             <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Security Deposit</span>
+              <span className="text-muted-foreground">Platform Fee</span>
               <span className="font-medium flex items-center">
-                <IndianRupee className="size-3" />{booking.deposit_amount.toLocaleString('en-IN')}
+                <IndianRupee className="size-3" />{platformFee.toLocaleString('en-IN')}
+              </span>
+            </div>
+
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Service Charge</span>
+              <span className="font-medium flex items-center">
+                <IndianRupee className="size-3" />{serviceCharge.toLocaleString('en-IN')}
               </span>
             </div>
           </div>
@@ -250,7 +350,7 @@ export function PaymentPage() {
           <div className="flex items-center justify-between">
             <span className="text-sm font-semibold">Total Payable Now</span>
             <span className="text-2xl font-bold flex items-center">
-              <IndianRupee className="size-5" />{booking.amount.toLocaleString('en-IN')}
+              <IndianRupee className="size-5" />{totalPayable.toLocaleString('en-IN')}
             </span>
           </div>
         </CardContent>
@@ -263,7 +363,7 @@ export function PaymentPage() {
           <p className="font-medium text-foreground mb-0.5">Secured by PGFindR</p>
           <p>
             Your payment is held securely by the platform. The owner receives payout
-            only after your move-in is confirmed. Commission: {booking.commission_pct}%.
+            only after your move-in is confirmed.
           </p>
         </div>
       </div>
@@ -294,7 +394,7 @@ export function PaymentPage() {
             ) : (
               <CheckCircle2 className="size-4 mr-1.5" />
             )}
-            {initiating ? 'Processing...' : `Pay ₹${booking.amount.toLocaleString('en-IN')} (Demo / Test Mode)`}
+            {initiating ? 'Processing...' : `Pay ₹${totalPayable.toLocaleString('en-IN')} (Demo / Test Mode)`}
           </Button>
 
           <Button

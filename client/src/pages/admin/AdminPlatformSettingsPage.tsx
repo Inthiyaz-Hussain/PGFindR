@@ -29,7 +29,14 @@ export function AdminPlatformSettingsPage() {
     supportPhone: '+91 80 4719 3210',
     supportEmail: 'support@pgfindr.in',
     manualApproval: true,
-    maintenanceMode: false
+    maintenanceMode: false,
+    platformFee: '200.00',
+    serviceCharge: '100.00',
+    tier1MaxRent: '5000',
+    tier1Rate: '8.00',
+    tier2MaxRent: '10000',
+    tier2Rate: '10.00',
+    tier3Rate: '12.00',
   })
 
   // Query Settings
@@ -62,7 +69,14 @@ export function AdminPlatformSettingsPage() {
         supportPhone: settingsMap['help_desk_phone'] || '+91 80 4719 3210',
         supportEmail: settingsMap['help_desk_email'] || 'support@pgfindr.in',
         manualApproval: settingsMap['manual_pg_approval'] === 'true',
-        maintenanceMode: settingsMap['platform_maintenance_mode'] === 'true'
+        maintenanceMode: settingsMap['platform_maintenance_mode'] === 'true',
+        platformFee: settingsMap['platform_fee'] || '200.00',
+        serviceCharge: settingsMap['service_charge'] || '100.00',
+        tier1MaxRent: settingsMap['commission_tier_1_max_rent'] || '5000',
+        tier1Rate: settingsMap['commission_tier_1_rate'] || '8.00',
+        tier2MaxRent: settingsMap['commission_tier_2_max_rent'] || '10000',
+        tier2Rate: settingsMap['commission_tier_2_rate'] || '10.00',
+        tier3Rate: settingsMap['commission_tier_3_rate'] || '12.00',
       }
 
       setForm(initialForm)
@@ -80,7 +94,7 @@ export function AdminPlatformSettingsPage() {
         logs.unshift({
           action: 'Platform settings updated',
           category: 'System',
-          details: 'Commission, support channels, and approval policies updated.',
+          details: 'Commission, support channels, fees, and approval policies updated.',
           user: profile?.full_name || 'System Admin',
           timestamp: new Date().toISOString()
         })
@@ -94,7 +108,14 @@ export function AdminPlatformSettingsPage() {
         { key: 'help_desk_phone', value: form.supportPhone, description: 'Customer support hotline phone number' },
         { key: 'help_desk_email', value: form.supportEmail, description: 'Customer support contact email address' },
         { key: 'manual_pg_approval', value: form.manualApproval.toString(), description: 'Toggle for manual PG verification gate' },
-        { key: 'platform_maintenance_mode', value: form.maintenanceMode.toString(), description: 'Toggle to lock platform for upgrades' }
+        { key: 'platform_maintenance_mode', value: form.maintenanceMode.toString(), description: 'Toggle to lock platform for upgrades' },
+        { key: 'platform_fee', value: form.platformFee, description: 'Flat platform fee charged to seekers' },
+        { key: 'service_charge', value: form.serviceCharge, description: 'Flat service charge charged to seekers' },
+        { key: 'commission_tier_1_max_rent', value: form.tier1MaxRent, description: 'Maximum rent for Tier 1 commission' },
+        { key: 'commission_tier_1_rate', value: form.tier1Rate, description: 'Commission rate for Tier 1' },
+        { key: 'commission_tier_2_max_rent', value: form.tier2MaxRent, description: 'Maximum rent for Tier 2 commission' },
+        { key: 'commission_tier_2_rate', value: form.tier2Rate, description: 'Commission rate for Tier 2' },
+        { key: 'commission_tier_3_rate', value: form.tier3Rate, description: 'Commission rate for Tier 3' }
       ]
 
       for (const item of updates) {
@@ -153,6 +174,112 @@ export function AdminPlatformSettingsPage() {
                     onChange={(e) => setForm((p) => ({ ...p, depositMonths: e.target.value }))}
                     required
                   />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-slate-100 dark:border-slate-800 shadow-sm rounded-2xl">
+            <CardHeader>
+              <CardTitle className="text-base font-bold">Seeker Payment Fees</CardTitle>
+              <CardDescription>Configure platform fee and service charge billed to seekers during booking checkout.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label>Platform Fee (₹)</Label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-semibold">₹</span>
+                    <Input
+                      type="number"
+                      step="1"
+                      className="pl-7"
+                      value={form.platformFee}
+                      onChange={(e) => setForm((p) => ({ ...p, platformFee: e.target.value }))}
+                      required
+                    />
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Service Charge (₹)</Label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-semibold">₹</span>
+                    <Input
+                      type="number"
+                      step="1"
+                      className="pl-7"
+                      value={form.serviceCharge}
+                      onChange={(e) => setForm((p) => ({ ...p, serviceCharge: e.target.value }))}
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-slate-100 dark:border-slate-800 shadow-sm rounded-2xl">
+            <CardHeader>
+              <CardTitle className="text-base font-bold">Owner Commission Tiers</CardTitle>
+              <CardDescription>Configure dynamic commission rates applied based on PG monthly rent.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <Label>Tier 1 Max Rent (₹)</Label>
+                    <Input
+                      type="number"
+                      value={form.tier1MaxRent}
+                      onChange={(e) => setForm((p) => ({ ...p, tier1MaxRent: e.target.value }))}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Tier 1 Commission Rate (%)</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={form.tier1Rate}
+                      onChange={(e) => setForm((p) => ({ ...p, tier1Rate: e.target.value }))}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <Label>Tier 2 Max Rent (₹)</Label>
+                    <Input
+                      type="number"
+                      value={form.tier2MaxRent}
+                      onChange={(e) => setForm((p) => ({ ...p, tier2MaxRent: e.target.value }))}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Tier 2 Commission Rate (%)</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={form.tier2Rate}
+                      onChange={(e) => setForm((p) => ({ ...p, tier2Rate: e.target.value }))}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <Label>Tier 3 Commission Rate (%) (Above Tier 2 Max)</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={form.tier3Rate}
+                      onChange={(e) => setForm((p) => ({ ...p, tier3Rate: e.target.value }))}
+                      required
+                    />
+                  </div>
                 </div>
               </div>
             </CardContent>

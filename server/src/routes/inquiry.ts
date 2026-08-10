@@ -7,6 +7,36 @@ import { authenticateToken } from '../middleware/auth.js'
 
 const router = Router()
 
+async function getPlatformSettings() {
+  const { data, error } = await supabase
+    .from('platform_settings')
+    .select('*')
+  if (error) {
+    console.error('Error loading platform settings:', error)
+    return {}
+  }
+  return (data || []).reduce((acc: Record<string, string>, item: any) => {
+    acc[item.key] = item.value
+    return acc
+  }, {})
+}
+
+function calculateCommissionRate(monthlyRent: number, settings: Record<string, string>): number {
+  const tier1Max = parseInt(settings['commission_tier_1_max_rent'] || '5000', 10)
+  const tier1Rate = parseFloat(settings['commission_tier_1_rate'] || '8.00')
+  const tier2Max = parseInt(settings['commission_tier_2_max_rent'] || '10000', 10)
+  const tier2Rate = parseFloat(settings['commission_tier_2_rate'] || '10.00')
+  const tier3Rate = parseFloat(settings['commission_tier_3_rate'] || '12.00')
+
+  if (monthlyRent <= tier1Max) {
+    return tier1Rate
+  } else if (monthlyRent <= tier2Max) {
+    return tier2Rate
+  } else {
+    return tier3Rate
+  }
+}
+
 // GET /api/inquiry - List inquiries (filtered by user role)
 router.get('/', async (req, res) => {
   try {
@@ -293,10 +323,20 @@ router.put('/:id', async (req, res) => {
           .single()
 
         const monthlyRent = (beds as any)?.[0]?.monthly_rent || pgDetails?.monthly_rent_min || 5000
-        const commissionRate = pgDetails?.commission_rate || 10
+
+        // Fetch settings for seeker platform fee and service charge
+        const settings = await getPlatformSettings()
+        const platformFee = parseInt(settings['platform_fee'] || '200', 10)
+        const serviceCharge = parseInt(settings['service_charge'] || '100', 10)
+
+        // Calculate dynamic commission rate based on monthly rent
+        const commissionRate = calculateCommissionRate(monthlyRent, settings)
         const depositAmount = pgDetails?.deposit_amount || 0
         const commissionAmount = Math.round(depositAmount * (commissionRate / 100))
         const ownerPayout = depositAmount - commissionAmount
+
+        // Total initial amount is Security Deposit + Platform Fee + Service Charge
+        const totalInitialAmount = depositAmount + platformFee + serviceCharge
 
         // Create booking in pending_payment status
         const { data: booking, error: bookingErr } = await supabase
@@ -309,10 +349,13 @@ router.put('/:id', async (req, res) => {
             bed_id: bedId,
             monthly_rent: monthlyRent,
             deposit_amount: depositAmount,
-            amount: depositAmount,
+            amount: totalInitialAmount,
             commission_pct: commissionRate,
             commission_amount: commissionAmount,
             owner_payout: ownerPayout,
+            platform_fee: platformFee,
+            service_charge: serviceCharge,
+            include_rent: false,
             status: 'pending_payment',
             move_in_date: existingInquiry.move_in_date || new Date().toISOString().split('T')[0]
           })
