@@ -230,12 +230,29 @@ router.post('/demo-confirm', async (req, res) => {
       })
       .eq('id', booking_id)
 
-    // Mark bed as reserved
+    // Mark beds as reserved
     if (booking.bed_id) {
+      const numBeds = booking.num_beds || 1
+      const { data: siblingBeds } = await supabase
+        .from('beds')
+        .select('id')
+        .eq('pg_id', booking.pg_id)
+        .eq('status', 'available')
+        .limit(numBeds)
+
+      const bedIdsToReserve = [booking.bed_id]
+      if (siblingBeds) {
+        siblingBeds.forEach((b: any) => {
+          if (!bedIdsToReserve.includes(b.id)) {
+            bedIdsToReserve.push(b.id)
+          }
+        })
+      }
+
       await supabase
         .from('beds')
         .update({ status: 'reserved', updated_at: new Date().toISOString() })
-        .eq('id', booking.bed_id)
+        .in('id', bedIdsToReserve.slice(0, numBeds))
     }
 
     // Send confirmation notifications
@@ -355,15 +372,32 @@ router.post('/verify', async (req, res) => {
         updated_at: new Date().toISOString(),
       })
       .eq('id', booking_id)
-      .select('bed_id, seeker_id, owner_id, pg_id')
+      .select('bed_id, seeker_id, owner_id, pg_id, num_beds')
       .single()
 
-    // Mark bed as reserved (will be 'occupied' on move-in confirmation)
+    // Mark beds as reserved (will be 'occupied' on move-in confirmation)
     if (booking?.bed_id) {
+      const numBeds = booking.num_beds || 1
+      const { data: siblingBeds } = await supabase
+        .from('beds')
+        .select('id')
+        .eq('pg_id', booking.pg_id)
+        .eq('status', 'available')
+        .limit(numBeds)
+
+      const bedIdsToReserve = [booking.bed_id]
+      if (siblingBeds) {
+        siblingBeds.forEach((b: any) => {
+          if (!bedIdsToReserve.includes(b.id)) {
+            bedIdsToReserve.push(b.id)
+          }
+        })
+      }
+
       await supabase
         .from('beds')
         .update({ status: 'reserved', updated_at: new Date().toISOString() })
-        .eq('id', booking.bed_id)
+        .in('id', bedIdsToReserve.slice(0, numBeds))
     }
 
     // Send confirmation notifications

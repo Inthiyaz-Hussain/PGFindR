@@ -18,7 +18,18 @@ const mockBookingUpdateChain = {
 }
 
 const mockBedsUpdateChain = {
+  select: jest.fn().mockReturnValue({
+    eq: jest.fn().mockReturnValue({
+      eq: jest.fn().mockReturnValue({
+        limit: jest.fn().mockResolvedValue({
+          data: [{ id: 'bed-001' }],
+          error: null,
+        }),
+      }),
+    }),
+  }),
   update: jest.fn().mockReturnValue({
+    in: jest.fn().mockResolvedValue({ error: null }),
     eq: jest.fn().mockResolvedValue({ error: null }),
   }),
 }

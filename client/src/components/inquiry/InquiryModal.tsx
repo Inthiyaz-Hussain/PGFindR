@@ -30,6 +30,7 @@ const inquirySchema = z.object({
   age: z.number().min(18, 'Age must be at least 18').max(60, 'Age must be at most 60'),
   move_in_date: z.string().min(1, 'Move-in date is required'),
   sharing_preference: z.number().min(1).max(4),
+  num_beds: z.number().min(1, 'At least 1 bed required').max(5, 'Maximum 5 beds allowed'),
   occupation: z.enum(['Student', 'Working Professional', 'Other']),
   city_of_origin: z.string().min(2, 'City of origin is required'),
   duration_value: z.number().min(1, 'Duration must be at least 1'),
@@ -97,6 +98,7 @@ export function InquiryModal({
       age: 25,
       move_in_date: '',
       sharing_preference: sharingTypes[0]?.type || 1,
+      num_beds: 1,
       occupation: 'Student',
       city_of_origin: '',
       duration_value: 1,
@@ -123,6 +125,7 @@ export function InquiryModal({
         age: 25,
         move_in_date: '',
         sharing_preference: sharingTypes[0]?.type || 1,
+        num_beds: 1,
         occupation: 'Student',
         city_of_origin: '',
         duration_value: 1,
@@ -304,6 +307,32 @@ export function InquiryModal({
           )}
         />
         {errors.sharing_preference && <p className="text-xs text-destructive">{errors.sharing_preference.message}</p>}
+      </div>
+
+      {/* Number of Beds Selection */}
+      <div className="space-y-1.5">
+        <Label htmlFor="num_beds" className="flex items-center gap-1.5">
+          <BedSingle className="size-3.5" /> Number of Beds
+        </Label>
+        <Controller
+          name="num_beds"
+          control={control}
+          render={({ field }) => (
+            <Select value={String(field.value)} onValueChange={(val) => field.onChange(Number(val))}>
+              <SelectTrigger id="num_beds">
+                <SelectValue placeholder="Select number of beds" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1">1 Bed</SelectItem>
+                <SelectItem value="2">2 Beds (Double Pricing)</SelectItem>
+                <SelectItem value="3">3 Beds (Triple Pricing)</SelectItem>
+                <SelectItem value="4">4 Beds (Quadruple Pricing)</SelectItem>
+                <SelectItem value="5">5 Beds (Quintuple Pricing)</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
+        />
+        {errors.num_beds && <p className="text-xs text-destructive">{errors.num_beds.message}</p>}
       </div>
 
       {/* Occupation */}

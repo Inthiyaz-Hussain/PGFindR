@@ -80,7 +80,8 @@ router.get('/:id', async (req, res) => {
 // POST /api/booking - Create booking from confirmed inquiry
 router.post('/', async (req, res) => {
   try {
-    const { inquiry_id, pg_id, seeker_id, owner_id, bed_id, monthly_rent, move_in_date } = req.body
+    const { inquiry_id, pg_id, seeker_id, owner_id, bed_id, monthly_rent, move_in_date, num_beds } = req.body
+    const numBeds = num_beds || 1
 
     // Get PG commission rate and deposit
     const { data: pg } = await supabase
@@ -90,11 +91,14 @@ router.post('/', async (req, res) => {
       .single()
 
     const settings = await getPlatformSettings()
-    const platformFee = parseInt(settings['platform_fee'] || '200', 10)
-    const serviceCharge = parseInt(settings['service_charge'] || '100', 10)
+    const platformFee = parseInt(settings['platform_fee'] || '200', 10) * numBeds
+    const serviceCharge = parseInt(settings['service_charge'] || '100', 10) * numBeds
 
-    const commissionRate = calculateCommissionRate(monthly_rent, settings)
-    const depositAmount = pg?.deposit_amount || 0
+    const baseMonthlyRent = monthly_rent || 5000
+    const scaledMonthlyRent = baseMonthlyRent * numBeds
+
+    const commissionRate = calculateCommissionRate(baseMonthlyRent, settings)
+    const depositAmount = (pg?.deposit_amount || 0) * numBeds
     const commissionAmount = Math.round(depositAmount * (commissionRate / 100))
     const ownerPayout = depositAmount - commissionAmount
     const totalInitialAmount = depositAmount + platformFee + serviceCharge
@@ -107,7 +111,8 @@ router.post('/', async (req, res) => {
         seeker_id,
         owner_id,
         bed_id,
-        monthly_rent,
+        num_beds: numBeds,
+        monthly_rent: scaledMonthlyRent,
         deposit_amount: depositAmount,
         amount: totalInitialAmount,
         commission_pct: commissionRate,

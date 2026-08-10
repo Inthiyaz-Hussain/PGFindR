@@ -97,6 +97,7 @@ router.post('/', authenticateToken, async (req, res) => {
       age,
       move_in_date,
       sharing_preference,
+      num_beds,
       occupation,
       city_of_origin,
       duration_value,
@@ -131,6 +132,10 @@ router.post('/', authenticateToken, async (req, res) => {
     }
     if (!sharing_preference || ![1, 2, 3, 4].includes(Number(sharing_preference))) {
       return res.status(400).json({ error: 'Sharing preference is required (1, 2, 3, or 4)' })
+    }
+    const numBedsVal = Number(num_beds || 1)
+    if (isNaN(numBedsVal) || numBedsVal < 1 || numBedsVal > 5) {
+      return res.status(400).json({ error: 'Number of beds must be between 1 and 5' })
     }
     if (!occupation || !['Student', 'Working Professional', 'Other'].includes(occupation)) {
       return res.status(400).json({ error: 'Occupation is required' })
@@ -207,6 +212,7 @@ router.post('/', authenticateToken, async (req, res) => {
         age: Number(age),
         move_in_date,
         sharing_preference: Number(sharing_preference),
+        num_beds: numBedsVal,
         occupation,
         city_of_origin: city_of_origin.trim(),
         duration_value: Number(duration_value),
@@ -305,13 +311,15 @@ router.put('/:id', async (req, res) => {
         const sharingTypeMap: Record<number, string> = { 1: 'single', 2: 'double', 3: 'triple', 4: 'dormitory' }
         const prefStr = existingInquiry.sharing_preference ? sharingTypeMap[existingInquiry.sharing_preference] : 'single'
 
+        const numBeds = existingInquiry.num_beds || 1
+
         const { data: beds } = await supabase
           .from('beds')
           .select('id, monthly_rent')
           .eq('pg_id', existingInquiry.pg_id)
           .eq('status', 'available')
           .eq('sharing_type', prefStr)
-          .limit(1)
+          .limit(numBeds)
 
         const bedId = (beds as any)?.[0]?.id || null
 
@@ -322,16 +330,17 @@ router.put('/:id', async (req, res) => {
           .eq('id', existingInquiry.pg_id)
           .single()
 
-        const monthlyRent = (beds as any)?.[0]?.monthly_rent || pgDetails?.monthly_rent_min || 5000
+        const baseMonthlyRent = (beds as any)?.[0]?.monthly_rent || pgDetails?.monthly_rent_min || 5000
+        const monthlyRent = baseMonthlyRent * numBeds
 
         // Fetch settings for seeker platform fee and service charge
         const settings = await getPlatformSettings()
-        const platformFee = parseInt(settings['platform_fee'] || '200', 10)
-        const serviceCharge = parseInt(settings['service_charge'] || '100', 10)
+        const platformFee = parseInt(settings['platform_fee'] || '200', 10) * numBeds
+        const serviceCharge = parseInt(settings['service_charge'] || '100', 10) * numBeds
 
-        // Calculate dynamic commission rate based on monthly rent
-        const commissionRate = calculateCommissionRate(monthlyRent, settings)
-        const depositAmount = pgDetails?.deposit_amount || 0
+        // Calculate dynamic commission rate based on single bed monthly rent
+        const commissionRate = calculateCommissionRate(baseMonthlyRent, settings)
+        const depositAmount = (pgDetails?.deposit_amount || 0) * numBeds
         const commissionAmount = Math.round(depositAmount * (commissionRate / 100))
         const ownerPayout = depositAmount - commissionAmount
 
@@ -347,6 +356,7 @@ router.put('/:id', async (req, res) => {
             seeker_id: existingInquiry.seeker_id,
             owner_id: pg?.owner_id,
             bed_id: bedId,
+            num_beds: numBeds,
             monthly_rent: monthlyRent,
             deposit_amount: depositAmount,
             amount: totalInitialAmount,
