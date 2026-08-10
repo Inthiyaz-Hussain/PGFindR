@@ -15,7 +15,7 @@ import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Field, FieldLabel, FieldError, FieldDescription } from '@/components/ui/field'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { supabase, supabaseUntyped, compressImage, ensureBucketExists } from '@/lib/supabase'
+import { supabase, supabaseUntyped, ensureBucketExists } from '@/lib/supabase'
 import { useAuth } from '@/hooks/useAuth'
 import { toast } from 'sonner'
 import type { PGType, SharingTypeItem, AmenityItem } from '@/types'
@@ -368,8 +368,8 @@ export function PGFormPage() {
       const uploadedUrls: string[] = []
       const totalFiles = files.length
 
-      const allowedMimeTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
-      const allowedExtensions = ['jpg', 'jpeg', 'png', 'webp']
+      const allowedMimeTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf']
+      const allowedExtensions = ['jpg', 'jpeg', 'png', 'pdf']
 
       for (let i = 0; i < files.length; i++) {
         const file = files[i]
@@ -377,25 +377,16 @@ export function PGFormPage() {
         // 1. Validate file extension and MIME type
         const fileExt = file.name.split('.').pop()?.toLowerCase()
         if (!fileExt || !allowedExtensions.includes(fileExt) || !allowedMimeTypes.includes(file.type)) {
-          throw new Error(`Unsupported file type for "${file.name}". Only JPG, JPEG, PNG, and WEBP formats are allowed.`)
+          throw new Error(`Unsupported file type for "${file.name}". Only PDF, JPG, JPEG, and PNG formats are allowed.`)
         }
 
-        // 2. Client-side image compression if the file exceeds the 5MB size limit
-        let fileToUpload = file
+        // 2. Enforce maximum file size limit of 5MB before submission
         const maxSizeBytes = 5 * 1024 * 1024 // 5MB
         if (file.size > maxSizeBytes) {
-          try {
-            toast.info(`Compressing "${file.name}"...`)
-            fileToUpload = await compressImage(file, maxSizeBytes)
-          } catch (compressErr: any) {
-            throw new Error(`Failed to compress image "${file.name}": ${compressErr.message || compressErr}`)
-          }
+          throw new Error(`File "${file.name}" exceeds the 5MB size limit. Please upload a smaller file.`)
         }
 
-        // 3. File size validation after compression
-        if (fileToUpload.size > maxSizeBytes) {
-          throw new Error(`File "${file.name}" exceeds the 5MB limit even after compression.`)
-        }
+        const fileToUpload = file
 
         // 4. Generate a unique filename to avoid collisions
         const uniqueFileName = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${fileToUpload.name.split('.').pop()?.toLowerCase()}`
@@ -980,7 +971,7 @@ export function PGFormPage() {
               onClick={() => {
                 const input = document.createElement('input')
                 input.type = 'file'
-                input.accept = 'image/*'
+                input.accept = 'image/jpeg,image/png,application/pdf'
                 input.multiple = true
                 input.onchange = (e) => {
                   const files = (e.target as HTMLInputElement).files
@@ -990,9 +981,9 @@ export function PGFormPage() {
               }}
             >
               <Upload className="size-10 mx-auto text-muted-foreground mb-3" />
-              <p className="font-medium">Drag & drop photos here</p>
+              <p className="font-medium">Drag & drop photos or PDFs here</p>
               <p className="text-sm text-muted-foreground">or click to browse</p>
-              <p className="text-xs text-muted-foreground mt-2">JPG, PNG up to 5MB each</p>
+              <p className="text-xs text-muted-foreground mt-2">JPG, PNG, PDF up to 5MB each</p>
             </div>
 
             {/* Upload Progress */}
