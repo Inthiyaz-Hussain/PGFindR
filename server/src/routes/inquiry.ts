@@ -323,6 +323,16 @@ router.put('/:id', async (req, res) => {
 
         const bedId = (beds as any)?.[0]?.id || null
 
+        if (!bedId) {
+          // Revert inquiry status back to pending if bed allocation failed
+          await supabase
+            .from('inquiries')
+            .update({ status: 'pending', updated_at: new Date().toISOString() })
+            .eq('id', req.params.id)
+
+          return res.status(400).json({ error: 'No available beds of this sharing preference are left in this PG. Please add more beds in Bed Management first.' })
+        }
+
         // Get PG commission rate and deposit
         const { data: pgDetails } = await supabase
           .from('pg_listings')
@@ -374,6 +384,13 @@ router.put('/:id', async (req, res) => {
 
         if (bookingErr) {
           console.error('[Inquiry Confirm] Booking creation failed:', bookingErr)
+          // Revert inquiry status back to pending if booking creation failed
+          await supabase
+            .from('inquiries')
+            .update({ status: 'pending', updated_at: new Date().toISOString() })
+            .eq('id', req.params.id)
+
+          return res.status(400).json({ error: `Booking creation failed: ${bookingErr.message}` })
         }
 
         // Change inquiry status to 'booked' to mark booking has been initialized

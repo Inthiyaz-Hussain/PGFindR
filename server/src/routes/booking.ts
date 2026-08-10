@@ -81,6 +81,10 @@ router.get('/:id', async (req, res) => {
 router.post('/', async (req, res) => {
   try {
     const { inquiry_id, pg_id, seeker_id, owner_id, bed_id, monthly_rent, move_in_date, num_beds } = req.body
+    
+    if (!bed_id) {
+      return res.status(400).json({ error: 'A valid bed_id is required.' })
+    }
     const numBeds = num_beds || 1
 
     // Get PG commission rate and deposit
