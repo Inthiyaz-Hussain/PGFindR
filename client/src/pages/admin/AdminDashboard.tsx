@@ -33,10 +33,10 @@ export function AdminDashboard() {
         supabaseUntyped.from('bookings').select('id', { count: 'exact', head: true }),
         supabaseUntyped.from('bookings').select('id', { count: 'exact', head: true }).in('status', ['active', 'completed']),
         supabaseUntyped.from('bookings').select('id', { count: 'exact', head: true }).in('status', ['pending_payment', 'payment_done']),
-        supabaseUntyped.from('payments').select('commission_amount').eq('status', 'completed').gte('created_at', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()),
+        supabaseUntyped.from('payments').select('commission_amount, platform_fee, service_charge').eq('status', 'completed').gte('created_at', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()),
       ])
 
-      const thisMonthRevenue = (paymentsThisMonth.data || []).reduce((sum: number, p: { commission_amount: number }) => sum + (p.commission_amount || 0), 0)
+      const thisMonthRevenue = (paymentsThisMonth.data || []).reduce((sum: number, p: any) => sum + (p.commission_amount || 0) + (p.platform_fee || 0) + (p.service_charge || 0), 0)
 
       return {
         totalPGs: listingsAll.count || 0,
@@ -67,7 +67,7 @@ export function AdminDashboard() {
           { label: 'Active PGs', value: stats?.approvedPGs, icon: ShieldCheck, color: 'text-green-600 bg-green-50 dark:bg-green-950/30', route: '/admin/pgs?status=approved' },
           { label: 'Seekers', value: stats?.totalSeekers, icon: Users, color: 'text-violet-600 bg-violet-50 dark:bg-violet-950/30', route: '/admin/users' },
           { label: 'Owners', value: stats?.totalOwners, icon: UserCheck, color: 'text-amber-600 bg-amber-50 dark:bg-amber-950/30', route: '/admin/owners' },
-          { label: 'This Month Revenue', value: `¥${(stats?.thisMonthRevenue || 0).toLocaleString('en-IN')}`, icon: IndianRupee, color: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30', isString: true, route: '/admin/commission' },
+          { label: 'This Month Revenue', value: `₹${(stats?.thisMonthRevenue || 0).toLocaleString('en-IN')}`, icon: IndianRupee, color: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30', isString: true, route: '/admin/transactions' },
         ].map(({ label, value, icon: Icon, color, isString, route }) => (
           <Card 
             key={label}

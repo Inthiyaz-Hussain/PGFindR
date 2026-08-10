@@ -34,6 +34,8 @@ interface PaymentRow {
   payment_type: string
   created_at: string
   cashfree_payment_id: string | null
+  platform_fee: number | null
+  service_charge: number | null
   booking: {
     pg: { name: string }
     seeker: { full_name: string }
@@ -67,6 +69,8 @@ export function AdminTransactionsPage() {
           payment_type,
           created_at,
           cashfree_payment_id,
+          platform_fee,
+          service_charge,
           booking:bookings(
             pg:pg_listings(name),
             seeker:profiles!bookings_seeker_id_fkey(full_name),
@@ -139,6 +143,8 @@ export function AdminTransactionsPage() {
           payment_type,
           created_at,
           cashfree_payment_id,
+          platform_fee,
+          service_charge,
           booking:bookings(
             pg:pg_listings(name),
             seeker:profiles!bookings_seeker_id_fkey(full_name),
@@ -178,7 +184,7 @@ export function AdminTransactionsPage() {
       })
 
       // Build CSV
-      const headers = ['Date', 'Payment ID', 'Booking ID', 'Seeker', 'PG', 'Owner', 'Amount', 'Commission Rate', 'Commission', 'Owner Payout', 'Status', 'Payment Type', 'Cashfree ID']
+      const headers = ['Date', 'Payment ID', 'Booking ID', 'Seeker', 'PG', 'Owner', 'Amount Paid', 'Platform Fee', 'Service Charge', 'Owner Commission', 'Total Platform Revenue', 'Owner Payout', 'Status', 'Payment Type', 'Cashfree ID']
       const rows = payments.map(p => [
         new Date(p.created_at).toLocaleDateString('en-IN'),
         p.id,
@@ -187,8 +193,10 @@ export function AdminTransactionsPage() {
         p.booking?.pg?.name || '—',
         p.booking?.owner?.full_name || '—',
         p.amount,
-        `${p.commission_rate}%`,
+        p.platform_fee || 0,
+        p.service_charge || 0,
         p.commission_amount,
+        (p.commission_amount || 0) + (p.platform_fee || 0) + (p.service_charge || 0),
         p.owner_payout,
         p.status,
         p.payment_type,
@@ -217,7 +225,7 @@ export function AdminTransactionsPage() {
 
   // Calculate totals
   const totalAmount = txData?.payments?.reduce((sum, p) => sum + p.amount, 0) || 0
-  const totalCommission = txData?.payments?.reduce((sum, p) => sum + p.commission_amount, 0) || 0
+  const totalRevenue = txData?.payments?.reduce((sum, p) => sum + (p.commission_amount || 0) + (p.platform_fee || 0) + (p.service_charge || 0), 0) || 0
   const totalPayout = txData?.payments?.reduce((sum, p) => sum + p.owner_payout, 0) || 0
 
   return (
@@ -254,8 +262,8 @@ export function AdminTransactionsPage() {
                 <IndianRupee className="size-5 text-green-600" />
               </div>
               <div>
-                <div className="text-xl font-bold">{totalCommission.toLocaleString('en-IN')}</div>
-                <div className="text-xs text-muted-foreground">Platform Commission</div>
+                <div className="text-xl font-bold">{totalRevenue.toLocaleString('en-IN')}</div>
+                <div className="text-xs text-muted-foreground">Platform Revenue</div>
               </div>
             </div>
           </CardContent>
@@ -338,11 +346,13 @@ export function AdminTransactionsPage() {
                 <TableRow>
                   <TableHead>Date</TableHead>
                   <TableHead>Payment ID</TableHead>
-                  <TableHead>Seeker</TableHead>
+                  <TableHead>Seeker / Owner</TableHead>
                   <TableHead>PG</TableHead>
-                  <TableHead>Owner</TableHead>
-                  <TableHead>Amount</TableHead>
+                  <TableHead>Amount Paid</TableHead>
+                  <TableHead>Platform Fee</TableHead>
+                  <TableHead>Service Charge</TableHead>
                   <TableHead>Commission</TableHead>
+                  <TableHead>Total Revenue</TableHead>
                   <TableHead>Payout</TableHead>
                   <TableHead>Status</TableHead>
                 </TableRow>
@@ -356,12 +366,19 @@ export function AdminTransactionsPage() {
                         {new Date(tx.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
                       </TableCell>
                       <TableCell className="font-mono text-xs">{tx.id.slice(0, 8)}...</TableCell>
-                      <TableCell>{tx.booking?.seeker?.full_name || '—'}</TableCell>
-                      <TableCell>{tx.booking?.pg?.name || '—'}</TableCell>
-                      <TableCell>{tx.booking?.owner?.full_name || '—'}</TableCell>
-                      <TableCell className="font-medium">{tx.amount.toLocaleString('en-IN')}</TableCell>
-                      <TableCell className="text-green-600">{tx.commission_amount.toLocaleString('en-IN')}</TableCell>
-                      <TableCell>{tx.owner_payout.toLocaleString('en-IN')}</TableCell>
+                      <TableCell className="text-xs">
+                        <div className="font-medium">{tx.booking?.seeker?.full_name || '—'}</div>
+                        <div className="text-[10px] text-muted-foreground">Owner: {tx.booking?.owner?.full_name || '—'}</div>
+                      </TableCell>
+                      <TableCell className="text-xs">{tx.booking?.pg?.name || '—'}</TableCell>
+                      <TableCell className="font-medium text-xs">{tx.amount.toLocaleString('en-IN')}</TableCell>
+                      <TableCell className="text-xs">₹{tx.platform_fee || 0}</TableCell>
+                      <TableCell className="text-xs">₹{tx.service_charge || 0}</TableCell>
+                      <TableCell className="text-xs">₹{tx.commission_amount.toLocaleString('en-IN')}</TableCell>
+                      <TableCell className="font-semibold text-xs text-indigo-600 dark:text-indigo-400">
+                        ₹{((tx.commission_amount || 0) + (tx.platform_fee || 0) + (tx.service_charge || 0)).toLocaleString('en-IN')}
+                      </TableCell>
+                      <TableCell className="text-xs">{tx.owner_payout.toLocaleString('en-IN')}</TableCell>
                       <TableCell>
                         <Badge variant="outline" className={cfg.class}>{cfg.label}</Badge>
                       </TableCell>
