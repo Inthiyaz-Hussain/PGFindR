@@ -9,7 +9,7 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Field, FieldLabel, FieldError, FieldDescription } from '@/components/ui/field'
+import { Field, FieldLabel, FieldError } from '@/components/ui/field'
 import { supabase } from '@/lib/supabase'
 
 const registerOwnerSchema = z.object({
@@ -31,7 +31,6 @@ export function OwnerRegistrationPage() {
     control,
     handleSubmit,
     setValue,
-    formState: { errors },
   } = useForm<RegisterOwnerValues>({
     resolver: zodResolver(registerOwnerSchema),
     defaultValues: {

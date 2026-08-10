@@ -17,6 +17,8 @@ export interface Profile {
   role: UserRole
   created_at: string
   updated_at: string
+  onboarding_verified?: boolean
+  onboarding_verified_at?: string | null
 }
 
 export interface PGListing {

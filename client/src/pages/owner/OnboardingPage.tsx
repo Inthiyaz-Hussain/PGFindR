@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { Loader2, ArrowLeft, ArrowRight, CheckCircle2, Plus, Trash2, Shield, Upload, Info } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -10,9 +9,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
 import { Progress } from '@/components/ui/progress'
-import { Field, FieldLabel } from '@/components/ui/field'
 import { supabase } from '@/lib/supabase'
-import { useAuth } from '@/hooks/useAuth'
+import { Field } from '@/components/ui/field'
 
 const COMPASS_DIRECTIONS = [
   { value: 'N', label: 'North (Coolest room — least direct sun)' },
@@ -26,8 +24,6 @@ const COMPASS_DIRECTIONS = [
 ]
 
 export function OnboardingPage() {
-  const navigate = useNavigate()
-  const { user, profile } = useAuth()
   const [step, setStep] = useState(1)
   const [submitting, setSubmitting] = useState(false)
 

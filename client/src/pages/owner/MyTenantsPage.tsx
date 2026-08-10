@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import {
   Users,
-  Calendar,
   Loader2,
   CheckCircle,
   XCircle,
@@ -12,14 +11,12 @@ import {
   Clock,
   Briefcase,
   Layers,
-  Search,
-  ArrowUpRight,
   Eye,
   Bookmark
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Empty, EmptyMedia, EmptyTitle, EmptyDescription } from '@/components/ui/empty'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
