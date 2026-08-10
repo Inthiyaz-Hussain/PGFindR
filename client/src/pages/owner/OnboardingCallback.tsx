@@ -42,8 +42,7 @@ export function OnboardingCallback() {
           .from('profiles')
           .update({
             onboarding_verified: true,
-            onboarding_verified_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
+            onboarding_verified_at: new Date().toISOString()
           })
           .eq('id', session.user.id)
 
