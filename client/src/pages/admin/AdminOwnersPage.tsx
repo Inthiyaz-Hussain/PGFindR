@@ -55,16 +55,15 @@ export function AdminOwnersPage() {
     queryFn: async () => {
       let query = supabaseUntyped
         .from('profiles')
-        .select('*, kyc:owner_kyc(*), documents:owner_documents(*)', { count: 'exact' })
+        .select('*, kyc:owner_kyc(*), documents:owner_documents(*)')
         .eq('role', 'owner')
         .order('created_at', { ascending: false })
-        .range((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE - 1)
 
       if (searchQuery) {
         query = query.or(`full_name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%`)
       }
 
-      const { data, count } = await query
+      const { data } = await query
 
       // Get PG count for each owner
       const owners = (data || []) as OwnerWithDetails[]
@@ -77,26 +76,39 @@ export function AdminOwnersPage() {
         }
       })
 
-      const ownerIds = owners.map((o) => o.id)
-      const { data: pgCounts } = await supabaseUntyped
-        .from('pg_listings')
-        .select('owner_id, id')
-        .in('owner_id', ownerIds)
-
-      const countMap = (pgCounts || []).reduce((acc: Record<string, number>, pg: { owner_id: string }) => {
-        acc[pg.owner_id] = (acc[pg.owner_id] || 0) + 1
-        return acc
-      }, {})
-
-      owners.forEach((o) => { o.pg_count = countMap[o.id] || 0 })
-
-      // Filter by KYC status
+      // Filter by KYC status (treating missing KYC record as pending)
       let filtered = owners
       if (kycFilter !== 'all') {
-        filtered = owners.filter((o) => (o.kyc as { status: string } | null)?.status === kycFilter)
+        filtered = owners.filter((o) => {
+          const status = (o.kyc as { status: string } | null)?.status || 'pending'
+          return status === kycFilter
+        })
       }
 
-      return { owners: filtered, total: count || 0 }
+      const total = filtered.length
+
+      // Paginate in-memory after filtering
+      const paginatedOwners = filtered.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE)
+
+      // Fetch PG count for the paginated owners subset
+      const ownerIds = paginatedOwners.map((o) => o.id)
+      if (ownerIds.length > 0) {
+        const { data: pgCounts } = await supabaseUntyped
+          .from('pg_listings')
+          .select('owner_id, id')
+          .in('owner_id', ownerIds)
+
+        const countMap = (pgCounts || []).reduce((acc: Record<string, number>, pg: { owner_id: string }) => {
+          acc[pg.owner_id] = (acc[pg.owner_id] || 0) + 1
+          return acc
+        }, {})
+
+        paginatedOwners.forEach((o) => { o.pg_count = countMap[o.id] || 0 })
+      } else {
+        paginatedOwners.forEach((o) => { o.pg_count = 0 })
+      }
+
+      return { owners: paginatedOwners, total }
     },
   })
 
