@@ -175,22 +175,162 @@ export function HelpDeskPage() {
             <Card className="border-slate-100 dark:border-slate-800 shadow-sm rounded-2xl overflow-hidden">
               <CardHeader className="bg-slate-50/50 dark:bg-slate-900/30 border-b border-slate-100 dark:border-slate-800">
                 <CardTitle className="text-xl font-bold flex items-center gap-2">
-                  <FileText className="size-5 text-indigo-600" /> Privacy & Terms
+                  <FileText className="size-5 text-indigo-600" /> Privacy Policy & Terms of Service
                 </CardTitle>
-                <CardDescription>Legal framework and safety disclosures for using PGFindR.</CardDescription>
+                <CardDescription>Legal framework and safety disclosures for using FindPgR.</CardDescription>
               </CardHeader>
-              <CardContent className="pt-6 space-y-6">
+              <CardContent className="pt-6 space-y-8 max-h-[60vh] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-800">
+                
+                {/* Privacy Policy Section */}
                 <div className="space-y-4">
-                  <h3 className="text-base font-bold text-slate-900 dark:text-white">Privacy Disclosures</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    We collect profile details (name, email, phone) to connect you with hosts. Your government ID docs uploaded for KYC validation are encrypted at rest and never shared with hosts directly; hosts only receive confirmation that your verification check is complete.
+                  <h2 className="text-lg font-extrabold text-slate-900 dark:text-white border-b pb-2 border-slate-100 dark:border-slate-800">
+                    Privacy Policy for FindPgR
+                  </h2>
+                  <p className="text-xs text-muted-foreground font-medium">Last Updated: August 10, 2026</p>
+                  
+                  <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                    At <strong>FindPgR</strong> ("we," "our," or "us"), we respect your privacy and are committed to protecting your personal data. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website or use our coliving and paying guest (PG) discovery platform.
                   </p>
 
-                  <h3 className="text-base font-bold text-slate-900 dark:text-white mt-4">Terms of Platform Use</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    PGFindR acts as a search index and management platform for PG owners and seekers. While we verify basic listings, we are not a party to the tenancy agreement signed between you and the host. Seekers are advised to perform standard checks prior to signing any tenancy terms.
-                  </p>
+                  <div className="space-y-3 mt-4">
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">1. Information We Collect</h3>
+                    <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                      We collect information that identifies, relates to, or could reasonably be linked to you ("Personal Data"), including:
+                    </p>
+                    <ul className="list-disc pl-5 text-sm text-slate-600 dark:text-slate-400 space-y-1">
+                      <li><strong>Account Information:</strong> Name, email address, and profile picture obtained via third-party authentication services (e.g., Google OAuth).</li>
+                      <li><strong>Identity & Verification Data (KYC):</strong> For property owners, we collect government-issued identification numbers, copies of ID documents, and property ownership proofs (such as utility bills) for verification purposes.</li>
+                      <li><strong>Location Data:</strong> Approximate or precise location data when you use our geo-search features to find nearby PGs.</li>
+                      <li><strong>Usage & Device Data:</strong> IP address, browser type, device identifiers, and interaction logs with our platform.</li>
+                    </ul>
+                  </div>
+
+                  <div className="space-y-3 mt-4">
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">2. How We Use Your Information</h3>
+                    <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                      We use the collected information for the following purposes:
+                    </p>
+                    <ul className="list-disc pl-5 text-sm text-slate-600 dark:text-slate-400 space-y-1">
+                      <li>To provide, operate, and maintain the FindPgR platform and real-time bed availability features.</li>
+                      <li>To authenticate user accounts and secure platform access.</li>
+                      <li>To execute our owner verification (KYC) process and maintain the integrity of "Verified" listings.</li>
+                      <li>To communicate with you regarding bookings, inquiries, and customer support.</li>
+                      <li>To detect, prevent, and address technical issues, fraud, or security breaches.</li>
+                    </ul>
+                  </div>
+
+                  <div className="space-y-3 mt-4">
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">3. Data Storage & Security</h3>
+                    <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                      Your personal data and sensitive documents are stored securely using cloud infrastructure (Supabase) featuring industry-standard encryption and strict Row Level Security (RLS) policies. KYC verification documents are kept confidential and are strictly accessible only by authorized platform administrators.
+                    </p>
+                  </div>
+
+                  <div className="space-y-3 mt-4">
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">4. Sharing of Information</h3>
+                    <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                      We do not sell, trade, or rent your personal information to third parties. We may share data only under these circumstances:
+                    </p>
+                    <ul className="list-disc pl-5 text-sm text-slate-600 dark:text-slate-400 space-y-1">
+                      <li>With trusted service providers who assist us in operating our website and conducting our business, subject to strict confidentiality obligations.</li>
+                      <li>To comply with legal obligations, court orders, or lawful requests by public authorities.</li>
+                    </ul>
+                  </div>
+
+                  <div className="space-y-3 mt-4">
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">5. Your Data Rights</h3>
+                    <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                      You have the right to access, update, or request the deletion of your personal data stored on our platform by contacting our support team.
+                    </p>
+                  </div>
+
+                  <div className="space-y-3 mt-4">
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">6. Changes to This Privacy Policy</h3>
+                    <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                      We may update this Privacy Policy from time to time. Any changes will be posted on this page with an updated revision date.
+                    </p>
+                  </div>
                 </div>
+
+                <hr className="border-slate-100 dark:border-slate-800" />
+
+                {/* Terms and Conditions Section */}
+                <div className="space-y-4">
+                  <h2 className="text-lg font-extrabold text-slate-900 dark:text-white border-b pb-2 border-slate-100 dark:border-slate-800">
+                    Terms & Conditions for FindPgR
+                  </h2>
+                  <p className="text-xs text-muted-foreground font-medium">Last Updated: August 10, 2026</p>
+
+                  <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                    Welcome to <strong>FindPgR</strong>. These Terms and Conditions ("Terms") govern your access to and use of our website, applications, and services. By accessing or using FindPgR, you agree to be bound by these Terms.
+                  </p>
+
+                  <div className="space-y-3 mt-4">
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">1. Acceptance of Terms</h3>
+                    <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                      By creating an account, browsing listings, or listing a property on FindPgR, you acknowledge that you have read, understood, and agree to comply with these Terms and our Privacy Policy. If you do not agree, you must discontinue use of the platform immediately.
+                    </p>
+                  </div>
+
+                  <div className="space-y-3 mt-4">
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">2. User Accounts & Security</h3>
+                    <ul className="list-disc pl-5 text-sm text-slate-600 dark:text-slate-400 space-y-1">
+                      <li>You are responsible for maintaining the confidentiality of your account credentials, including sign-ins via Google OAuth.</li>
+                      <li>You agree to provide accurate, current, and complete information during registration and property listing processes.</li>
+                    </ul>
+                  </div>
+
+                  <div className="space-y-3 mt-4">
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">3. Platform Role & Disclaimer</h3>
+                    <ul className="list-disc pl-5 text-sm text-slate-600 dark:text-slate-400 space-y-1">
+                      <li>FindPgR acts purely as an online aggregator and discovery platform connecting accommodation seekers with property owners/managers.</li>
+                      <li>We do not directly own, manage, or operate the listed paying guest (PG) accommodations unless explicitly stated.</li>
+                      <li>While we implement KYC verification workflows for owners to foster trust, users are strongly advised to independently inspect properties and verify terms before making payments or signing agreements.</li>
+                    </ul>
+                  </div>
+
+                  <div className="space-y-3 mt-4">
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">4. Property Owner Responsibilities & KYC</h3>
+                    <ul className="list-disc pl-5 text-sm text-slate-600 dark:text-slate-400 space-y-1">
+                      <li>Property owners listing spaces on FindPgR warrant that they possess legal authorization to lease the property.</li>
+                      <li>Owners agree to submit authentic KYC documentation and property proofs. Submission of fraudulent documents will result in immediate account termination, removal of listings, and potential legal action.</li>
+                    </ul>
+                  </div>
+
+                  <div className="space-y-3 mt-4">
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">5. Prohibited Conduct</h3>
+                    <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                      Users agree not to engage in any of the following prohibited activities:
+                    </p>
+                    <ul className="list-disc pl-5 text-sm text-slate-600 dark:text-slate-400 space-y-1">
+                      <li>Uploading malicious code, viruses, or attempting to breach platform security or RLS policies.</li>
+                      <li>Scraping, harvesting, or extracting data from the platform via automated means without explicit written permission.</li>
+                      <li>Posting false, misleading, or fraudulent property listings or reviews.</li>
+                    </ul>
+                  </div>
+
+                  <div className="space-y-3 mt-4">
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">6. Limitation of Liability</h3>
+                    <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                      To the maximum extent permitted by law, FindPgR and its team shall not be liable for any indirect, incidental, special, consequential, or punitive damages, including loss of profits, data, or personal disputes arising out of or related to your use of the platform or tenancy agreements.
+                    </p>
+                  </div>
+
+                  <div className="space-y-3 mt-4">
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">7. Governing Law</h3>
+                    <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                      These Terms shall be governed by and construed in accordance with the laws of India, without regard to its conflict of law principles.
+                    </p>
+                  </div>
+
+                  <div className="space-y-3 mt-4">
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">8. Contact Information</h3>
+                    <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                      For any questions regarding these Terms, please reach out through our official platform support channels.
+                    </p>
+                  </div>
+                </div>
+
               </CardContent>
             </Card>
           )}
