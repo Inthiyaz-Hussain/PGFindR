@@ -327,9 +327,9 @@ export function RegisterPage() {
 
         <p className="text-center text-xs text-muted-foreground">
           By creating an account, you agree to our{' '}
-          <span className="underline underline-offset-2 cursor-pointer hover:text-foreground">Terms</span>{' '}
+          <Link to="/seeker/help?tab=privacy" className="underline underline-offset-2 cursor-pointer hover:text-foreground">Terms</Link>{' '}
           and{' '}
-          <span className="underline underline-offset-2 cursor-pointer hover:text-foreground">Privacy Policy</span>.
+          <Link to="/seeker/help?tab=privacy" className="underline underline-offset-2 cursor-pointer hover:text-foreground">Privacy Policy</Link>.
         </p>
       </div>
     </div>

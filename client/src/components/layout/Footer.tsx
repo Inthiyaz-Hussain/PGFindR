@@ -297,9 +297,9 @@ export function Footer({ compact = false }: FooterProps) {
                     {[
                       { label: 'About Us', to: '/' },
                       { label: 'Careers', to: '/' },
-                      { label: 'Terms & Conditions', to: '/' },
-                      { label: 'Privacy Policy', to: '/' },
-                      { label: 'Support & Help', to: '/' },
+                      { label: 'Terms & Conditions', to: '/seeker/help?tab=privacy' },
+                      { label: 'Privacy Policy', to: '/seeker/help?tab=privacy' },
+                      { label: 'Support & Help', to: '/seeker/help?tab=faqs' },
                     ].map((link, idx) => (
                       <li key={idx}>
                         <Link
