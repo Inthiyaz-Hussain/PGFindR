@@ -66,6 +66,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         avatar_url: null,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
+        onboarding_verified: true,
       }
       if (mounted.current) setProfile(p)
       setProfileLoading(false)
@@ -78,7 +79,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .select('*')
         .eq('id', userId)
         .single()
-      const p = data as Profile | null
+      const p = data as any
+      if (p && p.role === 'owner' && !p.onboarding_verified) {
+        // Self-heal: If they have existing PG listings, they should be onboarding verified
+        const { data: listings } = await supabaseUntyped
+          .from('pg_listings')
+          .select('id')
+          .eq('owner_id', userId)
+          .limit(1)
+        if (listings && listings.length > 0) {
+          await supabaseUntyped
+            .from('profiles')
+            .update({ onboarding_verified: true, onboarding_verified_at: new Date().toISOString() })
+            .eq('id', userId)
+          p.onboarding_verified = true
+        }
+      }
       if (mounted.current) setProfile(p)
       return p
     } catch (e) {
