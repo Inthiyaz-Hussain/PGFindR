@@ -16,7 +16,7 @@ import { PGCard } from '@/components/pg/PGCard'
 import { Empty, EmptyMedia, EmptyTitle, EmptyDescription } from '@/components/ui/empty'
 import { Building2 } from 'lucide-react'
 import { type LocationState } from '@/types/filters'
-import { LocationPrompt } from '@/components/home/LocationPrompt'
+import { LocationPrompt, POPULAR_CITIES } from '@/components/home/LocationPrompt'
 
 const AMENITIES = [
   { id: 'wifi_included', label: 'WiFi' },
@@ -122,8 +122,25 @@ export function SearchPage() {
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault()
-    setQuery(inputValue)
-    setSearchParams(inputValue ? { q: inputValue } : {})
+    const cleanInput = inputValue.trim().toLowerCase()
+    const matchedCity = POPULAR_CITIES.find(
+      (c) => c.name.toLowerCase() === cleanInput
+    )
+
+    if (matchedCity) {
+      handleLocationSelect({
+        lat: matchedCity.lat,
+        lng: matchedCity.lng,
+        city: matchedCity.name,
+        radius: 25000,
+      })
+      setQuery('')
+      setInputValue('')
+      setSearchParams({})
+    } else {
+      setQuery(inputValue)
+      setSearchParams(inputValue ? { q: inputValue } : {})
+    }
   }
 
   function toggleAmenity(id: string) {

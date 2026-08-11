@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { SplashScreen } from '@/components/home/SplashScreen'
-import { LocationPrompt } from '@/components/home/LocationPrompt'
+import { LocationPrompt, POPULAR_CITIES } from '@/components/home/LocationPrompt'
 import { SearchBar } from '@/components/home/SearchBar'
 import { FilterPanel } from '@/components/home/FilterPanel'
 import { PGList } from '@/components/pg/PGList'
@@ -64,7 +64,22 @@ export function HomePage() {
   }
 
   function handleSearchChange(query: string) {
-    setFilters((prev) => ({ ...prev, query }))
+    const cleanQuery = query.trim().toLowerCase()
+    const matchedCity = POPULAR_CITIES.find(
+      (c) => c.name.toLowerCase() === cleanQuery
+    )
+
+    if (matchedCity) {
+      setLocation({
+        lat: matchedCity.lat,
+        lng: matchedCity.lng,
+        city: matchedCity.name,
+        radius: 25000,
+      })
+      setFilters((prev) => ({ ...prev, query: '' }))
+    } else {
+      setFilters((prev) => ({ ...prev, query }))
+    }
   }
 
   function handleApplyFilters(newFilters: SearchFilters) {

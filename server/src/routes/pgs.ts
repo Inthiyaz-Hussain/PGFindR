@@ -130,7 +130,21 @@ router.get('/', async (req, res) => {
             distance_meters: haversineMeters(userLat, userLng, pg.latitude, pg.longitude),
           }
         })
-        .filter((pg) => pg.distance_meters == null || pg.distance_meters <= radiusM)
+        .filter((pg) => {
+          if (q) {
+            const queryLower = q.toLowerCase().trim()
+            const cityLower = pg.city ? pg.city.toLowerCase() : ''
+            const localityLower = pg.locality ? pg.locality.toLowerCase() : ''
+
+            const isCityMatch = cityLower && (queryLower.includes(cityLower) || cityLower.includes(queryLower))
+            const isLocalityMatch = localityLower && (queryLower.includes(localityLower) || localityLower.includes(queryLower))
+
+            if (isCityMatch || isLocalityMatch) {
+              return true
+            }
+          }
+          return pg.distance_meters == null || pg.distance_meters <= radiusM
+        })
         .sort((a, b) => (a.distance_meters ?? Infinity) - (b.distance_meters ?? Infinity))
     }
 

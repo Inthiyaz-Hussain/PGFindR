@@ -12,7 +12,7 @@ import {
 import { cn } from '@/lib/utils'
 import type { LocationState } from '@/types/filters'
 
-const POPULAR_CITIES = [
+export const POPULAR_CITIES = [
   { name: 'Bangalore', lat: 12.9716, lng: 77.5946 },
   { name: 'Mumbai', lat: 19.0760, lng: 72.8777 },
   { name: 'Pune', lat: 18.5204, lng: 73.8567 },
