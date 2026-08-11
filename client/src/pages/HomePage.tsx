@@ -8,7 +8,6 @@ import { DEFAULT_FILTERS, DEFAULT_LOCATION, type SearchFilters, type LocationSta
 
 export function HomePage() {
   const [showSplash, setShowSplash] = useState(true)
-  const [splashDismissed, setSplashDismissed] = useState(false)
   const [showFilterPanel, setShowFilterPanel] = useState(false)
   const [location, setLocation] = useState<LocationState>(DEFAULT_LOCATION)
   const [filters, setFilters] = useState<SearchFilters>(DEFAULT_FILTERS)
@@ -45,7 +44,6 @@ export function HomePage() {
 
   function handleSplashDismiss() {
     setShowSplash(false)
-    setSplashDismissed(true)
   }
 
   function handleLocationSelect(newLocation: LocationState) {
