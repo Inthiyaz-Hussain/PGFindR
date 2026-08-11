@@ -16,7 +16,8 @@ import { PGCard } from '@/components/pg/PGCard'
 import { Empty, EmptyMedia, EmptyTitle, EmptyDescription } from '@/components/ui/empty'
 import { Building2 } from 'lucide-react'
 import { type LocationState } from '@/types/filters'
-import { LocationPrompt, POPULAR_CITIES } from '@/components/home/LocationPrompt'
+import { LocationPopover } from '@/components/home/LocationPopover'
+import { POPULAR_CITIES } from '@/components/home/LocationPrompt'
 
 const AMENITIES = [
   { id: 'wifi_included', label: 'WiFi' },
@@ -43,38 +44,22 @@ export function SearchPage() {
   }, [searchParams])
 
   const [selectedCity, setSelectedCity] = useState('')
-  const [showLocationPrompt, setShowLocationPrompt] = useState(false)
 
   useEffect(() => {
     try {
       const locStr = localStorage.getItem('pgr_location')
-      let hasLoc = false
       if (locStr) {
         const loc = JSON.parse(locStr)
         setSelectedCity(loc.city || '')
-        if (loc.lat != null && loc.lng != null) {
-          hasLoc = true
-        }
       }
-      const prompted = sessionStorage.getItem('pgr_location_prompt_shown') === 'true'
-      if (!prompted || !hasLoc) {
-        setShowLocationPrompt(true)
-        sessionStorage.setItem('pgr_location_prompt_shown', 'true')
-      }
-    } catch {
-      setShowLocationPrompt(true)
-      sessionStorage.setItem('pgr_location_prompt_shown', 'true')
+    } catch (e) {
+      console.warn('Failed to load location from storage:', e)
     }
   }, [])
 
   function handleLocationSelect(newLocation: LocationState) {
     setSelectedCity(newLocation.city || '')
     localStorage.setItem('pgr_location', JSON.stringify(newLocation))
-    setShowLocationPrompt(false)
-  }
-
-  function handleSkipLocation() {
-    setShowLocationPrompt(false)
   }
 
   const { data: pgs, isLoading } = useQuery({
@@ -232,15 +217,10 @@ export function SearchPage() {
             className="pl-10"
           />
         </div>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => setShowLocationPrompt(true)}
-          className="flex items-center gap-1.5 cursor-pointer"
-        >
-          <MapPin className="size-4 text-primary shrink-0" />
-          <span className="max-w-[120px] truncate font-medium text-xs sm:text-sm">{selectedCity || 'Location'}</span>
-        </Button>
+        <LocationPopover
+          selectedCity={selectedCity}
+          onSelect={handleLocationSelect}
+        />
         <Button type="submit">Search</Button>
         {/* Mobile Filter Button */}
         <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
@@ -326,11 +306,7 @@ export function SearchPage() {
         </main>
       </div>
 
-      <LocationPrompt
-        open={showLocationPrompt}
-        onSelect={handleLocationSelect}
-        onSkip={handleSkipLocation}
-      />
+
     </div>
   )
 }

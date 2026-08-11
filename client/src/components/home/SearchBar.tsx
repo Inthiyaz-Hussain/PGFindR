@@ -5,11 +5,12 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import type { SearchFilters, LocationState } from '@/types/filters'
 import { countActiveFilters } from '@/types/filters'
+import { LocationPopover } from './LocationPopover'
 
 interface SearchBarProps {
   location: LocationState
   filters: SearchFilters
-  onLocationClick: () => void
+  onLocationSelect: (location: LocationState) => void
   onFilterClick: () => void
   onSearchChange: (query: string) => void
   onSearchFocus?: () => void
@@ -18,7 +19,7 @@ interface SearchBarProps {
 export function SearchBar({
   location,
   filters,
-  onLocationClick,
+  onLocationSelect,
   onFilterClick,
   onSearchChange,
   onSearchFocus,
@@ -89,22 +90,11 @@ export function SearchBar({
 
   return (
     <div className="space-y-3">
-      {/* Location Button */}
-      <button
-        type="button"
-        onClick={onLocationClick}
-        className="w-full flex items-center gap-2 rounded-xl border bg-card px-4 py-3 text-left transition-all hover:border-primary hover:bg-accent"
-      >
-        <MapPin className="size-4 text-primary shrink-0" />
-        <span className="flex-1 text-sm">
-          {location.city ? (
-            <span className="text-foreground font-medium">{location.city}</span>
-          ) : (
-            <span className="text-muted-foreground">Select your location</span>
-          )}
-        </span>
-        <span className="text-xs text-muted-foreground">Change</span>
-      </button>
+      <LocationPopover
+        selectedCity={location.city || ''}
+        onSelect={onLocationSelect}
+        variant="full"
+      />
 
       {/* Search Input + Filter */}
       <form onSubmit={handleSubmit} className="flex gap-2">

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { SplashScreen } from '@/components/home/SplashScreen'
-import { LocationPrompt, POPULAR_CITIES } from '@/components/home/LocationPrompt'
+import { POPULAR_CITIES } from '@/components/home/LocationPrompt'
 import { SearchBar } from '@/components/home/SearchBar'
 import { FilterPanel } from '@/components/home/FilterPanel'
 import { PGList } from '@/components/pg/PGList'
@@ -9,7 +9,6 @@ import { DEFAULT_FILTERS, DEFAULT_LOCATION, type SearchFilters, type LocationSta
 export function HomePage() {
   const [showSplash, setShowSplash] = useState(true)
   const [splashDismissed, setSplashDismissed] = useState(false)
-  const [showLocationPrompt, setShowLocationPrompt] = useState(false)
   const [showFilterPanel, setShowFilterPanel] = useState(false)
   const [location, setLocation] = useState<LocationState>(DEFAULT_LOCATION)
   const [filters, setFilters] = useState<SearchFilters>(DEFAULT_FILTERS)
@@ -34,12 +33,7 @@ export function HomePage() {
     }
   }, [])
 
-  useEffect(() => {
-    if (!splashDismissed) return
-    if (location.lat == null || location.lng == null) {
-      setShowLocationPrompt(true)
-    }
-  }, [splashDismissed, location.lat, location.lng])
+
 
   useEffect(() => {
     localStorage.setItem('pgr_location', JSON.stringify(location))
@@ -56,11 +50,6 @@ export function HomePage() {
 
   function handleLocationSelect(newLocation: LocationState) {
     setLocation(newLocation)
-    setShowLocationPrompt(false)
-  }
-
-  function handleSkipLocation() {
-    setShowLocationPrompt(false)
   }
 
   function handleSearchChange(query: string) {
@@ -105,7 +94,7 @@ export function HomePage() {
         <SearchBar
           location={location}
           filters={filters}
-          onLocationClick={() => setShowLocationPrompt(true)}
+          onLocationSelect={handleLocationSelect}
           onFilterClick={() => setShowFilterPanel(true)}
           onSearchChange={handleSearchChange}
         />
@@ -122,12 +111,7 @@ export function HomePage() {
         />
       </div>
 
-      {/* Location Prompt */}
-      <LocationPrompt
-        open={showLocationPrompt}
-        onSelect={handleLocationSelect}
-        onSkip={handleSkipLocation}
-      />
+
     </div>
   )
 }
