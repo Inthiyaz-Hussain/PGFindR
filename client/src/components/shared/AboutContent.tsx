@@ -254,9 +254,9 @@ export function AboutContent() {
               <Phone className="h-4 w-4" />
               +91 6302854691
             </a>
-            <a href="mailto:info@findpgr.com" className="flex items-center gap-1.5 hover:text-white transition-colors">
+            <a href="mailto:inthiyazhussain69@gmail.com" className="flex items-center gap-1.5 hover:text-white transition-colors">
               <Mail className="h-4 w-4" />
-              info@findpgr.com
+              inthiyazhussain69@gmail.com
             </a>
           </div>
         </div>

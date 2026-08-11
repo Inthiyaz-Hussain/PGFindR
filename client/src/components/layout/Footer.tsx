@@ -328,11 +328,11 @@ export function Footer({ compact = false }: FooterProps) {
                     <div className="space-y-2 text-xs text-slate-300 border-t border-slate-800 pt-3">
                       <div className="flex items-center justify-between">
                         <span className="text-slate-500">Helpline:</span>
-                        <span className="font-semibold text-indigo-450">+91 800-555-0199</span>
+                        <span className="font-semibold text-indigo-450">+91 6302854691</span>
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-slate-500">Email:</span>
-                        <span className="font-semibold hover:text-white transition-colors">support@swiftpg.com</span>
+                        <span className="font-semibold hover:text-white transition-colors">inthiyazhussain69@gmail.com</span>
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-slate-500">Available:</span>
@@ -358,11 +358,11 @@ export function Footer({ compact = false }: FooterProps) {
                         <div className="space-y-2 text-xs text-slate-300 border-t border-slate-800 pt-3">
                           <div className="flex items-center justify-between">
                             <span className="text-slate-500">Helpline:</span>
-                            <span className="font-semibold text-indigo-450">+91 80 4719 3210</span>
+                            <span className="font-semibold text-indigo-450">+91 6302854691</span>
                           </div>
                           <div className="flex items-center justify-between">
                             <span className="text-slate-500">Email:</span>
-                            <span className="font-semibold hover:text-white transition-colors">support@pgfindr.in</span>
+                            <span className="font-semibold hover:text-white transition-colors">inthiyazhussain69@gmail.com</span>
                           </div>
                           <div className="flex items-center justify-between">
                             <span className="text-slate-500">Available:</span>

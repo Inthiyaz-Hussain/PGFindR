@@ -26,8 +26,8 @@ export function AdminPlatformSettingsPage() {
   const [form, setForm] = useState({
     commissionRate: '10.00',
     depositMonths: '2',
-    supportPhone: '+91 80 4719 3210',
-    supportEmail: 'support@pgfindr.in',
+    supportPhone: '+91 6302854691',
+    supportEmail: 'inthiyazhussain69@gmail.com',
     manualApproval: true,
     maintenanceMode: false,
     platformFee: '200.00',
@@ -66,8 +66,8 @@ export function AdminPlatformSettingsPage() {
       const initialForm = {
         commissionRate: settingsMap['default_commission_rate'] || '10.00',
         depositMonths: settingsMap['default_safety_deposit_multiplier'] || '2',
-        supportPhone: settingsMap['help_desk_phone'] || '+91 80 4719 3210',
-        supportEmail: settingsMap['help_desk_email'] || 'support@pgfindr.in',
+        supportPhone: settingsMap['help_desk_phone'] || '+91 6302854691',
+        supportEmail: settingsMap['help_desk_email'] || 'inthiyazhussain69@gmail.com',
         manualApproval: settingsMap['manual_pg_approval'] === 'true',
         maintenanceMode: settingsMap['platform_maintenance_mode'] === 'true',
         platformFee: settingsMap['platform_fee'] || '200.00',
