@@ -225,3 +225,22 @@
     animation: bed-flip 0.5s ease-in-out;
   }
 }
+
+@keyframes blink-border {
+  0%, 100% {
+    border-color: hsl(var(--destructive));
+    box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.4);
+  }
+  50% {
+    border-color: transparent;
+    box-shadow: none;
+  }
+}
+
+[data-invalid="true"] input,
+[data-invalid="true"] textarea,
+[data-invalid="true"] button[role="combobox"],
+[data-invalid="true"] [role="combobox"] {
+  border-color: hsl(var(--destructive)) !important;
+  animation: blink-border 1.2s ease-in-out 3;
+}

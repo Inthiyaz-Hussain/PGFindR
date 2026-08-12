@@ -801,7 +801,44 @@ export function OnboardingPage() {
 
         {step < 5 ? (
           <Button
-            onClick={() => setStep(step + 1)}
+            onClick={() => {
+              if (step === 1) {
+                const missingFields: string[] = []
+                if (!pgDetails.name.trim()) missingFields.push('name')
+                if (!pgDetails.address.trim()) missingFields.push('address')
+                if (!pgDetails.city.trim()) missingFields.push('city')
+                if (!pgDetails.locality.trim()) missingFields.push('locality')
+
+                if (missingFields.length > 0) {
+                  toast.error('Please fill in all required fields.')
+                  
+                  setTimeout(() => {
+                    const firstEmptyName = missingFields[0]
+                    const selectorMap: Record<string, string> = {
+                      name: 'input[placeholder*="Royal Living"]',
+                      address: 'input[placeholder*="Door No"]',
+                      city: 'input[placeholder*="Bengaluru"]',
+                      locality: 'input[placeholder*="Koramangala"]',
+                    }
+                    const selector = selectorMap[firstEmptyName]
+                    const inputElement = document.querySelector(selector) as HTMLElement
+                    if (inputElement) {
+                      const fieldParent = inputElement.closest('[role="group"]') || inputElement.parentElement
+                      if (fieldParent) {
+                        fieldParent.setAttribute('data-invalid', 'true')
+                        fieldParent.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                        setTimeout(() => {
+                          fieldParent.removeAttribute('data-invalid')
+                        }, 3600)
+                      }
+                      inputElement.focus()
+                    }
+                  }, 100)
+                  return
+                }
+              }
+              setStep(step + 1)
+            }}
             className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium"
           >
             Next <ArrowRight className="size-4 ml-2" />

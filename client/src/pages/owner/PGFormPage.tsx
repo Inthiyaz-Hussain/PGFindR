@@ -479,6 +479,28 @@ export function PGFormPage() {
     }
   }, [handleFileUpload])
 
+  const onInvalidSubmit = (errors: any) => {
+    console.warn('Form validation errors:', errors)
+    const errorKeys = Object.keys(errors)
+    if (errorKeys.length > 0) {
+      const firstErrorKey = errorKeys[0]
+      const errorMessage = errors[firstErrorKey]?.message || 'Required field missing'
+      toast.error(`Please complete all required fields: ${errorMessage}`)
+
+      // Scroll to the first element with validation error and focus it
+      setTimeout(() => {
+        const firstErrField = document.querySelector('[data-invalid="true"]')
+        if (firstErrField) {
+          firstErrField.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          const input = firstErrField.querySelector('input, select, textarea, button[role="combobox"]') as HTMLElement
+          if (input) {
+            input.focus()
+          }
+        }
+      }, 100)
+    }
+  }
+
   return (
     <div className="p-4 md:p-6 max-w-3xl">
       <Button variant="ghost" size="sm" onClick={() => navigate(window.location.pathname.startsWith('/admin') ? '/admin/pgs' : '/owner/pgs')} className="mb-4 -ml-2">
@@ -492,7 +514,7 @@ export function PGFormPage() {
         {isNew ? 'Fill in the details below to submit your PG for admin approval.' : 'Update your PG listing details.'}
       </p>
 
-      <form onSubmit={form.handleSubmit((data) => saveMutation.mutate(data))} className="space-y-6">
+      <form onSubmit={form.handleSubmit((data) => saveMutation.mutate(data), onInvalidSubmit)} className="space-y-6">
         {/* Owner Assignment (Admin Only) */}
         {isAdmin && (
           <Card className="border-indigo-500/30 shadow-md">
