@@ -210,51 +210,56 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
   useEffect(() => {
-    // 1. Check if there is an active demo session
+    // 1. Check inactivity timeout (for both real and demo sessions)
+    const lastActive = localStorage.getItem('last_active_time')
+    const threeDaysMs = 3 * 24 * 60 * 60 * 1000
+    
+    if (lastActive) {
+      const timeSinceActive = Date.now() - Number(lastActive)
+      if (timeSinceActive > threeDaysMs) {
+        console.log('Session expired due to 3 days of inactivity. Signing out...')
+        localStorage.removeItem('demo_session')
+        localStorage.removeItem('last_active_time')
+        if (mounted.current) {
+          setSession(null)
+          setUser(null)
+          setProfile(null)
+          setLoading(false)
+        }
+        supabase.auth.signOut()
+        return
+      }
+    }
+    
+    // Update last active time to now (since they just opened the app/tab)
+    localStorage.setItem('last_active_time', String(Date.now()))
+
+    // 2. Check if there is an active demo session
     const savedDemoSessionStr = localStorage.getItem('demo_session')
     if (savedDemoSessionStr) {
       try {
         const demoSession = JSON.parse(savedDemoSessionStr)
-        const loginTime = demoSession.loginTime
-        const threeDaysMs = 3 * 24 * 60 * 60 * 1000
-        if (Date.now() - loginTime < threeDaysMs) {
-          console.log('Restoring demo session from localStorage...')
-          if (mounted.current) {
-            setSession(demoSession.session)
-            setUser(demoSession.user)
-            setProfile(demoSession.profile)
-            setLoading(false)
-          }
-          // Listen for real auth changes but don't disrupt active demo session on start
-          const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-            if (!mounted.current) return
-            if (session) {
-              localStorage.removeItem('demo_session')
-              setSession(session)
-              setUser(session.user)
-              await syncProfileWithAuthSession(session)
-            } else if (event === 'SIGNED_OUT') {
-              localStorage.removeItem('demo_session')
-              setProfile(null)
-            }
-          })
-          return () => subscription.unsubscribe()
-        } else {
-          console.log('Demo session expired (older than 3 days). Clearing...')
-          localStorage.removeItem('demo_session')
+        console.log('Restoring demo session from localStorage...')
+        if (mounted.current) {
+          setSession(demoSession.session)
+          setUser(demoSession.user)
+          setProfile(demoSession.profile)
+          setLoading(false)
         }
+        return // Do NOT listen to onAuthStateChange for demo sessions!
       } catch (e) {
         console.error('Error parsing demo session from localStorage:', e)
         localStorage.removeItem('demo_session')
       }
     }
 
-    // 2. Restore session from localStorage (Supabase handles this automatically)
+    // 3. Restore session from localStorage (Supabase handles this automatically)
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!mounted.current) return
       setSession(session)
       setUser(session?.user ?? null)
       if (session) {
+        localStorage.setItem('last_active_time', String(Date.now()))
         syncProfileWithAuthSession(session).finally(() => {
           if (mounted.current) setLoading(false)
         })
@@ -267,10 +272,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!mounted.current) return
       if (event === 'SIGNED_OUT') {
         localStorage.removeItem('demo_session')
+        localStorage.removeItem('last_active_time')
       }
       setSession(session)
       setUser(session?.user ?? null)
       if (session) {
+        localStorage.setItem('last_active_time', String(Date.now()))
         await syncProfileWithAuthSession(session)
       } else {
         setProfile(null)
@@ -338,6 +345,7 @@ function getDemoMockData(email: string) {
         loginTime: Date.now()
       }
       localStorage.setItem('demo_session', JSON.stringify(demoSessionData))
+      localStorage.setItem('last_active_time', String(Date.now()))
 
       if (mounted.current) {
         setUser(mock.user)
@@ -355,6 +363,7 @@ function getDemoMockData(email: string) {
       if (!data.user) {
         return { error: new Error('User not found') as Error | null, profile: null }
       }
+      localStorage.setItem('last_active_time', String(Date.now()))
       const p = await fetchProfile(data.user.id)
       return { error: null, profile: p }
     } catch (e: any) {
@@ -365,6 +374,7 @@ function getDemoMockData(email: string) {
   // ── logout ─────────────────────────────────────────────────────────────────
   async function logout() {
     localStorage.removeItem('demo_session')
+    localStorage.removeItem('last_active_time')
     await supabase.auth.signOut()
   }
 
