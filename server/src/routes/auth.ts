@@ -107,12 +107,12 @@ router.post('/admin/create-owner', authenticateToken, requireRole('admin'), asyn
     let createdUser: any = null
     let createErr: any = null
 
-    // Try creating via admin API first (bypasses email rate limits and confirmation)
+    // Try creating via admin API first (requires email confirmation OTP/link)
     try {
       const { data, error } = await supabase.auth.admin.createUser({
         email,
         password,
-        email_confirm: true,
+        email_confirm: false,
         user_metadata: {
           full_name: name,
           role: 'owner',

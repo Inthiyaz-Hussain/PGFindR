@@ -726,19 +726,18 @@ export function PGFormPage() {
                     </Field>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <Field>
-                      <FieldLabel htmlFor="new-owner-email">Owner Email *</FieldLabel>
-                      <Input
-                        id="new-owner-email"
-                        type="email"
-                        value={newOwnerEmail}
-                        onChange={(e) => setNewOwnerEmail(e.target.value)}
-                        placeholder="e.g. ramesh@example.com"
-                        disabled={ownerMode === 'edit'}
-                      />
-                    </Field>
-                    {ownerMode === 'create' && (
+                  {ownerMode === 'create' && (
+                    <div className="grid grid-cols-2 gap-4">
+                      <Field>
+                        <FieldLabel htmlFor="new-owner-email">Owner Email *</FieldLabel>
+                        <Input
+                          id="new-owner-email"
+                          type="email"
+                          value={newOwnerEmail}
+                          onChange={(e) => setNewOwnerEmail(e.target.value)}
+                          placeholder="e.g. ramesh@example.com"
+                        />
+                      </Field>
                       <Field>
                         <FieldLabel htmlFor="new-owner-password">Owner Password *</FieldLabel>
                         <Input
@@ -746,11 +745,11 @@ export function PGFormPage() {
                           type="password"
                           value={newOwnerPassword}
                           onChange={(e) => setNewOwnerPassword(e.target.value)}
-                          placeholder="Min 6 characters"
+                          placeholder="••••••••"
                         />
                       </Field>
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </div>
               )}
             </CardContent>
