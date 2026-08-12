@@ -171,12 +171,11 @@ router.post('/', authenticateToken, async (req, res) => {
       })
     }
 
-    // Verify PG exists and is approved
+    // Verify PG exists (supports both pending and approved listings for testing/direct link inquiries)
     const { data: pg, error: pgError } = await dbClient
       .from('pg_listings')
       .select('id, owner_id, name')
       .eq('id', pg_id)
-      .eq('status', 'approved')
       .single()
 
     if (pgError || !pg) {
