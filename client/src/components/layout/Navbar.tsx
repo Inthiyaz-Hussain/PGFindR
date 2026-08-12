@@ -246,6 +246,19 @@ export function Navbar({
                   <Compass className="h-4 w-4 text-amber-500 dark:text-amber-400" />
                   <span>Explore</span>
                 </Link>
+                <Link
+                  to="/owner/register"
+                  className="animate-blink-button flex items-center gap-1.5 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 transition-all px-3.5 py-1.5 rounded-lg shadow-sm hover:scale-[1.02] cursor-pointer"
+                >
+                  <PlusCircle className="h-4 w-4" />
+                  <span>List PG (Register)</span>
+                </Link>
+                <Link
+                  to="/owner/login"
+                  className="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors px-2 py-1.5 rounded-lg hover:bg-slate-100/60 dark:hover:bg-slate-800/60"
+                >
+                  Sign In
+                </Link>
                 <button
                   onClick={() => {
                     if (onWishlistClick) {

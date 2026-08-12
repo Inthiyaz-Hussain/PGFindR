@@ -278,7 +278,7 @@ export function OwnerRegistrationPage() {
                 />
               </div>
 
-              <Button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium" disabled={loading}>
+              <Button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium animate-blink-button" disabled={loading}>
                 {loading ? (
                   <Loader2 className="size-4 animate-spin mr-2" />
                 ) : (
