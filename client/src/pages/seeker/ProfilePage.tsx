@@ -13,6 +13,7 @@ export function ProfilePage() {
   const isAuthed = !!profile
   const [fullName, setFullName] = useState('')
   const [phone, setPhone] = useState('')
+  const [phoneAlternate, setPhoneAlternate] = useState('')
   const [email, setEmail] = useState('')
   const [saving, setSaving] = useState(false)
 
@@ -21,6 +22,7 @@ export function ProfilePage() {
     if (isAuthed && profile) {
       setFullName(profile.full_name || '')
       setPhone(profile.phone || '')
+      setPhoneAlternate((profile as any).phone_alternate || '')
       setEmail(user?.email || '')
     } else {
       setFullName(localStorage.getItem('seeker_fullName') || '')
@@ -40,8 +42,9 @@ export function ProfilePage() {
       const { error } = await updateProfile({
         full_name: fullName,
         phone,
+        phone_alternate: phoneAlternate || null,
         updated_at: new Date().toISOString()
-      })
+      } as any)
       setSaving(false)
       if (error) {
         toast.error('Failed to save profile')
@@ -122,6 +125,23 @@ export function ProfilePage() {
                 />
               </div>
             </div>
+
+            {profile?.role === 'owner' && (
+              <div className="space-y-1.5">
+                <Label htmlFor="phoneAlternate">Alternate Phone Number</Label>
+                <div className="relative">
+                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                  <Input
+                    id="phoneAlternate"
+                    type="tel"
+                    value={phoneAlternate}
+                    onChange={(e) => setPhoneAlternate(e.target.value)}
+                    placeholder="+91 98765 43210"
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+            )}
 
             <Button type="submit" disabled={saving}>
               {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}

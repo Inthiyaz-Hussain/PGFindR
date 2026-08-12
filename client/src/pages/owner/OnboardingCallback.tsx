@@ -69,9 +69,14 @@ export function OnboardingCallback() {
             address: data.pgDetails.address,
             city: data.pgDetails.city,
             locality: data.pgDetails.locality,
+            pincode: data.pgDetails.pincode || null,
             pg_type: data.pgDetails.pg_type,
             deposit_amount: Number(data.pgDetails.deposit_amount) || 5000,
             rules: data.pgDetails.rules || '',
+            near_malls: data.pgDetails.near_malls || null,
+            near_parks: data.pgDetails.near_parks || null,
+            near_pubs: data.pgDetails.near_pubs || null,
+            near_transit: data.pgDetails.near_transit || null,
             status: 'pending', // Re-submit for review
             updated_at: new Date().toISOString()
           })

@@ -54,6 +54,7 @@ export function RegisterCallback() {
           body: JSON.stringify({
             fullName: savedForm.fullName,
             mobile: savedForm.mobile,
+            mobileAlternate: savedForm.mobileAlternate || undefined,
             pgName: savedForm.pgName,
             address: savedForm.address,
             pincode: savedForm.pincode,

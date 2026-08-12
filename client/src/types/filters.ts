@@ -1,5 +1,5 @@
 export type SharingNumber = 1 | 2 | 3 | 4
-export type GenderFilter = 'boys' | 'girls' | 'co-ed' | null
+export type GenderFilter = 'boys' | 'girls' | 'co-ed' | 'coliving' | null
 
 export interface SearchFilters {
   query: string

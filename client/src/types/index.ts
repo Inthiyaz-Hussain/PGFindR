@@ -1,5 +1,5 @@
 export type UserRole = 'seeker' | 'owner' | 'admin'
-export type PGType = 'boys' | 'girls' | 'co-ed'
+export type PGType = 'boys' | 'girls' | 'co-ed' | 'coliving'
 export type PGStatus = 'pending' | 'approved' | 'rejected' | 'inactive'
 export type BedStatus = 'available' | 'occupied' | 'reserved' | 'maintenance'
 export type SharingType = 'single' | 'double' | 'triple' | 'dormitory'
@@ -13,6 +13,7 @@ export interface Profile {
   id: string
   full_name: string
   phone: string | null
+  phone_alternate?: string | null
   avatar_url: string | null
   role: UserRole
   created_at: string

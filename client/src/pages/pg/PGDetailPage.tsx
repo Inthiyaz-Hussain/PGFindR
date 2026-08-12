@@ -33,6 +33,7 @@ interface PGDetailData {
   address: string
   city: string
   locality: string
+  pincode: string | null
   latitude: number | null
   longitude: number | null
   pg_type: string
@@ -42,6 +43,10 @@ interface PGDetailData {
   rules: string | null
   avg_rating: number
   review_count: number
+  near_malls: string | null
+  near_parks: string | null
+  near_pubs: string | null
+  near_transit: string | null
   photos: Array<{
     id: string
     url: string
@@ -51,7 +56,7 @@ interface PGDetailData {
   }>
   amenities: Array<{ key: string; is_available: boolean }>
   sharing_types: SharingTypeItem[]
-  owner: { full_name: string; phone: string | null } | null
+  owner: { full_name: string; phone: string | null; phone_alternate?: string | null } | null
 }
 
 interface ReviewsResponse {
@@ -69,52 +74,76 @@ interface ReviewsResponse {
   offset: number
 }
 
-function getNearbyLandmarks(pg: { locality: string; city: string; name: string }) {
-  const locality = pg.locality?.toLowerCase() || ''
-  const name = pg.name?.toLowerCase() || ''
-  
+function getNearbyLandmarks(pg: {
+  locality: string
+  city: string
+  name: string
+  near_malls?: string | null
+  near_parks?: string | null
+  near_pubs?: string | null
+  near_transit?: string | null
+}) {
   const landmarks: Array<{ name: string; type: string; distance: string; icon: any }> = []
 
-  if (locality.includes('indiranagar')) {
-    landmarks.push({ name: 'Indiranagar Metro Station', type: 'Metro Station', distance: '0.4 km', icon: Train })
-    landmarks.push({ name: '100 Feet Road Shopping Hub', type: 'Shopping & Dining', distance: '0.3 km', icon: ShoppingBag })
-    landmarks.push({ name: 'ESI Hospital', type: 'Healthcare', distance: '1.1 km', icon: Hospital })
-    landmarks.push({ name: 'Toit Brewpub / Restaurants', type: 'Food & Hangout', distance: '0.6 km', icon: Utensils })
-  } else if (locality.includes('andheri')) {
-    landmarks.push({ name: 'JB Nagar Metro Station', type: 'Metro Station', distance: '0.3 km', icon: Train })
-    landmarks.push({ name: 'SEEPZ IT Park', type: 'Business Hub', distance: '1.4 km', icon: ShoppingBag })
-    landmarks.push({ name: 'Seven Hills Hospital', type: 'Healthcare', distance: '1.8 km', icon: Hospital })
-    landmarks.push({ name: 'Andheri Kurla Road', type: 'Commercial Street', distance: '0.5 km', icon: Bus })
-  } else if (locality.includes('south extension') || locality.includes('south ex')) {
-    landmarks.push({ name: 'South Extension Metro Station', type: 'Metro Station', distance: '0.3 km', icon: Train })
-    landmarks.push({ name: 'South Ex Part 2 Market', type: 'Shopping Hub', distance: '0.2 km', icon: ShoppingBag })
-    landmarks.push({ name: 'AIIMS Delhi', type: 'Healthcare', distance: '2.3 km', icon: Hospital })
-  } else if (locality.includes('saket')) {
-    landmarks.push({ name: 'Saket Metro Station', type: 'Metro Station', distance: '0.5 km', icon: Train })
-    landmarks.push({ name: 'Select CITYWALK Mall', type: 'Shopping Mall', distance: '0.6 km', icon: ShoppingBag })
-    landmarks.push({ name: 'Max Super Speciality Hospital', type: 'Healthcare', distance: '0.9 km', icon: Hospital })
-  } else if (locality.includes('sector 62')) {
-    landmarks.push({ name: 'Sector 62 Metro Station', type: 'Metro Station', distance: '0.5 km', icon: Train })
-    landmarks.push({ name: 'Logix Cyber Park', type: 'IT Hub', distance: '0.8 km', icon: ShoppingBag })
-    landmarks.push({ name: 'Fortis Hospital', type: 'Healthcare', distance: '1.2 km', icon: Hospital })
-  } else if (locality.includes('sector 18')) {
-    landmarks.push({ name: 'Sector 18 Metro Station', type: 'Metro Station', distance: '0.2 km', icon: Train })
-    landmarks.push({ name: 'DLF Mall of India', type: 'Shopping Mall', distance: '0.4 km', icon: ShoppingBag })
-    landmarks.push({ name: 'Sector 18 Market', type: 'Commercial Hub', distance: '0.1 km', icon: Utensils })
-  } else if (locality.includes('dlf phase 2') || locality.includes('cyber city') || name.includes('cyber city')) {
-    landmarks.push({ name: 'DLF Cyber City Rapid Metro', type: 'Rapid Metro', distance: '0.4 km', icon: Train })
-    landmarks.push({ name: 'DLF CyberHub', type: 'Food & Entertainment', distance: '0.5 km', icon: Utensils })
-    landmarks.push({ name: 'Ambience Mall Gurgaon', type: 'Shopping Mall', distance: '1.8 km', icon: ShoppingBag })
-  } else if (locality.includes('golf course road') || locality.includes('sector 43') || name.includes('golf course')) {
-    landmarks.push({ name: 'Sector 42-43 Rapid Metro', type: 'Rapid Metro', distance: '0.6 km', icon: Train })
-    landmarks.push({ name: 'One Horizon Center', type: 'Corporate Park', distance: '0.8 km', icon: ShoppingBag })
-    landmarks.push({ name: 'Paras Hospital', type: 'Healthcare', distance: '1.5 km', icon: Hospital })
-  } else {
-    const prettyLocality = pg.locality || 'Local'
-    landmarks.push({ name: `${prettyLocality} Metro/Bus Station`, type: 'Transit', distance: '0.6 km', icon: Train })
-    landmarks.push({ name: `${prettyLocality} Shopping Plaza`, type: 'Shopping & Groceries', distance: '0.8 km', icon: ShoppingBag })
-    landmarks.push({ name: `${prettyLocality} Multi-speciality Hospital`, type: 'Healthcare', distance: '1.5 km', icon: Hospital })
-    landmarks.push({ name: `Local Restaurants & Cafes`, type: 'Food', distance: '0.3 km', icon: Utensils })
+  if (pg.near_malls) {
+    landmarks.push({ name: pg.near_malls, type: 'Shopping Mall', distance: 'Nearby', icon: ShoppingBag })
+  }
+  if (pg.near_parks) {
+    landmarks.push({ name: pg.near_parks, type: 'Park & Nature', distance: 'Nearby', icon: MapPin })
+  }
+  if (pg.near_pubs) {
+    landmarks.push({ name: pg.near_pubs, type: 'Famous Pub / Bar', distance: 'Nearby', icon: Utensils })
+  }
+  if (pg.near_transit) {
+    landmarks.push({ name: pg.near_transit, type: 'Transit Hub', distance: 'Nearby', icon: Train })
+  }
+
+  // If no landmarks are configured in the database, fall back to mock location-specific ones
+  if (landmarks.length === 0) {
+    const locality = pg.locality?.toLowerCase() || ''
+    const name = pg.name?.toLowerCase() || ''
+
+    if (locality.includes('indiranagar')) {
+      landmarks.push({ name: 'Indiranagar Metro Station', type: 'Metro Station', distance: '0.4 km', icon: Train })
+      landmarks.push({ name: '100 Feet Road Shopping Hub', type: 'Shopping & Dining', distance: '0.3 km', icon: ShoppingBag })
+      landmarks.push({ name: 'ESI Hospital', type: 'Healthcare', distance: '1.1 km', icon: Hospital })
+      landmarks.push({ name: 'Toit Brewpub / Restaurants', type: 'Food & Hangout', distance: '0.6 km', icon: Utensils })
+    } else if (locality.includes('andheri')) {
+      landmarks.push({ name: 'JB Nagar Metro Station', type: 'Metro Station', distance: '0.3 km', icon: Train })
+      landmarks.push({ name: 'SEEPZ IT Park', type: 'Business Hub', distance: '1.4 km', icon: ShoppingBag })
+      landmarks.push({ name: 'Seven Hills Hospital', type: 'Healthcare', distance: '1.8 km', icon: Hospital })
+      landmarks.push({ name: 'Andheri Kurla Road', type: 'Commercial Street', distance: '0.5 km', icon: Bus })
+    } else if (locality.includes('south extension') || locality.includes('south ex')) {
+      landmarks.push({ name: 'South Extension Metro Station', type: 'Metro Station', distance: '0.3 km', icon: Train })
+      landmarks.push({ name: 'South Ex Part 2 Market', type: 'Shopping Hub', distance: '0.2 km', icon: ShoppingBag })
+      landmarks.push({ name: 'AIIMS Delhi', type: 'Healthcare', distance: '2.3 km', icon: Hospital })
+    } else if (locality.includes('saket')) {
+      landmarks.push({ name: 'Saket Metro Station', type: 'Metro Station', distance: '0.5 km', icon: Train })
+      landmarks.push({ name: 'Select CITYWALK Mall', type: 'Shopping Mall', distance: '0.6 km', icon: ShoppingBag })
+      landmarks.push({ name: 'Max Super Speciality Hospital', type: 'Healthcare', distance: '0.9 km', icon: Hospital })
+    } else if (locality.includes('sector 62')) {
+      landmarks.push({ name: 'Sector 62 Metro Station', type: 'Metro Station', distance: '0.5 km', icon: Train })
+      landmarks.push({ name: 'Logix Cyber Park', type: 'IT Hub', distance: '0.8 km', icon: ShoppingBag })
+      landmarks.push({ name: 'Fortis Hospital', type: 'Healthcare', distance: '1.2 km', icon: Hospital })
+    } else if (locality.includes('sector 18')) {
+      landmarks.push({ name: 'Sector 18 Metro Station', type: 'Metro Station', distance: '0.2 km', icon: Train })
+      landmarks.push({ name: 'DLF Mall of India', type: 'Shopping Mall', distance: '0.4 km', icon: ShoppingBag })
+      landmarks.push({ name: 'Sector 18 Market', type: 'Commercial Hub', distance: '0.1 km', icon: Utensils })
+    } else if (locality.includes('dlf phase 2') || locality.includes('cyber city') || name.includes('cyber city')) {
+      landmarks.push({ name: 'DLF Cyber City Rapid Metro', type: 'Rapid Metro', distance: '0.4 km', icon: Train })
+      landmarks.push({ name: 'DLF CyberHub', type: 'Food & Entertainment', distance: '0.5 km', icon: Utensils })
+      landmarks.push({ name: 'Ambience Mall Gurgaon', type: 'Shopping Mall', distance: '1.8 km', icon: ShoppingBag })
+    } else if (locality.includes('golf course road') || locality.includes('sector 43') || name.includes('golf course')) {
+      landmarks.push({ name: 'Sector 42-43 Rapid Metro', type: 'Rapid Metro', distance: '0.6 km', icon: Train })
+      landmarks.push({ name: 'One Horizon Center', type: 'Corporate Park', distance: '0.8 km', icon: ShoppingBag })
+      landmarks.push({ name: 'Paras Hospital', type: 'Healthcare', distance: '1.5 km', icon: Hospital })
+    } else {
+      const prettyLocality = pg.locality || 'Local'
+      landmarks.push({ name: `${prettyLocality} Metro/Bus Station`, type: 'Transit', distance: '0.6 km', icon: Train })
+      landmarks.push({ name: `${prettyLocality} Shopping Plaza`, type: 'Shopping & Groceries', distance: '0.8 km', icon: ShoppingBag })
+      landmarks.push({ name: `${prettyLocality} Multi-speciality Hospital`, type: 'Healthcare', distance: '1.5 km', icon: Hospital })
+      landmarks.push({ name: `Local Restaurants & Cafes`, type: 'Food', distance: '0.3 km', icon: Utensils })
+    }
   }
 
   return landmarks
@@ -369,7 +398,7 @@ export function PGDetailPage() {
                     <MapPin className="size-5 text-primary shrink-0 mt-0.5" />
                     <div>
                       <div className="text-sm font-semibold">Exact Address</div>
-                      <div className="text-sm text-muted-foreground">{pg.address}, {pg.locality}, {pg.city}</div>
+                      <div className="text-sm text-muted-foreground">{pg.address}, {pg.locality}, {pg.city}{pg.pincode ? ` - ${pg.pincode}` : ''}</div>
                     </div>
                   </div>
                 </div>
@@ -377,7 +406,7 @@ export function PGDetailPage() {
             ) : (
               <div className="rounded-xl border border-border bg-card p-4 flex items-center gap-3 text-muted-foreground">
                 <MapPin className="size-5" />
-                <span className="text-sm">Location coordinates not available. Address: {pg.address}, {pg.locality}, {pg.city}</span>
+                <span className="text-sm">Location coordinates not available. Address: {pg.address}, {pg.locality}, {pg.city}{pg.pincode ? ` - ${pg.pincode}` : ''}</span>
               </div>
             )}
 
@@ -507,6 +536,7 @@ export function PGDetailPage() {
             pgName={pg.name}
             ownerName={pg.owner?.full_name || 'Owner'}
             ownerPhone={pg.owner?.phone || null}
+            ownerPhoneAlternate={pg.owner?.phone_alternate || null}
             selectedSharing={selectedSharing}
             sharingTypes={pg.sharing_types || []}
           />
@@ -541,7 +571,8 @@ export function PGDetailPage() {
               const typeColor = {
                 boys: 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300 border-blue-200/50',
                 girls: 'bg-pink-100 text-pink-800 dark:bg-pink-900/40 dark:text-pink-300 border-pink-200/50',
-                'co-ed': 'bg-violet-100 text-violet-800 dark:bg-violet-900/40 dark:text-violet-300 border-violet-200/50'
+                'co-ed': 'bg-violet-100 text-violet-800 dark:bg-violet-900/40 dark:text-violet-300 border-violet-200/50',
+                coliving: 'bg-violet-100 text-violet-800 dark:bg-violet-900/40 dark:text-violet-300 border-violet-200/50'
               }
               
               return (
@@ -564,8 +595,8 @@ export function PGDetailPage() {
                       </div>
                     )}
                     <div className="absolute top-2 left-2">
-                      <Badge className={cn('border text-[10px] font-medium px-1.5 py-0.5', typeColor[nearbyPg.pg_type as keyof typeof typeColor] || typeColor['co-ed'])}>
-                        {nearbyPg.pg_type === 'co-ed' ? 'Co-ed' : nearbyPg.pg_type === 'boys' ? 'Boys' : 'Girls'}
+                      <Badge className={cn('border text-[10px] font-medium px-1.5 py-0.5', typeColor[nearbyPg.pg_type as keyof typeof typeColor] || typeColor['coliving'])}>
+                        {nearbyPg.pg_type === 'coliving' ? 'Coliving' : nearbyPg.pg_type === 'co-ed' ? 'Co-ed' : nearbyPg.pg_type === 'boys' ? 'Boys' : 'Girls'}
                       </Badge>
                     </div>
                   </div>

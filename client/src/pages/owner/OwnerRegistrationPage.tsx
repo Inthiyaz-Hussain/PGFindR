@@ -16,6 +16,7 @@ const registerOwnerSchema = z.object({
   fullName: z.string().min(2, 'Name must be at least 2 characters').max(80, 'Name is too long'),
   email: z.string().email('Enter a valid email address'),
   mobile: z.string().regex(/^\+?[0-9]{10,15}$/, 'Enter a valid mobile number'),
+  mobileAlternate: z.string().regex(/^\+?[0-9]{10,15}$/, 'Enter a valid alternate mobile number').optional().or(z.literal('')),
   pgName: z.string().min(3, 'PG Name must be at least 3 characters'),
   address: z.string().min(5, 'Address is required'),
   pincode: z.string().regex(/^[0-9]{6}$/, 'Enter a valid 6-digit pincode'),
@@ -37,6 +38,7 @@ export function OwnerRegistrationPage() {
       fullName: '',
       email: '',
       mobile: '',
+      mobileAlternate: '',
       pgName: '',
       address: '',
       pincode: '',
@@ -188,7 +190,7 @@ export function OwnerRegistrationPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {/* Mobile */}
                 <Controller
                   name="mobile"
@@ -201,6 +203,25 @@ export function OwnerRegistrationPage() {
                         id="mobile"
                         type="tel"
                         placeholder="+91 9876543210"
+                        aria-invalid={fieldState.invalid}
+                      />
+                      {fieldState.error && <FieldError errors={[fieldState.error]} />}
+                    </Field>
+                  )}
+                />
+
+                {/* Alternate Mobile */}
+                <Controller
+                  name="mobileAlternate"
+                  control={control}
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid || undefined}>
+                      <FieldLabel htmlFor="mobileAlternate">Alternate Mobile (Optional)</FieldLabel>
+                      <Input
+                        {...field}
+                        id="mobileAlternate"
+                        type="tel"
+                        placeholder="Alternate number"
                         aria-invalid={fieldState.invalid}
                       />
                       {fieldState.error && <FieldError errors={[fieldState.error]} />}

@@ -31,6 +31,7 @@ export function PGHeader({
     boys: { label: 'Boys PG', class: 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-900' },
     girls: { label: 'Girls PG', class: 'bg-pink-100 text-pink-800 border-pink-200 dark:bg-pink-950 dark:text-pink-300 dark:border-pink-900' },
     'co-ed': { label: 'Co-ed PG', class: 'bg-violet-100 text-violet-800 border-violet-200 dark:bg-violet-950 dark:text-violet-300 dark:border-violet-900' },
+    coliving: { label: 'Coliving Space', class: 'bg-violet-100 text-violet-800 border-violet-200 dark:bg-violet-950 dark:text-violet-300 dark:border-violet-900' },
   } as const
 
   const gender = genderConfig[pg_type as keyof typeof genderConfig] || genderConfig['co-ed']

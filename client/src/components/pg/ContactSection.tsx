@@ -12,6 +12,7 @@ interface ContactSectionProps {
   pgName: string
   ownerName: string
   ownerPhone: string | null
+  ownerPhoneAlternate?: string | null
   selectedSharing: SharingTypeItem | null
   sharingTypes: SharingTypeItem[]
 }
@@ -21,6 +22,7 @@ export function ContactSection({
   pgName,
   ownerName,
   ownerPhone,
+  ownerPhoneAlternate,
   selectedSharing: _selectedSharing,
   sharingTypes,
 }: ContactSectionProps) {
@@ -56,9 +58,17 @@ export function ContactSection({
             {/* Phone number */}
             <div className="relative rounded-lg bg-muted p-4">
               {isLoggedIn ? (
-                <div className="flex items-center gap-2">
-                  <Phone className="size-4 text-green-600" />
-                  <span className="text-sm font-medium">{ownerPhone || 'Not available'}</span>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Phone className="size-4 text-green-600" />
+                    <span className="text-sm font-medium">{ownerPhone || 'Not available'}</span>
+                  </div>
+                  {ownerPhoneAlternate && (
+                    <div className="flex items-center gap-2 border-t pt-2 mt-2">
+                      <Phone className="size-4 text-green-600" />
+                      <span className="text-sm font-medium">{ownerPhoneAlternate} (Alternate)</span>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <>

@@ -13,7 +13,12 @@ interface PGCardProps {
 
 export function PGCard({ pg, liveAvailableBeds = null, className }: PGCardProps) {
   const primaryPhoto = pg.photos?.find((p) => p.is_primary) || pg.photos?.[0]
-  const typeColor = { boys: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200', girls: 'bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-200', 'co-ed': 'bg-violet-100 text-violet-800 dark:bg-violet-900 dark:text-violet-200' }
+  const typeColor = {
+    boys: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
+    girls: 'bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-200',
+    'co-ed': 'bg-violet-100 text-violet-800 dark:bg-violet-900 dark:text-violet-200',
+    coliving: 'bg-violet-100 text-violet-800 dark:bg-violet-900 dark:text-violet-200'
+  }
 
   function formatDistance(meters: number): string {
     if (meters < 1000) return `${Math.round(meters)}m`
@@ -51,7 +56,7 @@ export function PGCard({ pg, liveAvailableBeds = null, className }: PGCardProps)
             <img
               src={primaryPhoto.url}
               alt={pg.name}
-              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
             />
           ) : (
             <div className="flex h-full items-center justify-center bg-muted">
@@ -59,8 +64,8 @@ export function PGCard({ pg, liveAvailableBeds = null, className }: PGCardProps)
             </div>
           )}
           <div className="absolute top-3 left-3">
-            <Badge className={cn('border-0 text-xs font-medium', typeColor[pg.pg_type])}>
-              {pg.pg_type === 'co-ed' ? 'Co-ed' : pg.pg_type === 'boys' ? 'Boys' : 'Girls'}
+            <Badge className={cn('border-0 text-xs font-medium', typeColor[pg.pg_type as keyof typeof typeColor] || typeColor['coliving'])}>
+              {pg.pg_type === 'coliving' ? 'Coliving' : pg.pg_type === 'co-ed' ? 'Co-ed' : pg.pg_type === 'boys' ? 'Boys' : 'Girls'}
             </Badge>
           </div>
           <div className="absolute top-3 right-3">

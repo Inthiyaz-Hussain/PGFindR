@@ -90,10 +90,11 @@ interface CreateOwnerBody {
   email: string
   password: string
   mobile?: string
+  phone_alternate?: string
 }
 
 router.post('/admin/create-owner', authenticateToken, requireRole('admin'), async (req, res) => {
-  const { name, email, password, mobile }: CreateOwnerBody = req.body
+  const { name, email, password, mobile, phone_alternate }: CreateOwnerBody = req.body
 
   if (!name || !email || !password) {
     return res.status(400).json({ error: 'name, email, and password are required' })
@@ -156,7 +157,10 @@ router.post('/admin/create-owner', authenticateToken, requireRole('admin'), asyn
       const db = getSupabaseClient(req)
       await db
         .from('profiles')
-        .update({ phone: mobile || null })
+        .update({ 
+          phone: mobile || null,
+          phone_alternate: phone_alternate || null 
+        })
         .eq('id', createdUser.id)
 
       return res.status(201).json({
@@ -166,6 +170,7 @@ router.post('/admin/create-owner', authenticateToken, requireRole('admin'), asyn
           name,
           role: 'owner',
           mobile: mobile ?? null,
+          phone_alternate: phone_alternate ?? null,
         },
       })
     }
@@ -273,6 +278,7 @@ router.post('/verify-otp', async (req, res) => {
 interface RegisterOwnerBody {
   fullName: string
   mobile: string
+  mobileAlternate?: string
   pgName: string
   address: string
   pincode: string
@@ -281,7 +287,7 @@ interface RegisterOwnerBody {
 
 router.post('/register-owner', authenticateToken, async (req: any, res) => {
   try {
-    const { fullName, mobile, pgName, address, pincode, email }: RegisterOwnerBody = req.body
+    const { fullName, mobile, mobileAlternate, pgName, address, pincode, email }: RegisterOwnerBody = req.body
 
     if (!fullName || !mobile || !pgName || !address || !pincode || !email) {
       return res.status(400).json({ error: 'All fields are required' })
@@ -298,6 +304,7 @@ router.post('/register-owner', authenticateToken, async (req: any, res) => {
         role: 'owner',
         full_name: fullName,
         phone: mobile,
+        phone_alternate: mobileAlternate || null,
         google_uid: req.user.id,
         google_verified: true,
         google_verified_at: new Date().toISOString(),

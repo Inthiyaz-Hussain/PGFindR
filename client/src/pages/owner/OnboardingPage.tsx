@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Loader2, ArrowLeft, ArrowRight, CheckCircle2, Plus, Trash2, Shield, Upload, Info } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -32,11 +32,16 @@ export function OnboardingPage() {
     name: '',
     description: '',
     address: '',
+    pincode: '',
     city: 'Bengaluru',
     locality: '',
-    pg_type: 'co-ed' as 'boys' | 'girls' | 'co-ed',
+    pg_type: 'coliving' as 'boys' | 'girls' | 'co-ed' | 'coliving',
     deposit_amount: '5000',
     rules: '',
+    near_malls: '',
+    near_parks: '',
+    near_pubs: '',
+    near_transit: '',
   })
 
   // Step 2: Room & Bed Setup
@@ -64,7 +69,7 @@ export function OnboardingPage() {
       id: 'room-1',
       room_label: 'Room 101',
       floor: 1,
-      sharing_type: 2,
+      sharing_type: 1,
       door_facing: 'NE',
       has_window: true,
       window_facing: 'E',
@@ -74,10 +79,17 @@ export function OnboardingPage() {
       photos: ['https://images.unsplash.com/photo-1598928506311-c55ded91a20c?auto=format&fit=crop&w=500&q=80', 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=500&q=80'],
       beds: [
         { id: 'bed-1-1', bed_label: 'Bed A', bed_type: 'Single', status: 'available', monthly_rent: 12000 },
-        { id: 'bed-1-2', bed_label: 'Bed B', bed_type: 'Single', status: 'available', monthly_rent: 12000 },
       ]
     }
   ])
+
+  useEffect(() => {
+    if (pgDetails.pg_type === 'coliving' || pgDetails.pg_type === 'co-ed') {
+      setRooms(prev =>
+        prev.map(r => r.sharing_type !== 1 ? { ...r, sharing_type: 1 } : r)
+      )
+    }
+  }, [pgDetails.pg_type])
 
   // Step 3: Amenities
   const [standardAmenities, setStandardAmenities] = useState<Record<string, boolean>>({
@@ -279,7 +291,10 @@ export function OnboardingPage() {
                   <SelectContent>
                     <SelectItem value="boys">Boys only</SelectItem>
                     <SelectItem value="girls">Girls only</SelectItem>
-                    <SelectItem value="co-ed">Co-Ed / Mixed</SelectItem>
+                    <SelectItem value="coliving">Coliving</SelectItem>
+                    {pgDetails.pg_type === 'co-ed' && (
+                      <SelectItem value="co-ed">Co-ed (Legacy)</SelectItem>
+                    )}
                   </SelectContent>
                 </Select>
               </Field>
@@ -294,7 +309,7 @@ export function OnboardingPage() {
               />
             </Field>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <Field>
                 <Label className="text-sm font-semibold">City</Label>
                 <Input
@@ -309,6 +324,14 @@ export function OnboardingPage() {
                   value={pgDetails.locality}
                   onChange={e => setPgDetails({ ...pgDetails, locality: e.target.value })}
                   placeholder="e.g. Koramangala 4th Block"
+                />
+              </Field>
+              <Field>
+                <Label className="text-sm font-semibold">Pincode</Label>
+                <Input
+                  value={pgDetails.pincode}
+                  onChange={e => setPgDetails({ ...pgDetails, pincode: e.target.value })}
+                  placeholder="560034"
                 />
               </Field>
               <Field>
@@ -331,6 +354,45 @@ export function OnboardingPage() {
                 rows={3}
               />
             </Field>
+
+            <div className="border-t pt-4 space-y-3">
+              <h4 className="font-semibold text-sm">Nearby Attractions & Landmarks</h4>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <Field>
+                  <Label className="text-xs font-semibold">Near Malls</Label>
+                  <Input
+                    value={pgDetails.near_malls}
+                    onChange={e => setPgDetails({ ...pgDetails, near_malls: e.target.value })}
+                    placeholder="e.g. Nexus Mall"
+                  />
+                </Field>
+                <Field>
+                  <Label className="text-xs font-semibold">Near Parks</Label>
+                  <Input
+                    value={pgDetails.near_parks}
+                    onChange={e => setPgDetails({ ...pgDetails, near_parks: e.target.value })}
+                    placeholder="e.g. Cubbon Park"
+                  />
+                </Field>
+                <Field>
+                  <Label className="text-xs font-semibold">Famous Pubs</Label>
+                  <Input
+                    value={pgDetails.near_pubs}
+                    onChange={e => setPgDetails({ ...pgDetails, near_pubs: e.target.value })}
+                    placeholder="e.g. Toit, Windmills"
+                  />
+                </Field>
+                <Field>
+                  <Label className="text-xs font-semibold">Nearby Transit</Label>
+                  <Input
+                    value={pgDetails.near_transit}
+                    onChange={e => setPgDetails({ ...pgDetails, near_transit: e.target.value })}
+                    placeholder="e.g. Metro Station"
+                  />
+                </Field>
+              </div>
+            </div>
+
             <Field>
               <Label className="text-sm font-semibold">PG Rules (Optional)</Label>
               <Textarea
@@ -395,9 +457,13 @@ export function OnboardingPage() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="1">1-Share (Single)</SelectItem>
-                        <SelectItem value="2">2-Share (Double)</SelectItem>
-                        <SelectItem value="3">3-Share (Triple)</SelectItem>
-                        <SelectItem value="4">4-Share (Quadruple)</SelectItem>
+                        {pgDetails.pg_type !== 'coliving' && pgDetails.pg_type !== 'co-ed' && (
+                          <>
+                            <SelectItem value="2">2-Share (Double)</SelectItem>
+                            <SelectItem value="3">3-Share (Triple)</SelectItem>
+                            <SelectItem value="4">4-Share (Quadruple)</SelectItem>
+                          </>
+                        )}
                       </SelectContent>
                     </Select>
                   </Field>

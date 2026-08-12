@@ -29,7 +29,7 @@ const pgSchema = z.object({
   locality: z.string().min(2, 'Locality is required'),
   latitude: z.number().optional(),
   longitude: z.number().optional(),
-  pg_type: z.enum(['boys', 'girls', 'co-ed']),
+  pg_type: z.enum(['boys', 'girls', 'co-ed', 'coliving']),
   deposit_amount: z.number().min(0),
   food_included: z.boolean(),
   wifi_included: z.boolean(),
@@ -38,6 +38,11 @@ const pgSchema = z.object({
   laundry: z.boolean(),
   security_24x7: z.boolean(),
   rules: z.string().optional(),
+  pincode: z.string().optional(),
+  near_malls: z.string().optional(),
+  near_parks: z.string().optional(),
+  near_pubs: z.string().optional(),
+  near_transit: z.string().optional(),
 })
 
 type PGFormData = z.infer<typeof pgSchema>
@@ -61,12 +66,13 @@ export function PGFormPage() {
   const queryClient = useQueryClient()
   const isAdmin = profile?.role === 'admin' || window.location.pathname.startsWith('/admin')
 
-  const [ownerMode, setOwnerMode] = useState<'select' | 'create' | 'edit'>('select')
+  const [ownerMode, setOwnerMode] = useState<'select' | 'create' | 'edit'>(isNew ? 'select' : 'edit')
   const [selectedOwnerId, setSelectedOwnerId] = useState<string>('')
   const [newOwnerName, setNewOwnerName] = useState('')
   const [newOwnerEmail, setNewOwnerEmail] = useState('')
   const [newOwnerPassword, setNewOwnerPassword] = useState('')
   const [newOwnerPhone, setNewOwnerPhone] = useState('')
+  const [newOwnerPhoneAlternate, setNewOwnerPhoneAlternate] = useState('')
 
   const [filterCity, setFilterCity] = useState<string>('')
   const [filterLocality, setFilterLocality] = useState<string>('')
@@ -86,7 +92,7 @@ export function PGFormPage() {
     queryFn: async () => {
       const { data } = await supabaseUntyped
         .from('profiles')
-        .select('id, full_name, phone, email')
+        .select('id, full_name, phone, phone_alternate, email')
         .eq('role', 'owner')
         .order('full_name')
       return data || []
@@ -102,11 +108,13 @@ export function PGFormPage() {
           if (owner) {
             setNewOwnerName(owner.full_name || '')
             setNewOwnerPhone(owner.phone || '')
+            setNewOwnerPhoneAlternate(owner.phone_alternate || '')
             setNewOwnerEmail(owner.email || '')
           }
         } else {
           setNewOwnerName('')
           setNewOwnerPhone('')
+          setNewOwnerPhoneAlternate('')
           setNewOwnerEmail('')
         }
       }
@@ -164,14 +172,16 @@ export function PGFormPage() {
     resolver: zodResolver(pgSchema),
     defaultValues: {
       name: '', description: '', address: '', city: '', locality: '',
-      pg_type: 'co-ed', deposit_amount: 0,
+      pg_type: 'coliving', deposit_amount: 0,
       food_included: false, wifi_included: false, ac_rooms: false,
       parking: false, laundry: false, security_24x7: false, rules: '',
+      pincode: '', near_malls: '', near_parks: '', near_pubs: '', near_transit: '',
     },
   })
 
   const watchedCity = form.watch('city')
   const watchedLocality = form.watch('locality')
+  const watchedPgType = form.watch('pg_type')
 
   useEffect(() => {
     if (watchedCity) {
@@ -184,6 +194,15 @@ export function PGFormPage() {
       setFilterLocality(watchedLocality)
     }
   }, [watchedLocality])
+
+  useEffect(() => {
+    if (watchedPgType === 'coliving' || watchedPgType === 'co-ed') {
+      // Force all sharing types to type 1 (Single)
+      setSharingTypes((prev) =>
+        prev.map((st) => st.type !== 1 ? { ...st, type: 1 } : st)
+      )
+    }
+  }, [watchedPgType])
 
   // Load existing data for edit
   useQuery({
@@ -212,6 +231,11 @@ export function PGFormPage() {
           rules: (p.rules as string) || '',
           latitude: p.latitude as number | undefined,
           longitude: p.longitude as number | undefined,
+          pincode: (p.pincode as string) || '',
+          near_malls: (p.near_malls as string) || '',
+          near_parks: (p.near_parks as string) || '',
+          near_pubs: (p.near_pubs as string) || '',
+          near_transit: (p.near_transit as string) || '',
         })
       }
 
@@ -268,6 +292,7 @@ export function PGFormPage() {
               email: newOwnerEmail,
               password: newOwnerPassword,
               mobile: newOwnerPhone || undefined,
+              phone_alternate: newOwnerPhoneAlternate || undefined,
             })
           })
 
@@ -285,6 +310,7 @@ export function PGFormPage() {
             .update({
               full_name: newOwnerName,
               phone: newOwnerPhone || null,
+              phone_alternate: newOwnerPhoneAlternate || null,
             })
             .eq('id', selectedOwnerId)
 
@@ -300,13 +326,18 @@ export function PGFormPage() {
         }
       }
 
+      // If pg_type is coliving, we only allow type 1 (Single) sharing types to be saved
+      const finalSharingTypes = data.pg_type === 'coliving'
+        ? sharingTypes.filter((s) => s.type === 1)
+        : sharingTypes;
+
       const payload: any = {
         ...data,
         owner_id: finalOwnerId,
-        monthly_rent_min: sharingTypes.length > 0 ? Math.min(...sharingTypes.map((s) => Number(s.price_monthly) || 0)) : 0,
-        monthly_rent_max: sharingTypes.length > 0 ? Math.max(...sharingTypes.map((s) => Number(s.price_monthly) || 0)) : 0,
-        total_beds: sharingTypes.reduce((sum, s) => sum + (Number(s.total_beds) || 0), 0),
-        available_beds: sharingTypes.reduce((sum, s) => sum + (Number(s.total_beds) || 0), 0),
+        monthly_rent_min: finalSharingTypes.length > 0 ? Math.min(...finalSharingTypes.map((s) => Number(s.price_monthly) || 0)) : 0,
+        monthly_rent_max: finalSharingTypes.length > 0 ? Math.max(...finalSharingTypes.map((s) => Number(s.price_monthly) || 0)) : 0,
+        total_beds: finalSharingTypes.reduce((sum, s) => sum + (Number(s.total_beds) || 0), 0),
+        available_beds: finalSharingTypes.reduce((sum, s) => sum + (Number(s.total_beds) || 0), 0),
         updated_at: new Date().toISOString(),
       }
 
@@ -325,7 +356,7 @@ export function PGFormPage() {
         body: JSON.stringify({
           id,
           payload,
-          sharingTypes,
+          sharingTypes: finalSharingTypes,
           amenities,
           photos,
           isAdmin
@@ -473,30 +504,33 @@ export function PGFormPage() {
               <CardDescription>Assign this PG listing to a property owner</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex gap-4">
-                <Button
-                  type="button"
-                  variant={ownerMode === 'select' || ownerMode === 'edit' ? 'default' : 'outline'}
-                  onClick={() => setOwnerMode('select')}
-                  className="flex-1"
-                >
-                  Select Existing Owner
-                </Button>
-                <Button
-                  type="button"
-                  variant={ownerMode === 'create' ? 'default' : 'outline'}
-                  onClick={() => {
-                    setOwnerMode('create')
-                    setNewOwnerName('')
-                    setNewOwnerPhone('')
-                    setNewOwnerEmail('')
-                    setNewOwnerPassword('')
-                  }}
-                  className="flex-1"
-                >
-                  Create New Owner Inline
-                </Button>
-              </div>
+              {isNew && (
+                <div className="flex gap-4">
+                  <Button
+                    type="button"
+                    variant={ownerMode === 'select' || ownerMode === 'edit' ? 'default' : 'outline'}
+                    onClick={() => setOwnerMode('select')}
+                    className="flex-1"
+                  >
+                    Select Existing Owner
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={ownerMode === 'create' ? 'default' : 'outline'}
+                    onClick={() => {
+                      setOwnerMode('create')
+                      setNewOwnerName('')
+                      setNewOwnerPhone('')
+                      setNewOwnerPhoneAlternate('')
+                      setNewOwnerEmail('')
+                      setNewOwnerPassword('')
+                    }}
+                    className="flex-1"
+                  >
+                    Create New Owner Inline
+                  </Button>
+                </div>
+              )}
 
               {ownerMode === 'select' ? (
                 <div className="space-y-4">
@@ -600,7 +634,7 @@ export function PGFormPage() {
                           Edit Selected Owner
                         </Button>
                       </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm pt-1">
+                      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 text-sm pt-1">
                         <div>
                           <span className="text-muted-foreground block text-xs">Full Name</span>
                           <span className="font-medium">{newOwnerName || 'N/A'}</span>
@@ -608,6 +642,10 @@ export function PGFormPage() {
                         <div>
                           <span className="text-muted-foreground block text-xs">Phone</span>
                           <span className="font-medium">{newOwnerPhone || 'N/A'}</span>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground block text-xs">Alternate Phone</span>
+                          <span className="font-medium">{newOwnerPhoneAlternate || 'N/A'}</span>
                         </div>
                         <div>
                           <span className="text-muted-foreground block text-xs">Email</span>
@@ -623,7 +661,7 @@ export function PGFormPage() {
                     <h4 className="font-semibold text-sm">
                       {ownerMode === 'create' ? 'Create New Owner Details' : 'Edit Owner Details'}
                     </h4>
-                    {ownerMode === 'edit' && (
+                    {ownerMode === 'edit' && isNew && (
                       <Button
                         type="button"
                         variant="ghost"
@@ -636,7 +674,7 @@ export function PGFormPage() {
                     )}
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <Field>
                       <FieldLabel htmlFor="new-owner-name">Owner Full Name *</FieldLabel>
                       <Input
@@ -653,6 +691,15 @@ export function PGFormPage() {
                         value={newOwnerPhone}
                         onChange={(e) => setNewOwnerPhone(e.target.value)}
                         placeholder="e.g. +919876543210"
+                      />
+                    </Field>
+                    <Field>
+                      <FieldLabel htmlFor="new-owner-phone-alternate">Owner Alternate Phone</FieldLabel>
+                      <Input
+                        id="new-owner-phone-alternate"
+                        value={newOwnerPhoneAlternate}
+                        onChange={(e) => setNewOwnerPhoneAlternate(e.target.value)}
+                        placeholder="e.g. +919876543211"
                       />
                     </Field>
                   </div>
@@ -732,7 +779,10 @@ export function PGFormPage() {
                     <SelectContent>
                       <SelectItem value="boys">Boys Only</SelectItem>
                       <SelectItem value="girls">Girls Only</SelectItem>
-                      <SelectItem value="co-ed">Co-ed (Boys & Girls)</SelectItem>
+                      <SelectItem value="coliving">Coliving</SelectItem>
+                      {field.value === 'co-ed' && (
+                        <SelectItem value="co-ed">Co-ed (Legacy)</SelectItem>
+                      )}
                     </SelectContent>
                   </Select>
                   {fieldState.error && <FieldError errors={[fieldState.error]} />}
@@ -765,7 +815,7 @@ export function PGFormPage() {
               )}
             />
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <Controller
                 name="city"
                 control={form.control}
@@ -788,6 +838,67 @@ export function PGFormPage() {
                   </Field>
                 )}
               />
+              <Controller
+                name="pincode"
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor="pincode">Pincode</FieldLabel>
+                    <Input {...field} id="pincode" placeholder="560034" aria-invalid={fieldState.invalid} />
+                    {fieldState.error && <FieldError errors={[fieldState.error]} />}
+                  </Field>
+                )}
+              />
+            </div>
+
+            <div className="border-t pt-4 space-y-4">
+              <h4 className="font-semibold text-sm">Nearby Attractions & Landmarks</h4>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <Controller
+                  name="near_malls"
+                  control={form.control}
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel htmlFor="near_malls">Near Malls</FieldLabel>
+                      <Input {...field} id="near_malls" placeholder="e.g. Nexus Mall" aria-invalid={fieldState.invalid} />
+                      {fieldState.error && <FieldError errors={[fieldState.error]} />}
+                    </Field>
+                  )}
+                />
+                <Controller
+                  name="near_parks"
+                  control={form.control}
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel htmlFor="near_parks">Near Parks</FieldLabel>
+                      <Input {...field} id="near_parks" placeholder="e.g. Cubbon Park" aria-invalid={fieldState.invalid} />
+                      {fieldState.error && <FieldError errors={[fieldState.error]} />}
+                    </Field>
+                  )}
+                />
+                <Controller
+                  name="near_pubs"
+                  control={form.control}
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel htmlFor="near_pubs">Famous Pubs</FieldLabel>
+                      <Input {...field} id="near_pubs" placeholder="e.g. Toit, Windmills" aria-invalid={fieldState.invalid} />
+                      {fieldState.error && <FieldError errors={[fieldState.error]} />}
+                    </Field>
+                  )}
+                />
+                <Controller
+                  name="near_transit"
+                  control={form.control}
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel htmlFor="near_transit">Nearby Transit</FieldLabel>
+                      <Input {...field} id="near_transit" placeholder="e.g. Metro Station" aria-invalid={fieldState.invalid} />
+                      {fieldState.error && <FieldError errors={[fieldState.error]} />}
+                    </Field>
+                  )}
+                />
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -799,7 +910,17 @@ export function PGFormPage() {
               <CardTitle className="text-base">Sharing Types & Pricing</CardTitle>
               <CardDescription>Configure room sharing options and prices</CardDescription>
             </div>
-            <Button type="button" variant="outline" size="sm" onClick={addSharingType} disabled={sharingTypes.length >= 4}>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={addSharingType}
+              disabled={
+                (watchedPgType === 'coliving' || watchedPgType === 'co-ed')
+                  ? sharingTypes.length >= 1
+                  : sharingTypes.length >= 4
+              }
+            >
               <Plus className="size-4" /> Add Sharing Type
             </Button>
           </CardHeader>
@@ -824,9 +945,13 @@ export function PGFormPage() {
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="1">Single</SelectItem>
-                            <SelectItem value="2">Double</SelectItem>
-                            <SelectItem value="3">Triple</SelectItem>
-                            <SelectItem value="4">Dormitory</SelectItem>
+                            {watchedPgType !== 'coliving' && watchedPgType !== 'co-ed' && (
+                              <>
+                                <SelectItem value="2">Double</SelectItem>
+                                <SelectItem value="3">Triple</SelectItem>
+                                <SelectItem value="4">Dormitory</SelectItem>
+                              </>
+                            )}
                           </SelectContent>
                         </Select>
                       </div>
