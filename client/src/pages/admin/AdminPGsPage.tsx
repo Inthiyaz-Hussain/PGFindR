@@ -63,10 +63,10 @@ export function AdminPGsPage() {
 
   const { data: cities } = useQuery({
     queryKey: ['admin-cities'],
-    queryFn: async () => {
+    queryFn: async (): Promise<string[]> => {
       const { data } = await supabaseUntyped.from('pg_listings').select('city').order('city')
       const uniqueCities = [...new Set((data || []).map((p: { city: string }) => p.city))]
-      return uniqueCities
+      return uniqueCities as string[]
     },
   })
 

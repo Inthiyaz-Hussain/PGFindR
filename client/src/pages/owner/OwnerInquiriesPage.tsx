@@ -34,14 +34,29 @@ export function OwnerInquiriesPage() {
   const { data: inquiries, isLoading } = useQuery({
     queryKey: ['owner-all-inquiries', user?.id],
     queryFn: async () => {
+      console.log('[OwnerInquiriesPage] Fetching inquiries for owner ID:', user?.id)
       const pgRes = await supabaseUntyped.from('pg_listings').select('id').eq('owner_id', user!.id)
+      if (pgRes.error) {
+        console.error('[OwnerInquiriesPage] Error fetching owner listings:', pgRes.error)
+        throw pgRes.error
+      }
+      
       const pgIds = (pgRes.data || []).map((p: { id: string }) => p.id)
+      console.log('[OwnerInquiriesPage] Found owner PG IDs:', pgIds)
       if (pgIds.length === 0) return []
-      const { data } = await supabaseUntyped
+      
+      const { data, error } = await supabaseUntyped
         .from('inquiries')
         .select('*, pg:pg_listings(name, city), seeker:profiles!inquiries_seeker_id_fkey(full_name, phone)')
         .in('pg_id', pgIds)
         .order('created_at', { ascending: false })
+        
+      if (error) {
+        console.error('[OwnerInquiriesPage] Error fetching inquiries details:', error)
+        throw error
+      }
+      
+      console.log('[OwnerInquiriesPage] Successfully fetched inquiries:', data)
       return (data || []) as Inquiry[]
     },
     enabled: !!user,

@@ -6,10 +6,15 @@ const supabaseAnonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJI
 
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   db: { schema: 'public' },
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true
+  }
 })
 
 // Untyped client for dynamic table access
-export const supabaseUntyped = createClient(supabaseUrl, supabaseAnonKey)
+export const supabaseUntyped = supabase as any
 
 // Client-side image compression using canvas
 export async function compressImage(file: File, maxSizeBytes: number = 5 * 1024 * 1024): Promise<File> {

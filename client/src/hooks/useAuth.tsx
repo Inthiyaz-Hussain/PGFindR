@@ -253,34 +253,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
-    // 3. Restore session from localStorage (Supabase handles this automatically)
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!mounted.current) return
-      setSession(session)
-      setUser(session?.user ?? null)
-      if (session) {
-        localStorage.setItem('last_active_time', String(Date.now()))
-        syncProfileWithAuthSession(session).finally(() => {
-          if (mounted.current) setLoading(false)
-        })
-      } else {
-        setLoading(false)
-      }
-    })
-
+    // 3. Listen to auth state changes to drive initial load and session changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mounted.current) return
+      
+      console.log('Auth state change event:', event, session?.user?.email)
+      
       if (event === 'SIGNED_OUT') {
         localStorage.removeItem('demo_session')
         localStorage.removeItem('last_active_time')
+        setSession(null)
+        setUser(null)
+        setProfile(null)
+        setLoading(false)
+        return
       }
+
       setSession(session)
       setUser(session?.user ?? null)
+
       if (session) {
         localStorage.setItem('last_active_time', String(Date.now()))
-        await syncProfileWithAuthSession(session)
+        setProfileLoading(true)
+        try {
+          await syncProfileWithAuthSession(session)
+        } catch (err) {
+          console.error('Error syncing profile:', err)
+        } finally {
+          if (mounted.current) {
+            setProfileLoading(false)
+            setLoading(false)
+          }
+        }
       } else {
         setProfile(null)
+        setLoading(false)
       }
     })
 

@@ -76,7 +76,7 @@ export function MyTenantsPage() {
     queryKey: ['owner-inquiries', user?.id],
     queryFn: async () => {
       if (!pgs || pgs.length === 0) return []
-      const pgIds = pgs.map(p => p.id)
+      const pgIds = pgs.map((p: any) => p.id)
       const { data } = await supabaseUntyped
         .from('inquiries')
         .select(`
@@ -148,19 +148,19 @@ export function MyTenantsPage() {
 
   // Filter lists based on tab counts
   // Current Tenants: status is completed/active and bed status is occupied
-  const currentTenants = bookings?.filter(b => b.status === 'active' && b.bed?.status === 'occupied') || []
+  const currentTenants = bookings?.filter((b: any) => b.status === 'active' && b.bed?.status === 'occupied') || []
   
   // Pending Inquiries: status is pending
-  const pendingInquiries = inquiries?.filter(i => i.status === 'pending') || []
+  const pendingInquiries = inquiries?.filter((i: any) => i.status === 'pending') || []
   
   // Confirmed / Reserved: status is payment_done/paid, move-in not confirmed yet, bed status is reserved
-  const reservedTenants = bookings?.filter(b => (b.status === 'payment_done' || b.status === 'paid') && b.bed?.status === 'reserved') || []
+  const reservedTenants = bookings?.filter((b: any) => (b.status === 'payment_done' || b.status === 'paid') && b.bed?.status === 'reserved') || []
   
   // Past Tenants: completed bookings or beds that have moved out
-  const pastTenants = bookings?.filter(b => b.status === 'completed') || []
+  const pastTenants = bookings?.filter((b: any) => b.status === 'completed') || []
   
   // Declined: cancelled/declined inquiries this month
-  const declinedInquiries = inquiries?.filter(i => {
+  const declinedInquiries = inquiries?.filter((i: any) => {
     if (i.status !== 'cancelled') return false
     const date = new Date(i.updated_at || i.created_at)
     const now = new Date()
@@ -220,7 +220,7 @@ export function MyTenantsPage() {
               <SkeletonRows />
             ) : currentTenants.length > 0 ? (
               <div className="grid grid-cols-1 gap-3">
-                {currentTenants.map(b => (
+                {currentTenants.map((b: any) => (
                   <Card key={b.id} className="border-slate-200/80 dark:border-slate-800/80 shadow-xs">
                     <CardContent className="p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                       <div className="flex items-center gap-3">
@@ -280,7 +280,7 @@ export function MyTenantsPage() {
               <SkeletonRows />
             ) : pendingInquiries.length > 0 ? (
               <div className="grid grid-cols-1 gap-3">
-                {pendingInquiries.map(inq => (
+                {pendingInquiries.map((inq: any) => (
                   <Card key={inq.id} className="border-slate-200/80 dark:border-slate-800/80 shadow-xs">
                     <CardContent className="p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                       <div className="flex items-center gap-3">
@@ -359,7 +359,7 @@ export function MyTenantsPage() {
               <SkeletonRows />
             ) : reservedTenants.length > 0 ? (
               <div className="grid grid-cols-1 gap-3">
-                {reservedTenants.map(b => (
+                {reservedTenants.map((b: any) => (
                   <Card key={b.id} className="border-slate-200/80 dark:border-slate-800/80 shadow-xs">
                     <CardContent className="p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                       <div className="flex items-center gap-3">
@@ -432,7 +432,7 @@ export function MyTenantsPage() {
               <SkeletonRows />
             ) : pastTenants.length > 0 ? (
               <div className="grid grid-cols-1 gap-3">
-                {pastTenants.map(b => (
+                {pastTenants.map((b: any) => (
                   <Card key={b.id} className="border-slate-200/80 dark:border-slate-800/80 shadow-xs">
                     <CardContent className="p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                       <div className="flex items-center gap-3">
@@ -492,7 +492,7 @@ export function MyTenantsPage() {
               <SkeletonRows />
             ) : declinedInquiries.length > 0 ? (
               <div className="grid grid-cols-1 gap-3">
-                {declinedInquiries.map(inq => (
+                {declinedInquiries.map((inq: any) => (
                   <Card key={inq.id} className="border-slate-200/80 dark:border-slate-800/80 shadow-xs">
                     <CardContent className="p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                       <div className="flex items-center gap-3">
