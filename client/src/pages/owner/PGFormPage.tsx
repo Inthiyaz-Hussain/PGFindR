@@ -501,6 +501,71 @@ export function PGFormPage() {
     }
   }
 
+  const onValidSubmit = async (data: PGFormData) => {
+    if (isAdmin) {
+      if (ownerMode === 'create') {
+        const missing: string[] = []
+        if (!newOwnerName.trim()) missing.push('new-owner-name')
+        if (!newOwnerEmail.trim()) missing.push('new-owner-email')
+        if (!newOwnerPassword.trim()) missing.push('new-owner-password')
+
+        if (missing.length > 0) {
+          toast.error('Please fill in the Owner Name, Email, and Password.')
+          setTimeout(() => {
+            const firstEmpty = missing[0]
+            const el = document.getElementById(firstEmpty) as HTMLElement
+            if (el) {
+              const field = el.closest('[role="group"]') || el.parentElement
+              if (field) {
+                field.setAttribute('data-invalid', 'true')
+                field.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                setTimeout(() => field.removeAttribute('data-invalid'), 3600)
+              }
+              el.focus()
+            }
+          }, 100)
+          return
+        }
+      } else if (ownerMode === 'edit') {
+        if (!newOwnerName.trim()) {
+          toast.error('Please fill in the Owner Full Name.')
+          setTimeout(() => {
+            const el = document.getElementById('new-owner-name') as HTMLElement
+            if (el) {
+              const field = el.closest('[role="group"]') || el.parentElement
+              if (field) {
+                field.setAttribute('data-invalid', 'true')
+                field.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                setTimeout(() => field.removeAttribute('data-invalid'), 3600)
+              }
+              el.focus()
+            }
+          }, 100)
+          return
+        }
+      } else {
+        if (!selectedOwnerId) {
+          toast.error('Please select an owner for this PG listing.')
+          setTimeout(() => {
+            const el = document.querySelector('[role="combobox"]') as HTMLElement
+            if (el) {
+              const field = el.closest('[role="group"]') || el.parentElement
+              if (field) {
+                field.setAttribute('data-invalid', 'true')
+                field.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                setTimeout(() => field.removeAttribute('data-invalid'), 3600)
+              }
+              el.focus()
+            }
+          }, 100)
+          return
+        }
+      }
+    }
+
+    saveMutation.mutate(data)
+  }
+
   return (
     <div className="p-4 md:p-6 max-w-3xl">
       <Button variant="ghost" size="sm" onClick={() => navigate(window.location.pathname.startsWith('/admin') ? '/admin/pgs' : '/owner/pgs')} className="mb-4 -ml-2">
@@ -514,7 +579,7 @@ export function PGFormPage() {
         {isNew ? 'Fill in the details below to submit your PG for admin approval.' : 'Update your PG listing details.'}
       </p>
 
-      <form onSubmit={form.handleSubmit((data) => saveMutation.mutate(data), onInvalidSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(onValidSubmit, onInvalidSubmit)} className="space-y-6">
         {/* Owner Assignment (Admin Only) */}
         {isAdmin && (
           <Card className="border-indigo-500/30 shadow-md">
