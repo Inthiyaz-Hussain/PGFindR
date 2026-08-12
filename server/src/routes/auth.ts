@@ -157,11 +157,15 @@ router.post('/admin/create-owner', authenticateToken, requireRole('admin'), asyn
       const db = getSupabaseClient(req)
       await db
         .from('profiles')
-        .update({ 
+        .upsert({ 
+          id: createdUser.id,
+          full_name: name,
           phone: mobile || null,
-          phone_alternate: phone_alternate || null 
+          phone_alternate: phone_alternate || null,
+          role: 'owner',
+          onboarding_verified: false,
+          updated_at: new Date().toISOString()
         })
-        .eq('id', createdUser.id)
 
       return res.status(201).json({
         user: {
