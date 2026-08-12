@@ -27,10 +27,10 @@ const pgSchema = z.object({
   address: z.string().min(5, 'Address is required'),
   city: z.string().min(2, 'City is required'),
   locality: z.string().min(2, 'Locality is required'),
-  latitude: z.number().optional(),
-  longitude: z.number().optional(),
+  latitude: z.number().nullable().optional(),
+  longitude: z.number().nullable().optional(),
   pg_type: z.enum(['boys', 'girls', 'co-ed', 'coliving']),
-  deposit_amount: z.number().min(0),
+  deposit_amount: z.number().nullable().optional(),
   food_included: z.boolean(),
   wifi_included: z.boolean(),
   ac_rooms: z.boolean(),
@@ -1137,10 +1137,11 @@ export function PGFormPage() {
                   <FieldLabel htmlFor="deposit_amount">Security Deposit (¥)</FieldLabel>
                   <Input
                     {...field}
+                    value={field.value ?? ''}
                     id="deposit_amount"
                     type="number"
                     placeholder="10000"
-                    onChange={(e) => field.onChange(Number(e.target.value))}
+                    onChange={(e) => field.onChange(e.target.value === '' ? null : Number(e.target.value))}
                     aria-invalid={fieldState.invalid}
                   />
                   {fieldState.error && <FieldError errors={[fieldState.error]} />}
