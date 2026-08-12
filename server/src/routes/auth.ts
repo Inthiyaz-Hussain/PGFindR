@@ -348,6 +348,31 @@ router.post('/register-owner', authenticateToken, async (req: any, res) => {
     return res.status(500).json({ error: err.message || 'Internal server error' })
   }
 })
+router.post('/admin/confirm-email', async (req: any, res) => {
+  const { email } = req.body
+  if (!email) {
+    return res.status(400).json({ error: 'Email is required' })
+  }
+
+  try {
+    const { data: { users }, error: listErr } = await supabase.auth.admin.listUsers()
+    if (listErr) throw listErr
+    const user = users.find((u) => u.email === email)
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' })
+    }
+
+    const { error: updateErr } = await supabase.auth.admin.updateUserById(user.id, {
+      email_confirm: true
+    })
+    if (updateErr) throw updateErr
+
+    return res.status(200).json({ message: 'Email confirmed successfully' })
+  } catch (err: any) {
+    console.error('Confirm email error:', err)
+    return res.status(500).json({ error: err.message })
+  }
+})
 
 export default router
 

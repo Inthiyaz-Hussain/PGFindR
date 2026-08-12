@@ -12,6 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Field, FieldLabel, FieldError } from '@/components/ui/field'
 import { Separator } from '@/components/ui/separator'
 import { useAuth } from '@/hooks/useAuth'
+import { supabase } from '@/lib/supabase'
 
 const loginSchema = z.object({
   email: z.string().email('Enter a valid email address'),
@@ -27,6 +28,13 @@ export function OwnerLoginPage() {
   const location = useLocation()
   const searchParams = new URLSearchParams(location.search)
   const from = (location.state as { from?: string })?.from || searchParams.get('from') || '/owner'
+
+  // OTP Verification States
+  const [showOtpConfirm, setShowOtpConfirm] = useState(false)
+  const [otpCode, setOtpCode] = useState('')
+  const [pendingEmail, setPendingEmail] = useState('')
+  const [verifyingOtp, setVerifyingOtp] = useState(false)
+  const [confirmingInstantly, setConfirmingInstantly] = useState(false)
 
   useEffect(() => {
     if (user && profile && profile.role === 'owner') {
@@ -47,6 +55,20 @@ export function OwnerLoginPage() {
   async function onSubmit(values: LoginFormValues) {
     const { error, profile: loggedInProfile } = await login(values.email, values.password)
     if (error) {
+      const errMsg = error.message.toLowerCase()
+      // If error is related to unconfirmed email, open OTP verification block
+      if (
+        errMsg.includes('confirm') ||
+        errMsg.includes('verify') ||
+        errMsg.includes('verification')
+      ) {
+        setPendingEmail(values.email)
+        setShowOtpConfirm(true)
+        toast.info('Your email is not confirmed yet. We have sent a verification code to your email.')
+        // Request Supabase to trigger sending confirmation email OTP
+        await supabase.auth.resend({ type: 'signup', email: values.email })
+        return
+      }
       toast.error(error.message || 'Invalid email or password')
       return
     }
@@ -60,6 +82,53 @@ export function OwnerLoginPage() {
     navigate('/owner', { replace: true })
   }
 
+  async function handleVerifyOtp(e: React.FormEvent) {
+    e.preventDefault()
+    if (!otpCode || otpCode.length < 6) {
+      toast.error('Enter a valid 6-digit OTP code')
+      return
+    }
+
+    try {
+      setVerifyingOtp(true)
+      const { error } = await supabase.auth.verifyOtp({
+        email: pendingEmail,
+        token: otpCode,
+        type: 'signup'
+      })
+
+      if (error) throw error
+
+      toast.success('Email verified successfully! Logging you in...')
+      window.location.reload()
+    } catch (err: any) {
+      toast.error(err.message || 'Invalid OTP code. Please try again.')
+    } finally {
+      setVerifyingOtp(false)
+    }
+  }
+
+  async function handleInstantConfirm() {
+    try {
+      setConfirmingInstantly(true)
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/auth/admin/confirm-email`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: pendingEmail })
+      })
+      const resData = await res.json()
+      if (!res.ok) {
+        throw new Error(resData.error || 'Failed to auto-confirm email')
+      }
+      toast.success('Email auto-confirmed via Dev Mode! Logging you in...')
+      window.location.reload()
+    } catch (err: any) {
+      toast.error(err.message || 'Auto-confirmation failed')
+    } finally {
+      setConfirmingInstantly(false)
+    }
+  }
+
   const handleDemoFill = () => {
     setValue('email', 'owner@swiftpg.demo')
     setValue('password', 'Owner@123')
@@ -67,6 +136,93 @@ export function OwnerLoginPage() {
   }
 
   const isDev = import.meta.env.DEV
+
+  // Render OTP Verification form if requested
+  if (showOtpConfirm) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-muted/30 px-4 py-12">
+        <div className="w-full max-w-md space-y-6">
+          {/* Logo */}
+          <div className="flex flex-col items-center gap-3">
+            <Link to="/" className="flex items-center gap-2.5">
+              <img
+                src="/logo-swiftpg.png"
+                alt="FindPgR Icon"
+                className="h-11 w-11 rounded-xl object-cover ring-1 ring-slate-200 dark:ring-slate-800 shadow-xs"
+              />
+              <span className="text-2xl font-bold tracking-tight text-indigo-950 dark:text-slate-100">
+                Find<span className="text-indigo-600 dark:text-indigo-400 font-extrabold">PgR</span>
+              </span>
+            </Link>
+            <p className="text-sm text-muted-foreground">Verify ownership & list your PG instantly</p>
+          </div>
+
+          <Card className="border-slate-200/80 dark:border-slate-800/80 shadow-2xl backdrop-blur-xs bg-white/95 dark:bg-slate-900/95">
+            <CardHeader className="text-center pb-4">
+              <CardTitle className="text-xl">Email Verification Required</CardTitle>
+              <CardDescription>
+                We've sent a 6-digit OTP code to <span className="font-semibold text-slate-800 dark:text-slate-200">{pendingEmail}</span>.
+              </CardDescription>
+            </CardHeader>
+
+            <CardContent>
+              <form onSubmit={handleVerifyOtp} className="space-y-4">
+                <Field>
+                  <FieldLabel htmlFor="otp">Enter 6-Digit OTP</FieldLabel>
+                  <Input
+                    id="otp"
+                    type="text"
+                    maxLength={6}
+                    placeholder="123456"
+                    value={otpCode}
+                    onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
+                    className="text-center text-lg tracking-[0.5em] font-mono"
+                    disabled={verifyingOtp}
+                  />
+                </Field>
+
+                <Button type="submit" className="w-full" disabled={verifyingOtp}>
+                  {verifyingOtp ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : (
+                    <LogIn className="size-4" />
+                  )}
+                  {verifyingOtp ? 'Verifying OTP…' : 'Verify & Sign In'}
+                </Button>
+
+                {/* Localhost Auto-Confirm Helper */}
+                {isDev && (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={handleInstantConfirm}
+                    className="w-full border border-indigo-100/50 bg-indigo-50/20 text-indigo-600 dark:text-indigo-400 dark:bg-slate-800 dark:border-slate-700 hover:bg-indigo-50/50 transition-colors"
+                    disabled={confirmingInstantly}
+                  >
+                    {confirmingInstantly ? (
+                      <Loader2 className="size-4 animate-spin" />
+                    ) : (
+                      'Auto-Confirm Email (Dev Mode)'
+                    )}
+                  </Button>
+                )}
+
+                <div className="text-center mt-4">
+                  <button
+                    type="button"
+                    onClick={() => setShowOtpConfirm(false)}
+                    className="text-sm font-medium text-muted-foreground hover:underline underline-offset-4"
+                  >
+                    Back to Sign In
+                  </button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-muted/30 px-4 py-12">
