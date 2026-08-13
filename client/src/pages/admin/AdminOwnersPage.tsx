@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Textarea } from '@/components/ui/textarea'
 import { Empty, EmptyMedia, EmptyTitle, EmptyDescription } from '@/components/ui/empty'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { supabaseUntyped } from '@/lib/supabase'
+import { supabaseUntyped, supabase } from '@/lib/supabase'
 import type { KYCStatus, Profile } from '@/types'
 import { toast } from 'sonner'
 
@@ -45,6 +45,7 @@ export function AdminOwnersPage() {
   const queryClient = useQueryClient()
   const [selectedOwner, setSelectedOwner] = useState<OwnerWithDetails | null>(null)
   const [kycNote, setKycNote] = useState('')
+  const [generatedLink, setGeneratedLink] = useState<string | null>(null)
 
   const page = Number(searchParams.get('page') || '1')
   const kycFilter = searchParams.get('kyc') || 'all'
@@ -149,31 +150,38 @@ export function AdminOwnersPage() {
   })
 
   const verifyOwnerMutation = useMutation({
-    mutationFn: async ({ ownerId, email, verify }: { ownerId: string; email?: string | null; verify: boolean }) => {
-      const { error } = await supabaseUntyped
-        .from('profiles')
-        .update({
-          onboarding_verified: verify,
-          onboarding_verified_at: verify ? new Date().toISOString() : null
-        })
-        .eq('id', ownerId)
-      if (error) throw error
+    mutationFn: async ({ ownerId, verify }: { ownerId: string; email?: string | null; verify: boolean }) => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) throw new Error('Not authenticated')
 
-      if (verify && email) {
-        const { error: resetErr } = await supabaseUntyped.auth.resetPasswordForEmail(email, {
-          redirectTo: `${window.location.origin}/auth/reset-password`
-        })
-        if (resetErr) {
-          console.error('Failed to send password set email:', resetErr.message)
-        }
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+      const response = await fetch(`${apiUrl}/api/auth/admin/verify-owner`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({ ownerId, verify })
+      })
+
+      const resData = await response.json()
+      if (!response.ok) {
+        throw new Error(resData.error || 'Failed to update owner verification')
+      }
+
+      return resData as { message: string; actionLink: string | null }
+    },
+    onSuccess: (data, vars) => {
+      queryClient.invalidateQueries({ queryKey: ['admin-owners'] })
+      
+      if (vars.verify && data.actionLink) {
+        setGeneratedLink(data.actionLink)
+      } else {
+        toast.success(vars.verify ? 'Owner verified successfully!' : 'Owner access revoked')
+        setSelectedOwner(null)
       }
     },
-    onSuccess: (_, vars) => {
-      queryClient.invalidateQueries({ queryKey: ['admin-owners'] })
-      toast.success(vars.verify ? 'Owner verified. Invitation email sent!' : 'Owner access revoked')
-      setSelectedOwner(prev => prev ? { ...prev, onboarding_verified: vars.verify, onboarding_verified_at: vars.verify ? new Date().toISOString() : null } : null)
-    },
-    onError: () => toast.error('Failed to update owner verification status'),
+    onError: (err: any) => toast.error(err.message || 'Failed to update owner verification status'),
   })
 
   const totalPages = Math.ceil((ownersData?.total || 0) / ITEMS_PER_PAGE)
@@ -497,6 +505,46 @@ export function AdminOwnersPage() {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Generated Setup Password Link Dialog */}
+      <Dialog open={!!generatedLink} onOpenChange={(open) => !open && setGeneratedLink(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Verification Link Generated</DialogTitle>
+            <DialogDescription>
+              Copy and share this setup link with the owner to configure their password.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <div className="p-3 bg-indigo-50 dark:bg-indigo-950/20 text-indigo-900 dark:text-indigo-300 rounded-lg text-xs break-all border border-indigo-100 dark:border-indigo-900/50 select-all font-mono">
+              {generatedLink}
+            </div>
+            <div className="flex gap-2">
+              <Button
+                className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-medium"
+                onClick={() => {
+                  if (generatedLink) {
+                    navigator.clipboard.writeText(generatedLink)
+                    toast.success('Link copied to clipboard!')
+                  }
+                }}
+              >
+                Copy Link
+              </Button>
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => {
+                  setGeneratedLink(null)
+                  setSelectedOwner(null)
+                }}
+              >
+                Close & Finish
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

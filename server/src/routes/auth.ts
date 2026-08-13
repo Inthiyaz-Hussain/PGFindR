@@ -378,5 +378,55 @@ router.post('/admin/confirm-email', async (req: any, res) => {
   }
 })
 
+router.post('/admin/verify-owner', authenticateToken, requireRole('admin'), async (req: any, res) => {
+  const { ownerId, verify } = req.body
+  if (!ownerId) {
+    return res.status(400).json({ error: 'Owner ID is required' })
+  }
+
+  try {
+    const { error: updateErr } = await supabase
+      .from('profiles')
+      .update({
+        onboarding_verified: verify,
+        onboarding_verified_at: verify ? new Date().toISOString() : null
+      })
+      .eq('id', ownerId)
+
+    if (updateErr) throw updateErr
+
+    let actionLink = null
+
+    if (verify) {
+      const { data: user, error: userErr } = await supabase.auth.admin.getUserById(ownerId)
+      if (userErr) {
+        console.error('Failed to fetch user auth record:', userErr.message)
+      } else if (user?.user?.email) {
+        const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173'
+        const { data: linkData, error: linkErr } = await supabase.auth.admin.generateLink({
+          type: 'recovery',
+          email: user.user.email,
+          options: {
+            redirectTo: `${clientUrl}/auth/reset-password`
+          }
+        })
+        if (linkErr) {
+          console.error('Failed to generate recovery link:', linkErr.message)
+        } else {
+          actionLink = linkData?.properties?.action_link || null
+        }
+      }
+    }
+
+    return res.status(200).json({
+      message: verify ? 'Owner verified successfully' : 'Owner access revoked',
+      actionLink
+    })
+  } catch (err: any) {
+    console.error('Verify owner error:', err)
+    return res.status(500).json({ error: err.message })
+  }
+})
+
 export default router
 
