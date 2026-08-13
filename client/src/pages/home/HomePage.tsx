@@ -21,7 +21,8 @@ import {
   Loader2, 
   Save,
   MapPin,
-  Sparkles
+  Sparkles,
+  PlusCircle
 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -437,8 +438,8 @@ export function HomePage() {
               className="blink-btn-1 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-5 text-sm shadow-lg border border-indigo-400/20 active:scale-95 duration-150"
             >
               <Link to="/owner/register" className="flex items-center">
-                <Globe className="h-4 w-4 mr-2" />
-                Verify with Google & Submit
+                <PlusCircle className="h-4 w-4 mr-2" />
+                List PG (Register)
               </Link>
             </Button>
           </div>
@@ -535,8 +536,8 @@ export function HomePage() {
               className="blink-btn-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-8 py-6 text-base shadow-xl border border-indigo-400/20 active:scale-95 duration-150"
             >
               <Link to="/owner/register" className="flex items-center">
-                <Globe className="h-5 w-5 mr-2" />
-                Verify with Google & Submit
+                <PlusCircle className="h-5 w-5 mr-2" />
+                List PG (Register)
               </Link>
             </Button>
           </div>
@@ -556,8 +557,8 @@ export function HomePage() {
                   className="blink-btn-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-10 py-6 text-base shadow-xl border border-indigo-400/20 active:scale-95 duration-150"
                 >
                   <Link to="/owner/register" className="flex items-center">
-                    <Globe className="h-5 w-5 mr-2" />
-                    Verify with Google & Submit
+                    <PlusCircle className="h-5 w-5 mr-2" />
+                    List PG (Register)
                   </Link>
                 </Button>
               </div>

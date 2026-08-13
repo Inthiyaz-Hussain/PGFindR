@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Loader2, Home, Globe, ArrowRight } from 'lucide-react'
+import { Loader2, Home, ArrowRight, PlusCircle } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
@@ -282,9 +282,9 @@ export function OwnerRegistrationPage() {
                 {loading ? (
                   <Loader2 className="size-4 animate-spin mr-2" />
                 ) : (
-                  <Globe className="size-4 mr-2" />
+                  <PlusCircle className="size-4 mr-2" />
                 )}
-                {loading ? 'Initiating Verification…' : 'Verify with Google & Submit'}
+                {loading ? 'Initiating Verification…' : 'List PG (Register)'}
               </Button>
             </form>
 
