@@ -13,6 +13,7 @@ import { Field, FieldLabel, FieldError } from '@/components/ui/field'
 import { Separator } from '@/components/ui/separator'
 import { useAuth } from '@/hooks/useAuth'
 import { supabase } from '@/lib/supabase'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 
 const loginSchema = z.object({
   email: z.string().email('Enter a valid email address'),
@@ -39,6 +40,9 @@ function getRedirectPath(role: string, fromPath: string): string {
 
 export function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
+  const [showForgotDialog, setShowForgotDialog] = useState(false)
+  const [forgotEmail, setForgotEmail] = useState('')
+  const [sendingReset, setSendingReset] = useState(false)
   const { login, user, profile } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
@@ -211,9 +215,13 @@ export function LoginPage() {
                   <Field data-invalid={fieldState.invalid || undefined}>
                     <div className="flex items-center justify-between">
                       <FieldLabel htmlFor="password">Password</FieldLabel>
-                      <span className="text-xs text-muted-foreground">
+                      <button
+                        type="button"
+                        onClick={() => setShowForgotDialog(true)}
+                        className="text-xs text-indigo-600 hover:text-indigo-700 hover:underline dark:text-indigo-400 font-medium"
+                      >
                         Forgot password?
-                      </span>
+                      </button>
                     </div>
                     <div className="relative">
                       <Input
@@ -315,6 +323,72 @@ export function LoginPage() {
           <Link to="/seeker/help?tab=privacy" className="underline underline-offset-2 cursor-pointer hover:text-foreground">Privacy Policy</Link>.
         </p>
       </div>
+
+      {/* Forgot Password Dialog */}
+      <Dialog open={showForgotDialog} onOpenChange={setShowForgotDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Reset Password</DialogTitle>
+            <DialogDescription>
+              Enter your registered email address and we will send you a link to reset your password.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <Field>
+              <FieldLabel htmlFor="forgot-email">Email Address</FieldLabel>
+              <Input
+                id="forgot-email"
+                type="email"
+                placeholder="yourname@example.com"
+                value={forgotEmail}
+                onChange={(e) => setForgotEmail(e.target.value)}
+              />
+            </Field>
+            <div className="flex gap-2 justify-end">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowForgotDialog(false)
+                  setForgotEmail('')
+                }}
+                disabled={sendingReset}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium"
+                disabled={sendingReset || !forgotEmail.trim()}
+                onClick={async () => {
+                  try {
+                    setSendingReset(true)
+                    const { error } = await supabase.auth.resetPasswordForEmail(forgotEmail, {
+                      redirectTo: `${window.location.origin}/auth/reset-password`
+                    })
+                    if (error) throw error
+
+                    toast.success('Password reset link sent! Please check your email inbox.')
+                    setShowForgotDialog(false)
+                    setForgotEmail('')
+                  } catch (err: any) {
+                    toast.error(err.message || 'Failed to send reset link.')
+                  } finally {
+                    setSendingReset(false)
+                  }
+                }}
+              >
+                {sendingReset ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Sending...
+                  </>
+                ) : (
+                  'Send Reset Link'
+                )}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
