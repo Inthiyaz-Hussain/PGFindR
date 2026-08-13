@@ -67,11 +67,11 @@ export function RegisterCallback() {
           throw new Error(resData.error || 'Server registration failed')
         }
 
-        // 5. Cleanup and redirect to onboarding
+        // 5. Cleanup and redirect to about page
         localStorage.removeItem('owner_register_form')
         await refreshProfile()
         toast.success('Google verification completed successfully!')
-        navigate('/owner/onboarding')
+        navigate('/owner/about')
       } catch (err: any) {
         console.error('Registration callback error:', err)
         setErrorMsg(err.message || 'Verification failed. Please try again.')

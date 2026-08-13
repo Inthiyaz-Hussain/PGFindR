@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { UserCheck, Search, ChevronLeft, ChevronRight, CheckCircle, XCircle, Loader2, Eye, FileText, Building2 } from 'lucide-react'
+import { UserCheck, Search, ChevronLeft, ChevronRight, CheckCircle, XCircle, Loader2, Eye, FileText, Building2, Shield } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -148,6 +148,25 @@ export function AdminOwnersPage() {
     onError: () => toast.error('Failed to update KYC'),
   })
 
+  const verifyOwnerMutation = useMutation({
+    mutationFn: async ({ ownerId, verify }: { ownerId: string; verify: boolean }) => {
+      const { error } = await supabaseUntyped
+        .from('profiles')
+        .update({
+          onboarding_verified: verify,
+          onboarding_verified_at: verify ? new Date().toISOString() : null
+        })
+        .eq('id', ownerId)
+      if (error) throw error
+    },
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({ queryKey: ['admin-owners'] })
+      toast.success(vars.verify ? 'Owner verified successfully!' : 'Owner access revoked')
+      setSelectedOwner(prev => prev ? { ...prev, onboarding_verified: vars.verify, onboarding_verified_at: vars.verify ? new Date().toISOString() : null } : null)
+    },
+    onError: () => toast.error('Failed to update owner verification status'),
+  })
+
   const totalPages = Math.ceil((ownersData?.total || 0) / ITEMS_PER_PAGE)
 
   function updateFilter(key: string, value: string) {
@@ -239,7 +258,14 @@ export function AdminOwnersPage() {
                   return (
                     <TableRow key={owner.id}>
                       <TableCell>
-                        <div className="font-medium">{owner.full_name}</div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">{owner.full_name}</span>
+                          {owner.onboarding_verified ? (
+                            <Badge className="bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-400 border-indigo-100 dark:border-indigo-900 text-[10px] scale-90 px-2 py-0">Verified</Badge>
+                          ) : (
+                            <Badge variant="outline" className="bg-slate-50 text-slate-600 dark:bg-slate-900/40 dark:text-slate-400 border-slate-200 dark:border-slate-800 text-[10px] scale-90 px-2 py-0">Pending Access</Badge>
+                          )}
+                        </div>
                         <div className="text-xs text-muted-foreground">{owner.email || '—'}</div>
                       </TableCell>
                       <TableCell>{owner.phone || '—'}</TableCell>
@@ -423,6 +449,43 @@ export function AdminOwnersPage() {
                   </div>
                 </div>
               )}
+
+              {/* Owner Access Verification */}
+              <div className="border-t pt-4 space-y-3">
+                <h4 className="font-semibold flex items-center gap-1.5 text-sm text-slate-800 dark:text-slate-200">
+                  <Shield className="size-4 text-indigo-600 dark:text-indigo-400" /> Account Status & Portal Access
+                </h4>
+                {!selectedOwner.onboarding_verified ? (
+                  <div className="bg-amber-50/50 dark:bg-amber-950/10 border border-amber-100 dark:border-amber-900/50 rounded-xl p-4 space-y-3">
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      This owner registration is currently <span className="font-semibold text-amber-700">pending approval</span>. Granting access will verify their account, allowing them to open their owner dashboard, manage tenants, and edit property/PG listings.
+                    </p>
+                    <Button
+                      className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-xs py-1.5 h-8"
+                      onClick={() => verifyOwnerMutation.mutate({ ownerId: selectedOwner.id, verify: true })}
+                      disabled={verifyOwnerMutation.isPending}
+                    >
+                      {verifyOwnerMutation.isPending ? <Loader2 className="size-3.5 animate-spin mr-1.5" /> : <UserCheck className="size-3.5 mr-1.5" />}
+                      Approve & Grant Access
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="bg-green-50/50 dark:bg-green-950/10 border border-green-100 dark:border-green-900/50 rounded-xl p-4 space-y-3">
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      This owner is <span className="font-semibold text-green-700">verified</span> and has full dashboard access.
+                    </p>
+                    <Button
+                      variant="outline"
+                      className="text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700 dark:border-red-900 dark:hover:bg-red-950/30 text-xs py-1.5 h-8"
+                      onClick={() => verifyOwnerMutation.mutate({ ownerId: selectedOwner.id, verify: false })}
+                      disabled={verifyOwnerMutation.isPending}
+                    >
+                      {verifyOwnerMutation.isPending ? <Loader2 className="size-3.5 animate-spin mr-1.5" /> : <XCircle className="size-3.5 mr-1.5" />}
+                      Revoke Dashboard Access
+                    </Button>
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </DialogContent>
