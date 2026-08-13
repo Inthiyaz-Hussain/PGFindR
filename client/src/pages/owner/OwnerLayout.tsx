@@ -34,10 +34,9 @@ export function OwnerLayout() {
       const isOnboardingVerified = profile.onboarding_verified
       const isRegisterCallback = location.pathname === '/owner/register-callback'
       const isRegisterPage = location.pathname.startsWith('/owner/register')
-      const isAboutPage = location.pathname === '/owner/about'
 
-      if (!isOnboardingVerified && !isRegisterCallback && !isRegisterPage && !isAboutPage) {
-        navigate('/owner/about')
+      if (!isOnboardingVerified && !isRegisterCallback && !isRegisterPage) {
+        navigate('/seeker/about')
       }
     }
   }, [profile, loading, location.pathname, navigate])

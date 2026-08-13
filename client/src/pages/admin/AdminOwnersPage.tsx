@@ -149,7 +149,7 @@ export function AdminOwnersPage() {
   })
 
   const verifyOwnerMutation = useMutation({
-    mutationFn: async ({ ownerId, verify }: { ownerId: string; verify: boolean }) => {
+    mutationFn: async ({ ownerId, email, verify }: { ownerId: string; email?: string | null; verify: boolean }) => {
       const { error } = await supabaseUntyped
         .from('profiles')
         .update({
@@ -158,10 +158,19 @@ export function AdminOwnersPage() {
         })
         .eq('id', ownerId)
       if (error) throw error
+
+      if (verify && email) {
+        const { error: resetErr } = await supabaseUntyped.auth.resetPasswordForEmail(email, {
+          redirectTo: `${window.location.origin}/auth/reset-password`
+        })
+        if (resetErr) {
+          console.error('Failed to send password set email:', resetErr.message)
+        }
+      }
     },
     onSuccess: (_, vars) => {
       queryClient.invalidateQueries({ queryKey: ['admin-owners'] })
-      toast.success(vars.verify ? 'Owner verified successfully!' : 'Owner access revoked')
+      toast.success(vars.verify ? 'Owner verified. Invitation email sent!' : 'Owner access revoked')
       setSelectedOwner(prev => prev ? { ...prev, onboarding_verified: vars.verify, onboarding_verified_at: vars.verify ? new Date().toISOString() : null } : null)
     },
     onError: () => toast.error('Failed to update owner verification status'),
@@ -462,7 +471,7 @@ export function AdminOwnersPage() {
                     </p>
                     <Button
                       className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-xs py-1.5 h-8"
-                      onClick={() => verifyOwnerMutation.mutate({ ownerId: selectedOwner.id, verify: true })}
+                      onClick={() => verifyOwnerMutation.mutate({ ownerId: selectedOwner.id, email: selectedOwner.email, verify: true })}
                       disabled={verifyOwnerMutation.isPending}
                     >
                       {verifyOwnerMutation.isPending ? <Loader2 className="size-3.5 animate-spin mr-1.5" /> : <UserCheck className="size-3.5 mr-1.5" />}
@@ -477,7 +486,7 @@ export function AdminOwnersPage() {
                     <Button
                       variant="outline"
                       className="text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700 dark:border-red-900 dark:hover:bg-red-950/30 text-xs py-1.5 h-8"
-                      onClick={() => verifyOwnerMutation.mutate({ ownerId: selectedOwner.id, verify: false })}
+                      onClick={() => verifyOwnerMutation.mutate({ ownerId: selectedOwner.id, email: selectedOwner.email, verify: false })}
                       disabled={verifyOwnerMutation.isPending}
                     >
                       {verifyOwnerMutation.isPending ? <Loader2 className="size-3.5 animate-spin mr-1.5" /> : <XCircle className="size-3.5 mr-1.5" />}

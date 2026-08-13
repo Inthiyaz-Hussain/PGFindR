@@ -107,7 +107,7 @@ export function OwnerRegistrationPage() {
               const { data: { session } } = await supabase.auth.getSession()
               if (session) {
                 // Redirect to about page since registration finished in popup
-                navigate('/owner/about')
+                navigate('/seeker/about')
               } else {
                 toast.error('Google verification was closed or cancelled.')
               }

@@ -75,7 +75,7 @@ export function RegisterCallback() {
         if (window.opener && window.opener !== window) {
           window.close()
         } else {
-          navigate('/owner/about')
+          navigate('/seeker/about')
         }
       } catch (err: any) {
         console.error('Registration callback error:', err)

@@ -14,6 +14,7 @@ import { SearchPage } from '@/pages/search/SearchPage'
 import { PGDetailPage } from '@/pages/pg/PGDetailPage'
 import { LoginPage } from '@/pages/auth/LoginPage'
 import { RegisterPage } from '@/pages/auth/RegisterPage'
+import { ResetPasswordPage } from '@/pages/auth/ResetPasswordPage'
 import { MyInquiriesPage } from '@/pages/inquiry/MyInquiriesPage'
 import { PaymentPage } from '@/pages/payment/PaymentPage'
 import { PaymentSuccess } from '@/pages/payment/PaymentSuccess'
@@ -80,6 +81,7 @@ export function App() {
               {/* Auth (no Navbar) */}
               <Route path="/auth/login" element={<LoginPage />} />
               <Route path="/auth/register" element={<RegisterPage />} />
+              <Route path="/auth/reset-password" element={<ResetPasswordPage />} />
               <Route path="/owner/register" element={<OwnerRegistrationPage />} />
               <Route path="/owner/register-callback" element={<RegisterCallback />} />
 
