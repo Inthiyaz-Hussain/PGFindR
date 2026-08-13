@@ -196,9 +196,9 @@ export function HomePage() {
 
           {/* Progress Indicators */}
           <div className="flex items-center justify-center gap-6 text-xs font-semibold text-slate-400">
-            <span className={registerStep === 1 ? 'text-emerald-400 underline underline-offset-4' : ''}>1. Account Details</span>
+            <span className={registerStep === 1 ? 'text-indigo-400 underline underline-offset-4' : ''}>1. Account Details</span>
             <span className="text-slate-700">|</span>
-            <span className={registerStep === 2 ? 'text-emerald-400 underline underline-offset-4' : ''}>2. Property Details</span>
+            <span className={registerStep === 2 ? 'text-indigo-400 underline underline-offset-4' : ''}>2. Property Details</span>
           </div>
 
           {/* Title */}
@@ -226,7 +226,7 @@ export function HomePage() {
                       value={regFullName}
                       onChange={(e) => setRegFullName(e.target.value)}
                       placeholder="John Doe"
-                      className="pl-10 bg-slate-950/40 border-slate-800 text-white rounded-xl placeholder:text-slate-600 focus-visible:ring-emerald-500"
+                      className="pl-10 bg-slate-950/40 border-slate-800 text-white rounded-xl placeholder:text-slate-600 focus-visible:ring-indigo-500"
                     />
                   </div>
                 </div>
@@ -241,7 +241,7 @@ export function HomePage() {
                       value={regEmail}
                       onChange={(e) => setRegEmail(e.target.value)}
                       placeholder="john@example.com"
-                      className="pl-10 bg-slate-950/40 border-slate-800 text-white rounded-xl placeholder:text-slate-600 focus-visible:ring-emerald-500"
+                      className="pl-10 bg-slate-950/40 border-slate-800 text-white rounded-xl placeholder:text-slate-600 focus-visible:ring-indigo-500"
                     />
                   </div>
                 </div>
@@ -256,7 +256,7 @@ export function HomePage() {
                       value={regPhone}
                       onChange={(e) => setRegPhone(e.target.value)}
                       placeholder="+91 9876543210"
-                      className="pl-10 bg-slate-950/40 border-slate-800 text-white rounded-xl placeholder:text-slate-600 focus-visible:ring-emerald-500"
+                      className="pl-10 bg-slate-950/40 border-slate-800 text-white rounded-xl placeholder:text-slate-600 focus-visible:ring-indigo-500"
                     />
                   </div>
                 </div>
@@ -271,7 +271,7 @@ export function HomePage() {
                       value={regPassword}
                       onChange={(e) => setRegPassword(e.target.value)}
                       placeholder="••••••••"
-                      className="pl-10 pr-10 bg-slate-950/40 border-slate-800 text-white rounded-xl placeholder:text-slate-600 focus-visible:ring-emerald-500"
+                      className="pl-10 pr-10 bg-slate-950/40 border-slate-800 text-white rounded-xl placeholder:text-slate-600 focus-visible:ring-indigo-500"
                     />
                     <button
                       type="button"
@@ -285,7 +285,7 @@ export function HomePage() {
 
                 <Button
                   type="submit"
-                  className="w-full mt-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold active:scale-95 duration-150"
+                  className="w-full mt-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold active:scale-95 duration-150"
                 >
                   Next: Property Details
                   <ArrowRight className="size-4 ml-2" />
@@ -303,7 +303,7 @@ export function HomePage() {
                       value={regPgName}
                       onChange={(e) => setRegPgName(e.target.value)}
                       placeholder="e.g. Royal Palace Premium PG"
-                      className="pl-10 bg-slate-950/40 border-slate-800 text-white rounded-xl placeholder:text-slate-600 focus-visible:ring-emerald-500"
+                      className="pl-10 bg-slate-950/40 border-slate-800 text-white rounded-xl placeholder:text-slate-600 focus-visible:ring-indigo-500"
                     />
                   </div>
                 </div>
@@ -319,7 +319,7 @@ export function HomePage() {
                         value={regPgCity}
                         onChange={(e) => setRegPgCity(e.target.value)}
                         placeholder="e.g. Bangalore"
-                        className="pl-10 bg-slate-950/40 border-slate-800 text-white rounded-xl placeholder:text-slate-600 focus-visible:ring-emerald-500"
+                        className="pl-10 bg-slate-950/40 border-slate-800 text-white rounded-xl placeholder:text-slate-600 focus-visible:ring-indigo-500"
                       />
                     </div>
                   </div>
@@ -334,7 +334,7 @@ export function HomePage() {
                         value={regPgLocality}
                         onChange={(e) => setRegPgLocality(e.target.value)}
                         placeholder="e.g. Whitefield"
-                        className="pl-10 bg-slate-950/40 border-slate-800 text-white rounded-xl placeholder:text-slate-600 focus-visible:ring-emerald-500"
+                        className="pl-10 bg-slate-950/40 border-slate-800 text-white rounded-xl placeholder:text-slate-600 focus-visible:ring-indigo-500"
                       />
                     </div>
                   </div>
@@ -350,7 +350,7 @@ export function HomePage() {
                       onChange={(e) => setRegPgAddress(e.target.value)}
                       placeholder="e.g. #42, 3rd Cross, Whitefield Main Road, Near ITPL, Bangalore"
                       rows={2}
-                      className="w-full pl-10 pr-4 py-2 bg-slate-950/40 border border-slate-800 text-sm text-white rounded-xl placeholder:text-slate-600 focus:outline-hidden focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 resize-none"
+                      className="w-full pl-10 pr-4 py-2 bg-slate-950/40 border border-slate-800 text-sm text-white rounded-xl placeholder:text-slate-600 focus:outline-hidden focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 resize-none"
                     />
                   </div>
                 </div>
@@ -365,7 +365,7 @@ export function HomePage() {
                         onClick={() => setRegPgType(t)}
                         className={`py-2 px-3 text-xs font-bold rounded-xl border transition-all cursor-pointer ${
                           regPgType === t
-                            ? 'bg-emerald-600 border-emerald-500 text-white shadow-md'
+                            ? 'bg-indigo-600 border-indigo-500 text-white shadow-md'
                             : 'bg-slate-950/40 border-slate-800 text-slate-400 hover:text-white'
                         }`}
                       >
@@ -387,7 +387,7 @@ export function HomePage() {
                   <Button
                     type="submit"
                     disabled={registering}
-                    className="w-2/3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold active:scale-95 duration-150"
+                    className="w-2/3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold active:scale-95 duration-150"
                   >
                     {registering ? <Loader2 className="size-4 mr-2 animate-spin" /> : <Save className="size-4 mr-2" />}
                     Complete Register
@@ -409,7 +409,7 @@ export function HomePage() {
     return (
       <div className="relative min-h-screen flex flex-col bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 py-12 px-4 sm:px-6 lg:px-8 text-slate-100 overflow-hidden select-none">
         {/* Background glow effects */}
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-emerald-500/5 rounded-full blur-3xl animate-pulse duration-4000" />
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-indigo-500/5 rounded-full blur-3xl animate-pulse duration-4000" />
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-indigo-500/5 rounded-full blur-3xl animate-pulse duration-6000" />
 
         <div className="relative max-w-5xl w-full mx-auto flex flex-col flex-1">
@@ -433,17 +433,19 @@ export function HomePage() {
             </div>
             {/* Blinking Button 1 (Top Header) */}
             <Button
-              onClick={() => setShowRegisterModal(true)}
-              className="blink-btn-1 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-5 text-sm shadow-lg border border-emerald-400/20 active:scale-95 duration-150"
+              asChild
+              className="blink-btn-1 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-5 text-sm shadow-lg border border-indigo-400/20 active:scale-95 duration-150"
             >
-              <UserPlus className="h-4 w-4 mr-2" />
-              Register Now
+              <Link to="/owner/register" className="flex items-center">
+                <Globe className="h-4 w-4 mr-2" />
+                Verify with Google & Submit
+              </Link>
             </Button>
           </div>
 
           {/* Hero Section */}
           <div className="text-center max-w-3xl mx-auto space-y-4 mb-12">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs font-semibold uppercase tracking-wider">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-xs font-semibold uppercase tracking-wider">
               🏡 Owner Partnership Program
             </div>
             <h1 className="text-4xl md:text-5xl font-extrabold text-white tracking-tight leading-tight">
@@ -457,9 +459,9 @@ export function HomePage() {
           {/* Features Column Grid */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
             {/* Feature 1: Get Tenants */}
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/40 backdrop-blur-md p-6 hover:border-emerald-500/30 transition-all duration-300 flex flex-col justify-between">
+            <div className="rounded-2xl border border-slate-800 bg-slate-900/40 backdrop-blur-md p-6 hover:border-indigo-500/30 transition-all duration-300 flex flex-col justify-between">
               <div className="space-y-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
                   <User className="h-6 w-6" />
                 </div>
                 <h3 className="text-xl font-bold text-white">Get Verified Tenants</h3>
@@ -469,20 +471,20 @@ export function HomePage() {
               </div>
               <ul className="mt-6 space-y-2.5 text-xs text-slate-300 border-t border-slate-800/80 pt-4">
                 <li className="flex items-center gap-2">
-                  <CheckCircle className="size-3.5 text-emerald-400" />
+                  <CheckCircle className="size-3.5 text-indigo-400" />
                   Direct seeker inquiries
                 </li>
                 <li className="flex items-center gap-2">
-                  <CheckCircle className="size-3.5 text-emerald-400" />
+                  <CheckCircle className="size-3.5 text-indigo-400" />
                   Zero broker commission dependency
                 </li>
               </ul>
             </div>
 
             {/* Feature 2: Manage Empty Beds */}
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/40 backdrop-blur-md p-6 hover:border-emerald-500/30 transition-all duration-300 flex flex-col justify-between">
+            <div className="rounded-2xl border border-slate-800 bg-slate-900/40 backdrop-blur-md p-6 hover:border-indigo-500/30 transition-all duration-300 flex flex-col justify-between">
               <div className="space-y-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
                   <BedDouble className="h-6 w-6" />
                 </div>
                 <h3 className="text-xl font-bold text-white">Manage Room & Bed Inventory</h3>
@@ -492,20 +494,20 @@ export function HomePage() {
               </div>
               <ul className="mt-6 space-y-2.5 text-xs text-slate-300 border-t border-slate-800/80 pt-4">
                 <li className="flex items-center gap-2">
-                  <CheckCircle className="size-3.5 text-emerald-400" />
+                  <CheckCircle className="size-3.5 text-indigo-400" />
                   Bed-level availability tracking
                 </li>
                 <li className="flex items-center gap-2">
-                  <CheckCircle className="size-3.5 text-emerald-400" />
+                  <CheckCircle className="size-3.5 text-indigo-400" />
                   Instant vacancy updates
                 </li>
               </ul>
             </div>
 
             {/* Feature 3: Digital Presence */}
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/40 backdrop-blur-md p-6 hover:border-emerald-500/30 transition-all duration-300 flex flex-col justify-between">
+            <div className="rounded-2xl border border-slate-800 bg-slate-900/40 backdrop-blur-md p-6 hover:border-indigo-500/30 transition-all duration-300 flex flex-col justify-between">
               <div className="space-y-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
                   <Globe className="h-6 w-6" />
                 </div>
                 <h3 className="text-xl font-bold text-white">Digital Brand Presence</h3>
@@ -515,11 +517,11 @@ export function HomePage() {
               </div>
               <ul className="mt-6 space-y-2.5 text-xs text-slate-300 border-t border-slate-800/80 pt-4">
                 <li className="flex items-center gap-2">
-                  <CheckCircle className="size-3.5 text-emerald-400" />
+                  <CheckCircle className="size-3.5 text-indigo-400" />
                   Dedicated public listing page
                 </li>
                 <li className="flex items-center gap-2">
-                  <CheckCircle className="size-3.5 text-emerald-400" />
+                  <CheckCircle className="size-3.5 text-indigo-400" />
                   Photo galleries & map location
                 </li>
               </ul>
@@ -529,11 +531,13 @@ export function HomePage() {
           {/* Blinking Button 2 (Middle Section) */}
           <div className="flex justify-center mb-12">
             <Button
-              onClick={() => setShowRegisterModal(true)}
-              className="blink-btn-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-8 py-6 text-base shadow-xl border border-emerald-400/20 active:scale-95 duration-150"
+              asChild
+              className="blink-btn-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-8 py-6 text-base shadow-xl border border-indigo-400/20 active:scale-95 duration-150"
             >
-              <Building className="h-5 w-5 mr-2" />
-              List Your PG Property Today
+              <Link to="/owner/register" className="flex items-center">
+                <Globe className="h-5 w-5 mr-2" />
+                Verify with Google & Submit
+              </Link>
             </Button>
           </div>
 
@@ -548,11 +552,13 @@ export function HomePage() {
               <div className="pt-2 flex justify-center">
                 {/* Blinking Button 3 (Bottom Section) */}
                 <Button
-                  onClick={() => setShowRegisterModal(true)}
-                  className="blink-btn-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-10 py-6 text-base shadow-xl border border-emerald-400/20 active:scale-95 duration-150"
+                  asChild
+                  className="blink-btn-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-10 py-6 text-base shadow-xl border border-indigo-400/20 active:scale-95 duration-150"
                 >
-                  <UserPlus className="h-5 w-5 mr-2" />
-                  Get Started for Free
+                  <Link to="/owner/register" className="flex items-center">
+                    <Globe className="h-5 w-5 mr-2" />
+                    Verify with Google & Submit
+                  </Link>
                 </Button>
               </div>
             </div>
@@ -622,9 +628,9 @@ export function HomePage() {
           </div>
 
           {/* Card 2: Owner */}
-          <div className="group relative flex flex-col justify-between rounded-2xl border border-slate-800 bg-slate-900/60 backdrop-blur-xl p-6 shadow-xl hover:border-emerald-500/40 hover:bg-slate-900/80 transition-all duration-300">
+          <div className="group relative flex flex-col justify-between rounded-2xl border border-slate-800 bg-slate-900/60 backdrop-blur-xl p-6 shadow-xl hover:border-indigo-500/40 hover:bg-slate-900/80 transition-all duration-300">
             <div className="space-y-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 group-hover:bg-emerald-600 group-hover:text-white transition-colors duration-300">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 group-hover:bg-indigo-600 group-hover:text-white transition-colors duration-300">
                 <Building2 className="h-6 w-6" />
               </div>
               <h2 className="text-xl font-bold text-white">Property Owner</h2>
@@ -633,7 +639,7 @@ export function HomePage() {
               </p>
             </div>
             <div className="grid grid-cols-2 gap-2 mt-8">
-              <Button asChild className="w-full rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold shadow-xs border-0">
+              <Button asChild className="w-full rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold shadow-xs border-0">
                 <Link to="/auth/login?role=owner">
                   <LogIn className="size-4 shrink-0" />
                   Sign In
@@ -697,10 +703,10 @@ export function HomePage() {
 
               <button
                 onClick={handleWantToListPG}
-                className="group flex flex-col items-center justify-center p-6 rounded-xl border border-slate-800 bg-slate-900/50 hover:bg-emerald-950/30 hover:border-emerald-500/50 hover:shadow-[0_0_20px_rgba(16,185,129,0.15)] text-center transition-all duration-300 active:scale-98 cursor-pointer"
+                className="group flex flex-col items-center justify-center p-6 rounded-xl border border-slate-800 bg-slate-900/50 hover:bg-indigo-950/30 hover:border-indigo-500/50 hover:shadow-[0_0_20px_rgba(99,102,241,0.15)] text-center transition-all duration-300 active:scale-98 cursor-pointer"
               >
-                <Building className="h-8 w-8 text-emerald-400 group-hover:scale-110 transition-transform duration-300" />
-                <span className="mt-3 text-base font-bold text-white group-hover:text-emerald-400 transition-colors">Want to List PG</span>
+                <Building className="h-8 w-8 text-indigo-400 group-hover:scale-110 transition-transform duration-300" />
+                <span className="mt-3 text-base font-bold text-white group-hover:text-indigo-400 transition-colors">Want to List PG</span>
                 <span className="mt-1 text-xs text-slate-400 max-w-[220px]">Get tenants fast, manage room inventory, and grow digitally</span>
               </button>
             </div>

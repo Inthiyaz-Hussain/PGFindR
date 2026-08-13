@@ -1,29 +1,29 @@
-@keyframes pulse-blink-emerald {
+@keyframes pulse-blink-indigo {
   0%, 100% {
     transform: scale(1);
-    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+    box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.4);
     opacity: 0.95;
-    border-color: rgba(16, 185, 129, 0.3);
+    border-color: rgba(79, 70, 229, 0.3);
   }
   50% {
     transform: scale(1.06);
-    box-shadow: 0 0 25px 12px rgba(16, 185, 129, 0.35);
+    box-shadow: 0 0 25px 12px rgba(79, 70, 229, 0.35);
     opacity: 1;
-    border-color: rgba(16, 185, 129, 0.95);
+    border-color: rgba(79, 70, 229, 0.95);
   }
 }
 
 .blink-btn-1 {
-  animation: pulse-blink-emerald 1.8s infinite ease-in-out;
+  animation: pulse-blink-indigo 1.8s infinite ease-in-out;
   animation-delay: 0s;
 }
 
 .blink-btn-2 {
-  animation: pulse-blink-emerald 1.8s infinite ease-in-out;
+  animation: pulse-blink-indigo 1.8s infinite ease-in-out;
   animation-delay: 0.6s;
 }
 
 .blink-btn-3 {
-  animation: pulse-blink-emerald 1.8s infinite ease-in-out;
+  animation: pulse-blink-indigo 1.8s infinite ease-in-out;
   animation-delay: 1.2s;
 }
