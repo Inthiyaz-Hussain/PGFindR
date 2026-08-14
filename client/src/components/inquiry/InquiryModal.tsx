@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Loader2, Send, User, Phone, CalendarDays, MapPin, Briefcase, Clock, BedSingle, Mail } from 'lucide-react'
+import { Loader2, Send, User, Phone, CalendarDays, MapPin, Briefcase, Clock, BedSingle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -13,6 +13,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { useAuth } from '@/hooks/useAuth'
+import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
 import type { SharingTypeItem } from '@/types'
 
@@ -70,6 +71,27 @@ export function InquiryModal({
   const { user, profile, session } = useAuth()
 
   const isEmailVerified = !!user
+
+  const handleGoogleSignIn = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: window.location.origin + window.location.pathname,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'select_account',
+          }
+        }
+      })
+      if (error) {
+        toast.error(error.message || 'Google Sign-In failed')
+      }
+    } catch (e) {
+      console.error(e)
+      toast.error('Google Sign-In error')
+    }
+  }
 
   const {
     register,
@@ -143,15 +165,26 @@ export function InquiryModal({
   const availableSharing = sharingTypes.filter((s) => s.total_beds - s.occupied_beds > 0)
 
   async function onSubmit(data: InquiryFormData) {
-    let activeUser: any = user
+    let activeUser = user
     let activeSession = session
 
     if (!activeUser) {
-      // Allow guest submissions without credentials
-      activeUser = {
-        id: '00000000-0000-0000-0000-000000000001', // Seeker default fallback UUID
-        email: data.email || 'guest@pgfindr.com',
-      } as any
+      if (!isEmailVerified) {
+        toast.error('Please verify your email address first')
+        return
+      }
+
+      // Check if we can get the session directly from supabase
+      const { data: { session: latestSession } } = await supabase.auth.getSession()
+      if (latestSession) {
+        activeUser = latestSession.user
+        activeSession = latestSession
+      }
+    }
+
+    if (!activeUser) {
+      toast.error('Authentication session not found. Please verify your email again.')
+      return
     }
 
     // Save seeker details to local storage
@@ -205,14 +238,30 @@ export function InquiryModal({
 
   const formContent = (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-      {/* Optional Guest Email Field (Unauthenticated Users only) */}
+      {/* Guest Email Field (Unauthenticated Users only) */}
       {!user && (
-        <div className="space-y-1.5">
-          <Label htmlFor="email" className="flex items-center gap-1.5">
-            <Mail className="size-3.5" /> Email Address (Optional)
-          </Label>
-          <Input id="email" type="email" {...register('email')} placeholder="you@example.com" />
-          {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
+        <div className="space-y-3.5 p-4 bg-indigo-50/30 dark:bg-slate-800/30 rounded-xl border border-indigo-100/50 dark:border-slate-700/50 text-center">
+          <div className="space-y-1">
+            <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+              Identity Verification Required
+            </h4>
+            <p className="text-xs text-muted-foreground">
+              Please sign in with Google to verify your email and submit this inquiry.
+            </p>
+          </div>
+          <Button
+            type="button"
+            onClick={handleGoogleSignIn}
+            className="w-full bg-white hover:bg-slate-50 text-slate-900 border border-slate-200 py-2 flex items-center justify-center gap-2 font-medium shadow-xs hover:scale-[1.01] transition-all"
+          >
+            <svg className="h-4 w-4" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path d="M21.35,11.1H12v2.7h5.38c-0.24,1.28 -0.96,2.37 -2.04,3.1v2.6h3.29c1.92,-1.78 3.02,-4.4 3.02,-7.4C21.65,11.8 21.55,11.4 21.35,11.1z" fill="#4285F4" />
+              <path d="M12,20.8c2.6,0 4.8,-0.8 6.4,-2.3l-3.29,-2.6c-0.9,0.6 -2.07,1 -3.11,1c-3.11,0 -5.74,-2.11 -6.68,-4.96H2.03v2.7C3.65,17.9 7.56,20.8 12,20.8z" fill="#34A853" />
+              <path d="M5.32,11.94c-0.24,-0.72 -0.38,-1.5 -0.38,-2.3s0.14,-1.58 0.38,-2.3V4.64H2.03C1.22,6.26 0.76,8.08 0.76,10s0.46,3.74 1.27,5.36L5.32,11.94z" fill="#FBBC05" />
+              <path d="M12,4.8c1.44,0 2.72,0.5 3.73,1.46l2.8,-2.8C16.8,1.9 14.6,1.2 12,1.2c-4.44,0 -8.35,2.9 -9.97,7.06l3.29,2.7C6.26,8.11 8.89,6 12,4.8z" fill="#EA4335" />
+            </svg>
+            Verify with Google
+          </Button>
         </div>
       )}
       {/* Full Name */}
