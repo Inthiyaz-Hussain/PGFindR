@@ -712,18 +712,7 @@ export function HomePage() {
               </button>
             </div>
 
-            {/* Footer Sign In Links */}
-            <div className="pt-4 border-t border-slate-800/80 flex flex-col items-center gap-2 text-xs">
-              <div className="text-slate-400">
-                Already have an account?{' '}
-                <Link to="/auth/login" className="font-semibold text-indigo-400 hover:text-indigo-300 transition-colors">
-                  Sign In
-                </Link>
-              </div>
-              <Link to="/admin/login" className="text-slate-500 hover:text-slate-400 transition-colors">
-                System Admin Access
-              </Link>
-            </div>
+            
           </div>
         </div>
       )}

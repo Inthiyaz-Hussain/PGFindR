@@ -165,7 +165,18 @@ export function SearchPage() {
             type="number"
             placeholder="e.g. 15000"
             value={maxRent}
-            onChange={(e) => setMaxRent(e.target.value)}
+            min={1}
+            onChange={(e) => {
+              const val = e.target.value;
+              if (val === '') {
+                setMaxRent('');
+              } else {
+                const num = parseFloat(val);
+                if (num >= 1) {
+                  setMaxRent(String(num));
+                }
+              }
+            }}
           />
         </div>
 

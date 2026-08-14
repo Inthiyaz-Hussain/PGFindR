@@ -136,7 +136,7 @@ export function Navbar({
 
           {/* ================= RIGHT: LINKS, WISHLIST & PROFILE ================= */}
           <div className="hidden md:flex items-center gap-4 shrink-0">
-            {isOwnerPath ? (
+            {user && profile?.role === 'owner' ? (
               <>
                 <Link
                   to="/owner"
@@ -168,9 +168,8 @@ export function Navbar({
                 >
                   About
                 </Link>
-
               </>
-            ) : isAdminPath ? (
+            ) : user && profile?.role === 'admin' ? (
               <>
                 <Link
                   to="/admin"
@@ -197,7 +196,7 @@ export function Navbar({
                   Transactions
                 </Link>
               </>
-            ) : isSeekerPath ? (
+            ) : user && profile?.role === 'seeker' ? (
               <>
                 <Link
                   to="/seeker"
@@ -433,7 +432,7 @@ export function Navbar({
 
                   {/* Navigation Links */}
                   <nav className="space-y-1">
-                    {isOwnerPath ? (
+                    {user && profile?.role === 'owner' ? (
                       <>
                         <Link
                           to="/owner"
@@ -467,9 +466,8 @@ export function Navbar({
                           <Info className="h-5 w-5 text-blue-500 dark:text-blue-400" />
                           <span>About</span>
                         </Link>
-
                       </>
-                    ) : isAdminPath ? (
+                    ) : user && profile?.role === 'admin' ? (
                       <>
                         <Link
                           to="/admin"
@@ -496,7 +494,7 @@ export function Navbar({
                           <span>Owners</span>
                         </Link>
                       </>
-                    ) : isSeekerPath ? (
+                    ) : user && profile?.role === 'seeker' ? (
                       <>
                         <Link
                           to="/seeker"

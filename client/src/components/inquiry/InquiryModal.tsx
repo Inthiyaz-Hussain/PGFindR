@@ -31,21 +31,12 @@ const inquirySchema = z.object({
   age: z.number().min(18, 'Age must be at least 18').max(60, 'Age must be at most 60'),
   move_in_date: z.string().min(1, 'Move-in date is required'),
   sharing_preference: z.number().min(1).max(4),
-  num_beds: z.number({ message: 'Enter a valid digit' }).min(1, 'At least 1 bed required').max(5, 'Maximum 5 beds allowed'),
+  num_beds: z.number({ message: 'Enter a valid digit' }).min(1, 'At least 1 bed required').max(10, 'Maximum 10 beds allowed'),
   occupation: z.enum(['Student', 'Working Professional', 'Other']),
   city_of_origin: z.string().min(2, 'City of origin is required'),
   duration_value: z.number().min(1, 'Duration must be at least 1'),
   duration_unit: z.enum(['days', 'months']),
   message: z.string().optional(),
-}).superRefine((data, ctx) => {
-  const maxAllowed = data.sharing_preference === 1 ? 1 : data.sharing_preference === 2 ? 2 : data.sharing_preference === 3 ? 3 : 5
-  if (data.num_beds > maxAllowed) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: `Maximum ${maxAllowed} bed(s) allowed for this sharing option`,
-      path: ['num_beds'],
-    })
-  }
 })
 
 type InquiryFormData = z.infer<typeof inquirySchema>
@@ -99,7 +90,6 @@ export function InquiryModal({
     control,
     reset,
     setValue,
-    watch,
     formState: { errors, isSubmitting },
   } = useForm<InquiryFormData>({
     resolver: zodResolver(inquirySchema),
@@ -120,18 +110,7 @@ export function InquiryModal({
     mode: 'onChange',
   })
 
-  const selectedSharing = watch('sharing_preference')
-  const currentNumBeds = watch('num_beds')
-
-  // Calculate dynamic options list based on selected sharing type capacity
-  const maxBedsAllowed = selectedSharing === 1 ? 1 : selectedSharing === 2 ? 2 : selectedSharing === 3 ? 3 : 5
-
-  // Reset num_beds to 1 if user changes sharing preference to one with lower capacity
-  useEffect(() => {
-    if (currentNumBeds > maxBedsAllowed) {
-      setValue('num_beds', 1)
-    }
-  }, [selectedSharing, maxBedsAllowed, currentNumBeds, setValue])
+  const maxBedsAllowed = 10
 
   // Pre-fill from profile when available
   useEffect(() => {
