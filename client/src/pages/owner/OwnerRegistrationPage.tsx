@@ -315,7 +315,17 @@ export function OwnerRegistrationPage() {
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid || undefined}>
                       <FieldLabel htmlFor="roomCount">Approximate Number of Rooms</FieldLabel>
-                      <Input {...field} type="number" id="roomCount" min={1} aria-invalid={fieldState.invalid} />
+                      <Input
+                        type="number"
+                        id="roomCount"
+                        min={1}
+                        aria-invalid={fieldState.invalid}
+                        value={field.value}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          field.onChange(val === '' ? '' : parseInt(val, 10));
+                        }}
+                      />
                       {fieldState.error && <FieldError errors={[fieldState.error]} />}
                     </Field>
                   )}
@@ -328,7 +338,17 @@ export function OwnerRegistrationPage() {
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid || undefined}>
                       <FieldLabel htmlFor="bedCount">Approximate Total Beds</FieldLabel>
-                      <Input {...field} type="number" id="bedCount" min={1} aria-invalid={fieldState.invalid} />
+                      <Input
+                        type="number"
+                        id="bedCount"
+                        min={1}
+                        aria-invalid={fieldState.invalid}
+                        value={field.value}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          field.onChange(val === '' ? '' : parseInt(val, 10));
+                        }}
+                      />
                       {fieldState.error && <FieldError errors={[fieldState.error]} />}
                     </Field>
                   )}
