@@ -457,7 +457,7 @@ export function AdminOwnerInquiriesPage() {
                   {selectedInquiry.reset_token && (
                     <div className="flex flex-col gap-1 border-t pt-2 mt-2">
                       <span className="text-muted-foreground font-semibold">Active Invitation Link:</span>
-                      <code className="bg-muted px-2 py-1.5 rounded text-xs select-all text-indigo-650 dark:text-indigo-400 block truncate">
+                      <code className="bg-muted px-2 py-1.5 rounded text-xs select-all text-indigo-650 dark:text-indigo-400 block break-all whitespace-normal">
                         {window.location.origin}/owner/set-password?token={selectedInquiry.reset_token}
                       </code>
                       <span className="text-[10px] text-muted-foreground">Expires: {new Date(selectedInquiry.reset_token_expires_at || '').toLocaleString('en-IN')}</span>
