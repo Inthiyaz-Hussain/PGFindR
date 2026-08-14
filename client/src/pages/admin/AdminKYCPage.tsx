@@ -1,224 +1,397 @@
-import { CheckCircle, XCircle, Loader2 } from 'lucide-react'
+import { useState } from 'react'
+import { CheckCircle, XCircle, Loader2, Eye, FileText, ShieldCheck, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Card, CardContent } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Textarea } from '@/components/ui/textarea'
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
+import { Label } from '@/components/ui/label'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Empty, EmptyMedia, EmptyTitle, EmptyDescription } from '@/components/ui/empty'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
-import type { OwnerKYC, KYCStatus } from '@/types'
 import { toast } from 'sonner'
-import { useState } from 'react'
+import { cn } from '@/lib/utils'
 
-const KYC_STATUS_CONFIG: Record<KYCStatus, { label: string; class: string }> = {
-  pending: { label: 'Pending', class: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
-  approved: { label: 'Approved', class: 'bg-green-100 text-green-800 border-green-200' },
-  rejected: { label: 'Rejected', class: 'bg-red-100 text-red-800 border-red-200' },
-}
-
-interface KYCWithOwner extends OwnerKYC {
-  owner: { full_name: string; phone: string | null }
+interface KYCSubmission {
+  owner_id: string
+  full_name: string
+  email: string
+  mobile: string
+  kyc_submitted_at: string
+  document_count: number
+  documents: Array<{ id: string; doc_type: string; url: string; verified: boolean }>
+  bank: {
+    bank_account_number: string
+    bank_ifsc: string
+    bank_holder_name: string
+  }
+  pg_name: string
 }
 
 export function AdminKYCPage() {
   const queryClient = useQueryClient()
-  const [note, setNote] = useState<{ id: string; text: string } | null>(null)
+  const [selectedKyc, setSelectedKyc] = useState<KYCSubmission | null>(null)
+  
+  // Resubmission request states
+  const [showResubmitDialog, setShowResubmitDialog] = useState(false)
+  const [resubmitNotes, setResubmitNotes] = useState('')
+  const [resubmitDocs, setResubmitDocs] = useState<Record<string, boolean>>({
+    id_proof: false,
+    address_proof: false,
+    ownership_proof: false
+  })
 
-  const { data: kycList, isLoading } = useQuery({
-    queryKey: ['admin-kyc'],
+  // Fetch Session for Auth Header
+  const { data: sessionData } = useQuery({
+    queryKey: ['session'],
     queryFn: async () => {
-      const { data } = await supabase
-        .from('owner_kyc')
-        .select('*, owner:profiles!owner_kyc_owner_id_fkey(full_name, phone)')
-        .order('created_at', { ascending: false })
-      
-      const kList = (data || []) as KYCWithOwner[]
-      const demoOwnerId = '00000000-0000-0000-0000-000000000002'
-      const savedKyc = localStorage.getItem(`demo_kyc_${demoOwnerId}`)
-      
-      if (savedKyc) {
-        const k = JSON.parse(savedKyc)
-        if (!kList.some(item => item.owner_id === demoOwnerId)) {
-          kList.unshift({
-            ...k,
-            owner: {
-              full_name: 'Rajesh Sharma (Bangalore Owner)',
-              phone: '+91 9876543210'
-            }
-          })
-        } else {
-          const index = kList.findIndex(item => item.owner_id === demoOwnerId)
-          kList[index] = {
-            ...kList[index],
-            ...k,
-            owner: kList[index].owner || {
-              full_name: 'Rajesh Sharma (Bangalore Owner)',
-              phone: '+91 9876543210'
-            }
-          }
-        }
-      } else {
-        if (!kList.some(item => item.owner_id === demoOwnerId)) {
-          kList.unshift({
-            id: 'demo-kyc-id',
-            owner_id: demoOwnerId,
-            pan_number: 'ABCDE1234F',
-            aadhaar_number: '123456789012',
-            bank_account: '91827364501',
-            bank_ifsc: 'SBIN0001234',
-            bank_name: 'State Bank of India',
-            status: 'pending',
-            admin_notes: null,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-            owner: {
-              full_name: 'Rajesh Sharma (Bangalore Owner)',
-              phone: '+91 9876543210'
-            }
-          })
-        }
-      }
-      
-      return kList
-    },
+      const { data } = await supabase.auth.getSession()
+      return data.session
+    }
   })
 
-  const updateMutation = useMutation({
-    mutationFn: async ({ id, status, admin_notes }: { id: string; status: KYCStatus; admin_notes?: string }) => {
-      const demoOwnerId = '00000000-0000-0000-0000-000000000002'
-      const kycItem = kycList?.find(k => k.id === id)
-      
-      if (kycItem?.owner_id === demoOwnerId || id === 'demo-kyc-id' || id.startsWith('demo-')) {
-        const existingKyc = kycItem || {
-          id: id || 'demo-kyc-id',
-          owner_id: demoOwnerId,
-          status: 'pending',
-          created_at: new Date().toISOString(),
+  // Fetch KYC queue
+  const { data: kycQueue, isLoading, refetch } = useQuery({
+    queryKey: ['admin-kyc-queue', sessionData?.access_token],
+    queryFn: async () => {
+      if (!sessionData?.access_token) return []
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+      const response = await fetch(`${apiUrl}/api/admin/kyc-queue`, {
+        headers: {
+          'Authorization': `Bearer ${sessionData.access_token}`
         }
-        const updatedKyc = {
-          ...existingKyc,
-          status,
-          admin_notes: admin_notes || null,
-          updated_at: new Date().toISOString(),
-        }
-        localStorage.setItem(`demo_kyc_${demoOwnerId}`, JSON.stringify(updatedKyc))
-        return
-      }
-
-      const { error } = await (supabase
-        .from('owner_kyc') as any)
-        .update({ status, admin_notes: admin_notes || null, updated_at: new Date().toISOString() })
-        .eq('id', id)
-      if (error) throw error
+      })
+      if (!response.ok) throw new Error('Failed to fetch KYC queue')
+      return response.json() as Promise<KYCSubmission[]>
     },
-    onSuccess: (_, vars) => {
-      queryClient.invalidateQueries({ queryKey: ['admin-kyc'] })
+    enabled: !!sessionData?.access_token
+  })
+
+  // Approve KYC mutation
+  const approveMutation = useMutation({
+    mutationFn: async (ownerId: string) => {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+      const response = await fetch(`${apiUrl}/api/admin/kyc/${ownerId}/approve`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${sessionData?.access_token}`,
+          'Content-Type': 'application/json'
+        }
+      })
+      const resData = await response.json()
+      if (!response.ok) throw new Error(resData.error || 'Failed to approve KYC')
+      return resData
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-kyc-queue'] })
       queryClient.invalidateQueries({ queryKey: ['admin-stats'] })
-      toast.success(`KYC ${vars.status}`)
-      setNote(null)
+      toast.success('KYC Approved and Owner account activated!')
+      setSelectedKyc(null)
     },
-    onError: () => toast.error('Failed to update KYC'),
+    onError: (err: any) => {
+      toast.error(err.message || 'Failed to approve KYC')
+    }
   })
 
-  const pending = kycList?.filter((k) => k.status === 'pending') || []
-  const processed = kycList?.filter((k) => k.status !== 'pending') || []
+  // Request Resubmission mutation
+  const resubmitMutation = useMutation({
+    mutationFn: async ({ ownerId, notes, docTypes }: { ownerId: string; notes: string; docTypes: string[] }) => {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+      const response = await fetch(`${apiUrl}/api/admin/kyc/${ownerId}/request-resubmit`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${sessionData?.access_token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ notes, documentTypes: docTypes })
+      })
+      const resData = await response.json()
+      if (!response.ok) throw new Error(resData.error || 'Failed to request resubmission')
+      return resData
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-kyc-queue'] })
+      toast.success('Resubmission request sent to owner.')
+      setShowResubmitDialog(false)
+      setSelectedKyc(null)
+      // Reset resubmit states
+      setResubmitNotes('')
+      setResubmitDocs({ id_proof: false, address_proof: false, ownership_proof: false })
+    },
+    onError: (err: any) => {
+      toast.error(err.message || 'Failed to submit resubmission request')
+    }
+  })
 
-  function KYCCard({ k }: { k: KYCWithOwner }) {
-    const cfg = KYC_STATUS_CONFIG[k.status]
-    return (
-      <Card>
-        <CardContent className="pt-4 space-y-3">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <div className="font-semibold">{k.owner.full_name}</div>
-              {k.owner.phone && <div className="text-sm text-muted-foreground">{k.owner.phone}</div>}
-            </div>
-            <Badge variant="outline" className={`text-xs ${cfg.class}`}>{cfg.label}</Badge>
-          </div>
+  const handleResubmitSubmit = () => {
+    if (!selectedKyc) return
+    const selectedTypes = Object.entries(resubmitDocs)
+      .filter(([_, checked]) => checked)
+      .map(([type]) => type)
+    
+    if (selectedTypes.length === 0) {
+      toast.error('Please select at least one document to resubmit.')
+      return
+    }
+    if (!resubmitNotes) {
+      toast.error('Please add notes detailing why the documents are rejected.')
+      return
+    }
 
-          <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
-            {k.pan_number && <div><span className="text-muted-foreground">PAN: </span>{k.pan_number}</div>}
-            {k.aadhaar_number && <div><span className="text-muted-foreground">Aadhaar: </span>{k.aadhaar_number}</div>}
-            {k.bank_name && <div><span className="text-muted-foreground">Bank: </span>{k.bank_name}</div>}
-            {k.bank_ifsc && <div><span className="text-muted-foreground">IFSC: </span>{k.bank_ifsc}</div>}
-            {k.bank_account && <div className="col-span-2"><span className="text-muted-foreground">Account: </span>{k.bank_account}</div>}
-          </div>
-
-          {note?.id === k.id && (
-            <Textarea
-              placeholder="Admin notes (reason for rejection, etc.)..."
-              value={note.text}
-              onChange={(e) => setNote({ id: k.id, text: e.target.value })}
-              rows={2}
-            />
-          )}
-
-          {k.admin_notes && (
-            <div className="text-xs text-muted-foreground bg-muted rounded px-2 py-1.5">Note: {k.admin_notes}</div>
-          )}
-
-          {k.status === 'pending' && (
-            <div className="flex flex-wrap gap-2">
-              <Button size="xs" className="bg-green-600 hover:bg-green-700 text-white" onClick={() => updateMutation.mutate({ id: k.id, status: 'approved' })} disabled={updateMutation.isPending}>
-                {updateMutation.isPending ? <Loader2 className="size-3 animate-spin" /> : <CheckCircle className="size-3" />}
-                Approve
-              </Button>
-              {note?.id === k.id ? (
-                <>
-                  <Button size="xs" variant="destructive" onClick={() => updateMutation.mutate({ id: k.id, status: 'rejected', admin_notes: note.text })} disabled={updateMutation.isPending}>
-                    Confirm Reject
-                  </Button>
-                  <Button size="xs" variant="ghost" onClick={() => setNote(null)}>Cancel</Button>
-                </>
-              ) : (
-                <Button size="xs" variant="outline" className="text-destructive hover:text-destructive" onClick={() => setNote({ id: k.id, text: '' })}>
-                  <XCircle className="size-3" /> Reject
-                </Button>
-              )}
-            </div>
-          )}
-
-          <div className="text-xs text-muted-foreground">Submitted {new Date(k.created_at).toLocaleDateString('en-IN')}</div>
-        </CardContent>
-      </Card>
-    )
+    resubmitMutation.mutate({
+      ownerId: selectedKyc.owner_id,
+      notes: resubmitNotes,
+      docTypes: selectedTypes
+    })
   }
 
+  const kycList = kycQueue || []
+
   return (
-    <div className="p-4 md:p-6 max-w-3xl">
-      <div className="mb-6">
-        <h1 className="scroll-m-20 text-2xl font-bold tracking-tight">KYC Review</h1>
-        <p className="text-muted-foreground mt-1">Verify owner identities before they can list PGs</p>
+    <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <h1 className="scroll-m-20 text-2xl font-bold tracking-tight flex items-center gap-2">
+            <ShieldCheck className="h-6 w-6 text-indigo-600" /> KYC Reviews Queue
+          </h1>
+          <p className="text-muted-foreground mt-1">Verify owner identity proofs and bank accounts before allowing listings to go live.</p>
+        </div>
+        <Button variant="outline" size="sm" onClick={() => refetch()} className="shrink-0">
+          <RefreshCw className="h-4 w-4 mr-2" /> Refresh
+        </Button>
       </div>
 
-      {isLoading ? (
-        <div className="space-y-4">{[1, 2].map((i) => <Skeleton key={i} className="h-40 rounded-xl" />)}</div>
-      ) : (
-        <Tabs defaultValue="pending">
-          <TabsList className="mb-4">
-            <TabsTrigger value="pending">Pending ({pending.length})</TabsTrigger>
-            <TabsTrigger value="processed">Processed ({processed.length})</TabsTrigger>
-          </TabsList>
-          <TabsContent value="pending">
-            {pending.length > 0 ? (
-              <div className="space-y-4">{pending.map((k) => <KYCCard key={k.id} k={k} />)}</div>
-            ) : (
-              <Empty className="border-dashed">
-                <EmptyMedia variant="icon"><CheckCircle /></EmptyMedia>
-                <EmptyTitle>No pending KYC</EmptyTitle>
-                <EmptyDescription>All owner KYC requests have been processed.</EmptyDescription>
-              </Empty>
-            )}
-          </TabsContent>
-          <TabsContent value="processed">
-            {processed.length > 0 ? (
-              <div className="space-y-4">{processed.map((k) => <KYCCard key={k.id} k={k} />)}</div>
-            ) : <div className="text-center py-8 text-muted-foreground">No processed KYC yet.</div>}
-          </TabsContent>
-        </Tabs>
-      )}
+      {/* Main Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Submissions Queue Table/List */}
+        <div className="lg:col-span-2 space-y-4">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Pending Reviews ({kycList.length})</CardTitle>
+              <CardDescription>Click any row to open the KYC detail inspection panel.</CardDescription>
+            </CardHeader>
+            <CardContent className="p-0">
+              {isLoading ? (
+                <div className="p-6 space-y-4">
+                  {[1, 2, 3].map((i) => <Skeleton key={i} className="h-16 w-full rounded-lg" />)}
+                </div>
+              ) : kycList.length === 0 ? (
+                <Empty className="py-12 border-none">
+                  <EmptyMedia variant="icon"><CheckCircle className="h-10 w-10 text-green-500" /></EmptyMedia>
+                  <EmptyTitle>All Caught Up!</EmptyTitle>
+                  <EmptyDescription>There are no pending KYC reviews in the queue.</EmptyDescription>
+                </Empty>
+              ) : (
+                <div className="divide-y divide-slate-100 dark:divide-slate-850">
+                  {kycList.map((k) => (
+                    <div
+                      key={k.owner_id}
+                      onClick={() => setSelectedKyc(k)}
+                      className={cn(
+                        'p-4 flex items-center justify-between gap-4 cursor-pointer hover:bg-slate-50/50 dark:hover:bg-slate-850 transition-colors',
+                        selectedKyc?.owner_id === k.owner_id ? 'bg-indigo-50/20 dark:bg-slate-800' : ''
+                      )}
+                    >
+                      <div className="space-y-1">
+                        <div className="font-bold text-slate-900 dark:text-slate-100">{k.full_name}</div>
+                        <div className="text-xs text-muted-foreground flex items-center gap-2">
+                          <span>Listing: <span className="font-medium text-slate-700 dark:text-slate-300">{k.pg_name}</span></span>
+                          <span>•</span>
+                          <span>Submitted: <span className="font-medium">{new Date(k.kyc_submitted_at).toLocaleDateString('en-IN')}</span></span>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-3 shrink-0">
+                        <Badge variant="outline" className="text-xs border-0 bg-blue-50 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
+                          {k.document_count} Files Proof
+                        </Badge>
+                        <Badge variant="outline" className="text-xs border-0 bg-yellow-50 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400">
+                          Reviewing
+                        </Badge>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Detailed Inspection Drawer Panel */}
+        <div className="lg:col-span-1">
+          {selectedKyc ? (
+            <Card className="border-indigo-100 dark:border-indigo-900/30 shadow-lg sticky top-6">
+              <CardHeader className="pb-4 border-b">
+                <CardTitle className="text-lg font-bold">{selectedKyc.full_name}</CardTitle>
+                <CardDescription>KYC Documents & Payout Bank Verification</CardDescription>
+              </CardHeader>
+              <CardContent className="pt-5 space-y-6 text-sm">
+                {/* Contact */}
+                <div>
+                  <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider block mb-1">Owner Contact</span>
+                  <div className="space-y-1">
+                    <div className="font-medium">{selectedKyc.email}</div>
+                    <div className="text-slate-500">{selectedKyc.mobile}</div>
+                  </div>
+                </div>
+
+                {/* Bank payout Details */}
+                <div className="bg-muted/30 border border-slate-100 dark:border-slate-800 p-4 rounded-xl space-y-3">
+                  <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider block">Linked Bank Account</span>
+                  <div className="grid grid-cols-2 gap-y-2 text-xs">
+                    <div>
+                      <span className="text-muted-foreground block">Holder Name</span>
+                      <span className="font-semibold text-slate-800 dark:text-slate-200">{selectedKyc.bank.bank_holder_name}</span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground block">IFSC Code</span>
+                      <span className="font-semibold text-slate-800 dark:text-slate-200">{selectedKyc.bank.bank_ifsc}</span>
+                    </div>
+                    <div className="col-span-2 border-t pt-2 mt-1">
+                      <span className="text-muted-foreground block">Account Number</span>
+                      <code className="text-sm font-bold text-slate-900 dark:text-slate-100">{selectedKyc.bank.bank_account_number}</code>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Documents Links */}
+                <div className="space-y-3">
+                  <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider block">Document Proofs ({selectedKyc.document_count})</span>
+                  <div className="space-y-2">
+                    {selectedKyc.documents.map((doc) => (
+                      <div key={doc.id} className="flex items-center justify-between p-2.5 rounded-lg border border-slate-100 dark:border-slate-800 hover:bg-muted/10">
+                        <div className="flex items-center gap-2">
+                          <FileText className="size-4 text-indigo-500 shrink-0" />
+                          <span className="text-xs font-semibold capitalize">{doc.doc_type.replace(/_/g, ' ')}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <a
+                            href={doc.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex h-7 w-7 items-center justify-center rounded bg-slate-100 hover:bg-slate-200 text-slate-600 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700 transition-colors"
+                            title="Preview File"
+                          >
+                            <Eye className="size-3.5" />
+                          </a>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex flex-col gap-2 pt-4 border-t">
+                  <Button
+                    onClick={() => approveMutation.mutate(selectedKyc.owner_id)}
+                    disabled={approveMutation.isPending || resubmitMutation.isPending}
+                    className="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-5"
+                  >
+                    {approveMutation.isPending ? <Loader2 className="size-4 animate-spin mr-2" /> : <CheckCircle className="size-4 mr-2" />}
+                    Approve KYC & Activate Owner
+                  </Button>
+                  
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowResubmitDialog(true)}
+                    disabled={resubmitMutation.isPending || approveMutation.isPending}
+                    className="w-full text-destructive hover:text-destructive hover:bg-red-50 py-5"
+                  >
+                    <XCircle className="size-4 mr-2" />
+                    Request Resubmission
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card className="text-center p-6 border-dashed bg-muted/10 sticky top-6">
+              <CardContent className="pt-6 space-y-3">
+                <ShieldCheck className="h-10 w-10 text-indigo-400 mx-auto animate-pulse" />
+                <div className="font-semibold text-sm">No Owner Selected</div>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Select a pending owner submission from the queue on the left to verify their KYC.
+                </p>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      </div>
+
+      {/* Resubmission Request Dialog */}
+      <Dialog open={showResubmitDialog} onOpenChange={setShowResubmitDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Request Document Resubmission</DialogTitle>
+            <DialogDescription>
+              Select which document proofs are invalid or unclear, and add review feedback.
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedKyc && (
+            <div className="space-y-4 pt-2">
+              {/* Document selection */}
+              <div className="space-y-2.5">
+                <span className="text-xs font-semibold text-slate-700 block">Select documents to reject:</span>
+                <div className="space-y-2 border rounded-lg p-3 bg-muted/20">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="doc-id"
+                      checked={resubmitDocs.id_proof}
+                      onCheckedChange={(checked) => setResubmitDocs((prev) => ({ ...prev, id_proof: !!checked }))}
+                    />
+                    <label htmlFor="doc-id" className="text-xs font-medium cursor-pointer">Identity Proof (Aadhaar/PAN)</label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="doc-addr"
+                      checked={resubmitDocs.address_proof}
+                      onCheckedChange={(checked) => setResubmitDocs((prev) => ({ ...prev, address_proof: !!checked }))}
+                    />
+                    <label htmlFor="doc-addr" className="text-xs font-medium cursor-pointer">Address Proof (Utility Bill/Voter ID)</label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="doc-prop"
+                      checked={resubmitDocs.ownership_proof}
+                      onCheckedChange={(checked) => setResubmitDocs((prev) => ({ ...prev, ownership_proof: !!checked }))}
+                    />
+                    <label htmlFor="doc-prop" className="text-xs font-medium cursor-pointer">Property Proof (Ownership/Rental doc)</label>
+                  </div>
+                </div>
+              </div>
+
+              {/* Feedback reason notes */}
+              <div className="space-y-1.5">
+                <Label htmlFor="resubmitNotes">Admin Review Notes</Label>
+                <Textarea
+                  id="resubmitNotes"
+                  placeholder="Explain why the files were rejected (e.g. 'Identity Proof scan is blurry, please upload a high-resolution photo')..."
+                  value={resubmitNotes}
+                  onChange={(e) => setResubmitNotes(e.target.value)}
+                  rows={3}
+                />
+              </div>
+
+              <div className="flex gap-2 pt-2 justify-end">
+                <Button variant="ghost" onClick={() => setShowResubmitDialog(false)}>
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleResubmitSubmit}
+                  disabled={resubmitMutation.isPending}
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium"
+                >
+                  {resubmitMutation.isPending ? <Loader2 className="size-3 animate-spin mr-1" /> : null}
+                  Send Request
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

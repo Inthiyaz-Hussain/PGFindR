@@ -3,23 +3,27 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Loader2, Home, ArrowRight, PlusCircle } from 'lucide-react'
+import { Loader2, ArrowRight, ClipboardList, Info } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Field, FieldLabel, FieldError } from '@/components/ui/field'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { supabase } from '@/lib/supabase'
 
 const registerOwnerSchema = z.object({
   fullName: z.string().min(2, 'Name must be at least 2 characters').max(80, 'Name is too long'),
   email: z.string().email('Enter a valid email address'),
-  mobile: z.string().regex(/^\+?[0-9]{10,15}$/, 'Enter a valid mobile number'),
-  mobileAlternate: z.string().regex(/^\+?[0-9]{10,15}$/, 'Enter a valid alternate mobile number').optional().or(z.literal('')),
+  mobile: z.string().regex(/^\+?[0-9]{10,15}$/, 'Enter a valid 10-to-15 digit mobile number'),
   pgName: z.string().min(3, 'PG Name must be at least 3 characters'),
-  address: z.string().min(5, 'Address is required'),
-  pincode: z.string().regex(/^[0-9]{6}$/, 'Enter a valid 6-digit pincode'),
+  pgCity: z.string().min(2, 'Please select or enter the city'),
+  pgAddress: z.string().min(5, 'Complete PG Address is required'),
+  roomCount: z.number().int().min(1, 'Number of rooms must be at least 1'),
+  bedCount: z.number().int().min(1, 'Number of beds must be at least 1'),
+  referralSource: z.string().optional().or(z.literal('')),
 })
 
 type RegisterOwnerValues = z.infer<typeof registerOwnerSchema>
@@ -38,14 +42,16 @@ export function OwnerRegistrationPage() {
       fullName: '',
       email: '',
       mobile: '',
-      mobileAlternate: '',
       pgName: '',
-      address: '',
-      pincode: '',
+      pgCity: 'Bengaluru',
+      pgAddress: '',
+      roomCount: 5,
+      bedCount: 10,
+      referralSource: '',
     },
   })
 
-  // Prefill form if there's any saved form in localStorage (e.g. on mismatch retry)
+  // Prefill form if there's any saved form in localStorage
   useEffect(() => {
     const saved = localStorage.getItem('owner_register_form')
     if (saved) {
@@ -54,7 +60,7 @@ export function OwnerRegistrationPage() {
         Object.keys(data).forEach((key) => {
           setValue(key as any, data[key])
         })
-        toast.info('Restored your previous registration details.')
+        toast.info('Restored your previous inquiry details.')
       } catch (e) {
         console.error('Error parsing saved form', e)
       }
@@ -106,15 +112,15 @@ export function OwnerRegistrationPage() {
               // Verify if session exists now
               const { data: { session } } = await supabase.auth.getSession()
               if (session) {
-                // Redirect to about page since registration finished in popup
-                navigate('/seeker/about')
+                // Redirect to callback route to handle registration validation
+                navigate('/owner/register-callback')
               } else {
                 toast.error('Google verification was closed or cancelled.')
               }
             }
           }, 1000)
         } else {
-          // Redirecting...
+          // Mobile redirects automatically...
           console.log('Redirecting to Google Auth:', data.url)
         }
       }
@@ -126,17 +132,17 @@ export function OwnerRegistrationPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-radial from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-950 px-4 py-12">
-      <div className="w-full max-w-xl space-y-6">
+      <div className="w-full max-w-2xl space-y-6">
         {/* Logo */}
         <div className="flex flex-col items-center gap-3">
           <Link to="/" className="flex items-center gap-2.5">
             <img
               src="/logo-swiftpg.png"
-              alt="FindPgR Logo"
+              alt="SwiftPG Logo"
               className="h-11 w-11 rounded-xl object-cover ring-1 ring-slate-200 dark:ring-slate-800 shadow-sm"
             />
             <span className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
-              Find<span className="text-indigo-600 dark:text-indigo-400 font-extrabold">PgR</span>
+              Swift<span className="text-indigo-600 dark:text-indigo-400 font-extrabold">PG</span>
             </span>
           </Link>
           <p className="text-sm text-muted-foreground font-medium">Verify ownership & list your PG instantly</p>
@@ -146,15 +152,24 @@ export function OwnerRegistrationPage() {
         <Card className="border-slate-200/80 dark:border-slate-800/80 shadow-2xl backdrop-blur-xs bg-white/95 dark:bg-slate-900/95">
           <CardHeader className="text-center pb-4">
             <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-indigo-50 dark:bg-indigo-900/30 mb-2">
-              <Home className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+              <ClipboardList className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
             </div>
-            <CardTitle className="text-2xl font-bold tracking-tight">Owner Registration</CardTitle>
-            <CardDescription className="text-slate-500 dark:text-slate-400">
-              Provide your details and complete Google verification to get started.
+            <CardTitle className="text-2xl font-bold tracking-tight">Owner Interest Inquiry</CardTitle>
+            <CardDescription className="text-slate-500 dark:text-slate-400 mt-1">
+              Provide details about yourself and your PG. Admin will review this before any account is created.
             </CardDescription>
           </CardHeader>
 
-          <CardContent>
+          <CardContent className="space-y-6">
+            {/* Info Callout */}
+            <div className="flex gap-3 rounded-xl border border-blue-100 dark:border-blue-900/30 bg-blue-50/50 dark:bg-blue-950/20 p-4 text-sm text-blue-800 dark:text-blue-300">
+              <Info className="h-5 w-5 shrink-0 text-blue-600 dark:text-blue-400" />
+              <div>
+                <span className="font-semibold block mb-0.5">Registration Process Note</span>
+                This is an interest inquiry. After submitting and verifying your email with Google, SwiftPG Admin will review the legitimacy of your PG details and send a Set Password invitation link within 48 hours.
+              </div>
+            </div>
+
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Full Name */}
@@ -163,20 +178,20 @@ export function OwnerRegistrationPage() {
                   control={control}
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid || undefined}>
-                      <FieldLabel htmlFor="fullName">Full name</FieldLabel>
+                      <FieldLabel htmlFor="fullName">Full Name</FieldLabel>
                       <Input {...field} id="fullName" placeholder="Suresh Patel" aria-invalid={fieldState.invalid} />
                       {fieldState.error && <FieldError errors={[fieldState.error]} />}
                     </Field>
                   )}
                 />
 
-                {/* Email */}
+                {/* Email Address */}
                 <Controller
                   name="email"
                   control={control}
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid || undefined}>
-                      <FieldLabel htmlFor="email">Email address</FieldLabel>
+                      <FieldLabel htmlFor="email">Email Address</FieldLabel>
                       <Input
                         {...field}
                         id="email"
@@ -190,38 +205,19 @@ export function OwnerRegistrationPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {/* Mobile */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Mobile Number */}
                 <Controller
                   name="mobile"
                   control={control}
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid || undefined}>
-                      <FieldLabel htmlFor="mobile">Mobile number</FieldLabel>
+                      <FieldLabel htmlFor="mobile">Mobile Number</FieldLabel>
                       <Input
                         {...field}
                         id="mobile"
                         type="tel"
                         placeholder="+91 9876543210"
-                        aria-invalid={fieldState.invalid}
-                      />
-                      {fieldState.error && <FieldError errors={[fieldState.error]} />}
-                    </Field>
-                  )}
-                />
-
-                {/* Alternate Mobile */}
-                <Controller
-                  name="mobileAlternate"
-                  control={control}
-                  render={({ field, fieldState }) => (
-                    <Field data-invalid={fieldState.invalid || undefined}>
-                      <FieldLabel htmlFor="mobileAlternate">Alternate Mobile (Optional)</FieldLabel>
-                      <Input
-                        {...field}
-                        id="mobileAlternate"
-                        type="tel"
-                        placeholder="Alternate number"
                         aria-invalid={fieldState.invalid}
                       />
                       {fieldState.error && <FieldError errors={[fieldState.error]} />}
@@ -243,52 +239,111 @@ export function OwnerRegistrationPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {/* Address */}
-                <div className="md:col-span-2">
-                  <Controller
-                    name="address"
-                    control={control}
-                    render={({ field, fieldState }) => (
-                      <Field data-invalid={fieldState.invalid || undefined}>
-                        <FieldLabel htmlFor="address">PG Address</FieldLabel>
-                        <Input
-                          {...field}
-                          id="address"
-                          placeholder="No. 45, 2nd Main Road, Koramangala"
-                          aria-invalid={fieldState.invalid}
-                        />
-                        {fieldState.error && <FieldError errors={[fieldState.error]} />}
-                      </Field>
-                    )}
-                  />
-                </div>
-
-                {/* Pincode */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* PG City */}
                 <Controller
-                  name="pincode"
+                  name="pgCity"
                   control={control}
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid || undefined}>
-                      <FieldLabel htmlFor="pincode">Pincode</FieldLabel>
-                      <Input {...field} id="pincode" placeholder="560034" aria-invalid={fieldState.invalid} />
+                      <FieldLabel htmlFor="pgCity">PG City</FieldLabel>
+                      <Select value={field.value} onValueChange={field.onChange}>
+                        <SelectTrigger id="pgCity" className="bg-background">
+                          <SelectValue placeholder="Select City" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Bengaluru">Bengaluru</SelectItem>
+                          <SelectItem value="Pune">Pune</SelectItem>
+                          <SelectItem value="Mumbai">Mumbai</SelectItem>
+                          <SelectItem value="Delhi">Delhi</SelectItem>
+                          <SelectItem value="Hyderabad">Hyderabad</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      {fieldState.error && <FieldError errors={[fieldState.error]} />}
+                    </Field>
+                  )}
+                />
+
+                {/* How did you hear about SwiftPG? */}
+                <Controller
+                  name="referralSource"
+                  control={control}
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid || undefined}>
+                      <FieldLabel htmlFor="referralSource">How did you hear about SwiftPG?</FieldLabel>
+                      <Select value={field.value} onValueChange={field.onChange}>
+                        <SelectTrigger id="referralSource" className="bg-background">
+                          <SelectValue placeholder="Select Option" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Google">Google Search</SelectItem>
+                          <SelectItem value="Friend">Friend / Recommendation</SelectItem>
+                          <SelectItem value="Social Media">Social Media</SelectItem>
+                          <SelectItem value="Other">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
                       {fieldState.error && <FieldError errors={[fieldState.error]} />}
                     </Field>
                   )}
                 />
               </div>
 
-              <Button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium animate-blink-button" disabled={loading}>
-                {loading ? (
-                  <Loader2 className="size-4 animate-spin mr-2" />
-                ) : (
-                  <PlusCircle className="size-4 mr-2" />
+              {/* PG Full Address */}
+              <Controller
+                name="pgAddress"
+                control={control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid || undefined}>
+                    <FieldLabel htmlFor="pgAddress">PG Full Address (including pincode)</FieldLabel>
+                    <Textarea
+                      {...field}
+                      id="pgAddress"
+                      rows={3}
+                      placeholder="No. 45, 2nd Main Road, Koramangala, Bengaluru - 560034"
+                      aria-invalid={fieldState.invalid}
+                    />
+                    {fieldState.error && <FieldError errors={[fieldState.error]} />}
+                  </Field>
                 )}
-                {loading ? 'Initiating Verification…' : 'List PG (Register)'}
+              />
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Number of Rooms */}
+                <Controller
+                  name="roomCount"
+                  control={control}
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid || undefined}>
+                      <FieldLabel htmlFor="roomCount">Approximate Number of Rooms</FieldLabel>
+                      <Input {...field} type="number" id="roomCount" min={1} aria-invalid={fieldState.invalid} />
+                      {fieldState.error && <FieldError errors={[fieldState.error]} />}
+                    </Field>
+                  )}
+                />
+
+                {/* Number of Beds */}
+                <Controller
+                  name="bedCount"
+                  control={control}
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid || undefined}>
+                      <FieldLabel htmlFor="bedCount">Approximate Total Beds</FieldLabel>
+                      <Input {...field} type="number" id="bedCount" min={1} aria-invalid={fieldState.invalid} />
+                      {fieldState.error && <FieldError errors={[fieldState.error]} />}
+                    </Field>
+                  )}
+                />
+              </div>
+
+              <Button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium shadow-lg hover:shadow-indigo-500/20 py-6 transition-all duration-200 mt-2" disabled={loading}>
+                {loading ? (
+                  <Loader2 className="size-5 animate-spin mr-2" />
+                ) : null}
+                {loading ? 'Initiating Verification…' : 'Verify with Google & Submit Inquiry'}
               </Button>
             </form>
 
-            <div className="mt-6 text-center border-t border-slate-100 dark:border-slate-800 pt-4">
+            <div className="text-center border-t border-slate-100 dark:border-slate-800 pt-4">
               <span className="text-sm text-muted-foreground mr-1.5">Already registered?</span>
               <Link to="/owner/login" className="text-sm font-semibold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 inline-flex items-center gap-1">
                 Sign in to Dashboard <ArrowRight className="h-3.5 w-3.5" />

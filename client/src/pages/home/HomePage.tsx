@@ -439,7 +439,7 @@ export function HomePage() {
             >
               <Link to="/owner/register" className="flex items-center">
                 <PlusCircle className="h-4 w-4 mr-2" />
-                List PG (Register)
+                List Your PG
               </Link>
             </Button>
           </div>
@@ -537,7 +537,7 @@ export function HomePage() {
             >
               <Link to="/owner/register" className="flex items-center">
                 <PlusCircle className="h-5 w-5 mr-2" />
-                List PG (Register)
+                List Your PG
               </Link>
             </Button>
           </div>
@@ -558,7 +558,7 @@ export function HomePage() {
                 >
                   <Link to="/owner/register" className="flex items-center">
                     <PlusCircle className="h-5 w-5 mr-2" />
-                    List PG (Register)
+                    List Your PG
                   </Link>
                 </Button>
               </div>

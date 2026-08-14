@@ -20,6 +20,15 @@ export interface Profile {
   updated_at: string
   onboarding_verified?: boolean
   onboarding_verified_at?: string | null
+  kyc_status?: string | null
+  kyc_notes?: string | null
+  kyc_submitted_at?: string | null
+  kyc_reviewed_at?: string | null
+  kyc_reviewed_by?: string | null
+  bank_account_number?: string | null
+  bank_ifsc?: string | null
+  bank_holder_name?: string | null
+  listing_status?: string | null
 }
 
 export interface PGListing {

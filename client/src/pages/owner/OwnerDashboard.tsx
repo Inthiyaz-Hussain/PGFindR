@@ -1,7 +1,8 @@
 import { useNavigate } from 'react-router-dom'
-import { Building2, BedDouble, ChevronRight, TrendingUp, MessageSquare, IndianRupee, Clock } from 'lucide-react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Building2, BedDouble, ChevronRight, TrendingUp, MessageSquare, IndianRupee, Clock, AlertCircle } from 'lucide-react'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useQuery } from '@tanstack/react-query'
@@ -89,6 +90,77 @@ export function OwnerDashboard() {
           <p className="text-muted-foreground mt-1">Manage your PG listings and inquiries</p>
         </div>
       </div>
+      
+      {/* KYC Status Banners */}
+      {profile?.kyc_status === 'submitted' && (
+        <div className="mb-6 flex gap-3 rounded-xl border border-yellow-250 bg-yellow-50/20 p-4 text-yellow-800 dark:text-yellow-400">
+          <Clock className="size-5 text-yellow-600 shrink-0" />
+          <div>
+            <div className="font-semibold">KYC Verification Pending Approval</div>
+            <div className="text-sm opacity-90">Your profile and bank details are under review. We will notify you via email as soon as your listing is approved and goes live.</div>
+          </div>
+        </div>
+      )}
+
+      {profile?.kyc_status === 'resubmission_requested' && (
+        <div className="mb-6 flex gap-3 rounded-xl border border-orange-250 bg-orange-50/20 p-4 text-orange-850 dark:text-orange-400">
+          <AlertCircle className="size-5 text-orange-650 shrink-0 animate-pulse" />
+          <div>
+            <div className="font-semibold">KYC Action Required: Please Resubmit Documents</div>
+            <div className="text-sm opacity-90 mt-0.5">Reason: <span className="italic font-medium">{profile?.kyc_notes || 'Some documents were rejected.'}</span></div>
+            <Button size="sm" variant="outline" onClick={() => navigate('/owner/kyc')} className="mt-2 text-xs border-orange-250 hover:bg-orange-50 dark:hover:bg-slate-800">
+              Resubmit Documents
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Onboarding Checklist Gates (if not fully active/verified) */}
+      {profile?.kyc_status !== 'approved' && (
+        <Card className="mb-8 border-indigo-100 dark:border-indigo-900/30 shadow-md">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">🚀 Onboarding Completion Gates</CardTitle>
+            <CardDescription>Complete these two milestones to take your PG listing live and unlock inquiries/payouts.</CardDescription>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Gate 1: PG Details */}
+            <div className={cn(
+              'p-4 rounded-xl border transition-all',
+              listings && listings.length > 0 ? 'border-green-200 bg-green-50/10' : 'border-slate-200 bg-background'
+            )}>
+              <div className="flex items-start justify-between">
+                <div>
+                  <div className="font-bold flex items-center gap-1.5 text-sm">
+                    {listings && listings.length > 0 ? '✅ Step 1: PG Details Added' : '⬜ Step 1: Add PG Details'}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">Provide description, rules, rooms, bed types, pricing, and amenities.</p>
+                </div>
+                {(!listings || listings.length === 0) && (
+                  <Button size="sm" onClick={() => navigate('/owner/pgs/new')} className="bg-indigo-600 hover:bg-indigo-700 text-white shrink-0 ml-2">Configure PG</Button>
+                )}
+              </div>
+            </div>
+            
+            {/* Gate 2: Submit KYC */}
+            <div className={cn(
+              'p-4 rounded-xl border transition-all',
+              ['submitted', 'approved'].includes(profile?.kyc_status || '') ? 'border-green-200 bg-green-50/10' : 'border-slate-200 bg-background'
+            )}>
+              <div className="flex items-start justify-between">
+                <div>
+                  <div className="font-bold flex items-center gap-1.5 text-sm">
+                    {['submitted', 'approved'].includes(profile?.kyc_status || '') ? '✅ Step 2: KYC Submitted' : '⬜ Step 2: Submit KYC Documents'}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">Upload Identity, Address, Property proofs and enter bank payout details.</p>
+                </div>
+                {!['submitted', 'approved'].includes(profile?.kyc_status || '') && (
+                  <Button size="sm" onClick={() => navigate('/owner/kyc')} className="bg-indigo-600 hover:bg-indigo-700 text-white shrink-0 ml-2">Verify KYC</Button>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">

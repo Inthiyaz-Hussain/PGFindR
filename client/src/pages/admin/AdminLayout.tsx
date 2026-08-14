@@ -22,6 +22,7 @@ const NAV_GROUPS = [
     items: [
       { to: '/admin/pgs', label: 'PG Listings', icon: Building, end: false },
       { to: '/admin/owners', label: 'Owners', icon: UserCheck, end: false },
+      { to: '/admin/owner-inquiries', label: 'Owner Inquiries', icon: FileText, end: false },
       { to: '/admin/listing-inquiries', label: 'Listing Inquiries', icon: FileText, end: false },
       { to: '/admin/kyc', label: 'KYC Review', icon: ShieldCheck, end: false },
       { to: '/admin/users', label: 'Seekers', icon: Users, end: false },

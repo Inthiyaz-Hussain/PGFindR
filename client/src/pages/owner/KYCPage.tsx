@@ -1,166 +1,383 @@
-import { useState } from 'react'
-import { FileCheck, Loader2, Save, CheckCircle2 } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import {
+  Loader2,
+  Save,
+  CheckCircle2,
+  Upload,
+  CreditCard,
+  User,
+  Building,
+  AlertCircle,
+  FileText
+} from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/useAuth'
-import type { OwnerKYC } from '@/types'
 import { toast } from 'sonner'
 
 const KYC_STATUS_CONFIG = {
-  pending: { label: 'Under Review', class: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
-  approved: { label: 'Approved', class: 'bg-green-100 text-green-800 border-green-200' },
-  rejected: { label: 'Rejected', class: 'bg-red-100 text-red-800 border-red-200' },
+  pending: { label: 'KYC Pending Setup', class: 'bg-slate-100 text-slate-800 border-slate-200' },
+  submitted: { label: 'KYC Under Review', class: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
+  approved: { label: 'KYC Verified', class: 'bg-green-100 text-green-800 border-green-200' },
+  rejected: { label: 'KYC Rejected', class: 'bg-red-100 text-red-800 border-red-200' },
+  resubmission_requested: { label: 'Resubmission Requested', class: 'bg-orange-100 text-orange-850 border-orange-250 animate-pulse' },
 }
 
 export function KYCPage() {
-  const { user } = useAuth()
+  const { user, profile, refreshProfile } = useAuth()
   const queryClient = useQueryClient()
-  const [form, setForm] = useState({ pan_number: '', aadhaar_number: '', bank_account: '', bank_ifsc: '', bank_name: '' })
 
-  const isDemoId = user?.id === '00000000-0000-0000-0000-000000000003' || 
-                   user?.id === '00000000-0000-0000-0000-000000000002' || 
-                   user?.id === '00000000-0000-0000-0000-000000000001'
+  // Form states
+  const [bankAccountNumber, setBankAccountNumber] = useState('')
+  const [bankIfsc, setBankIfsc] = useState('')
+  const [bankHolderName, setBankHolderName] = useState('')
+  const [aadhaarNumber, setAadhaarNumber] = useState('')
 
-  const { data: kyc, isLoading } = useQuery({
-    queryKey: ['kyc', user?.id],
-    queryFn: async () => {
-      if (isDemoId) {
-        const savedKyc = localStorage.getItem(`demo_kyc_${user!.id}`)
-        if (savedKyc) {
-          const k = JSON.parse(savedKyc) as OwnerKYC
-          setForm({
-            pan_number: k.pan_number || '',
-            aadhaar_number: k.aadhaar_number || '',
-            bank_account: k.bank_account || '',
-            bank_ifsc: k.bank_ifsc || '',
-            bank_name: k.bank_name || '',
+  // File proof states
+  const [files, setFiles] = useState<{
+    id_proof: { name: string; url: string; progress: number } | null
+    address_proof: { name: string; url: string; progress: number } | null
+    ownership_proof: { name: string; url: string; progress: number } | null
+  }>({
+    id_proof: null,
+    address_proof: null,
+    ownership_proof: null,
+  })
+
+  // Prefill bank data on load from profile
+  useEffect(() => {
+    if (profile) {
+      setBankAccountNumber(profile.bank_account_number || '')
+      setBankIfsc(profile.bank_ifsc || '')
+      setBankHolderName(profile.bank_holder_name || '')
+      // Fetch documents to prefill files
+      async function loadDocs() {
+        const { data: docs } = await supabase
+          .from('owner_documents')
+          .select('*')
+          .eq('owner_id', user!.id)
+        
+        if (docs) {
+          const updatedFiles = { ...files }
+          docs.forEach((doc: any) => {
+            const type = doc.doc_type as 'id_proof' | 'address_proof' | 'ownership_proof'
+            if (updatedFiles[type] === null) {
+              updatedFiles[type] = {
+                name: doc.url.split('/').pop() || `${type}.pdf`,
+                url: doc.url,
+                progress: 100
+              }
+            }
           })
-          return k
+          setFiles(updatedFiles)
         }
-        return null
       }
+      loadDocs()
+    }
+  }, [profile, user])
 
-      const { data, error } = await supabase.from('owner_kyc').select('*').eq('owner_id', user!.id).maybeSingle()
-      if (error) throw error
-      if (data) {
-        const k = data as OwnerKYC
-        setForm({
-          pan_number: k.pan_number || '',
-          aadhaar_number: k.aadhaar_number || '',
-          bank_account: k.bank_account || '',
-          bank_ifsc: k.bank_ifsc || '',
-          bank_name: k.bank_name || '',
-        })
+  // Mock File Upload Simulator
+  const simulateUpload = (type: 'id_proof' | 'address_proof' | 'ownership_proof', fileName: string) => {
+    setFiles((prev) => ({
+      ...prev,
+      [type]: { name: fileName, url: '', progress: 10 }
+    }))
+
+    let currentProgress = 10
+    const interval = setInterval(() => {
+      currentProgress += 30
+      if (currentProgress >= 100) {
+        currentProgress = 100
+        clearInterval(interval)
+        toast.success(`${fileName} uploaded successfully!`)
       }
-      return data as OwnerKYC | null
-    },
-    enabled: !!user,
-  })
+      setFiles((prev) => ({
+        ...prev,
+        [type]: prev[type] ? { ...prev[type]!, progress: currentProgress, url: `https://supabase-storage-mock/kyc/${user!.id}/${type}_${fileName}` } : null
+      }))
+    }, 200)
+  }
 
-  const saveMutation = useMutation({
+  // Submit KYC mutation
+  const submitKycMutation = useMutation({
     mutationFn: async () => {
-      if (isDemoId) {
-        const existingKyc = kyc || {
-          id: `demo-kyc-${user!.id}`,
-          owner_id: user!.id,
-          status: 'pending',
-          created_at: new Date().toISOString(),
-        }
-        const updatedKyc = {
-          ...existingKyc,
-          ...form,
-          status: 'pending', // Reset to pending for review when owner updates it
-          updated_at: new Date().toISOString()
-        }
-        localStorage.setItem(`demo_kyc_${user!.id}`, JSON.stringify(updatedKyc))
-        return
+      // Validate documents are uploaded
+      if (!files.id_proof?.url || !files.address_proof?.url || !files.ownership_proof?.url) {
+        throw new Error('Please upload all three required document proofs.')
       }
 
-      if (kyc) {
-        const { error } = await (supabase.from('owner_kyc') as any).update({ ...form, updated_at: new Date().toISOString() }).eq('owner_id', user!.id)
-        if (error) throw error
-      } else {
-        const { error } = await (supabase.from('owner_kyc') as any).insert({ ...form, owner_id: user!.id })
-        if (error) throw error
+      const docsPayload = [
+        { doc_type: 'id_proof', url: files.id_proof.url },
+        { doc_type: 'address_proof', url: files.address_proof.url },
+        { doc_type: 'ownership_proof', url: files.ownership_proof.url }
+      ]
+
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+      const response = await fetch(`${apiUrl}/api/owner/kyc`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+        },
+        body: JSON.stringify({
+          bankAccountNumber,
+          bankIfsc,
+          bankHolderName,
+          aadhaarNumber,
+          documents: docsPayload
+        })
+      })
+
+      const resData = await response.json()
+      if (!response.ok) {
+        throw new Error(resData.error || 'KYC submission failed')
       }
+      return resData
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['kyc', user?.id] })
-      toast.success('KYC details submitted for review!')
+    onSuccess: async () => {
+      await refreshProfile()
+      queryClient.invalidateQueries({ queryKey: ['profile'] })
+      toast.success('KYC documents submitted for review! Admin notified.')
     },
-    onError: () => toast.error('Failed to save KYC details'),
+    onError: (err: any) => {
+      toast.error(err.message || 'Failed to submit KYC details')
+    }
   })
 
-  const cfg = kyc ? KYC_STATUS_CONFIG[kyc.status] : null
+  const currentStatus = profile?.kyc_status || 'pending'
+  const cfg = KYC_STATUS_CONFIG[currentStatus as keyof typeof KYC_STATUS_CONFIG] || KYC_STATUS_CONFIG.pending
+
+  const isLocked = currentStatus === 'approved' || currentStatus === 'submitted'
 
   return (
-    <div className="p-4 md:p-6 max-w-lg">
-      <div className="mb-6">
+    <div className="p-4 md:p-6 max-w-2xl mx-auto space-y-6">
+      {/* Page Header */}
+      <div>
         <h1 className="scroll-m-20 text-2xl font-bold tracking-tight">KYC Verification</h1>
-        <p className="text-muted-foreground mt-1">Complete verification to go live on PGFindR</p>
+        <p className="text-muted-foreground mt-1">Submit identity, address, property proofs and link your bank details to go live.</p>
       </div>
 
-      {!isLoading && kyc?.status === 'approved' && (
-        <div className="mb-6 flex items-center gap-3 rounded-lg border border-green-200 bg-green-50 p-4">
+      {/* KYC Status Callouts */}
+      {currentStatus === 'approved' && (
+        <div className="flex items-center gap-3 rounded-xl border border-green-200 bg-green-50/50 p-4 text-green-800 dark:text-green-300">
           <CheckCircle2 className="size-5 text-green-600 shrink-0" />
           <div>
-            <div className="font-medium text-green-800">KYC Approved</div>
-            <div className="text-sm text-green-700">Your identity has been verified. You can now list PGs.</div>
+            <div className="font-semibold">KYC Fully Verified & Active</div>
+            <div className="text-sm opacity-90">Your property listings are now live and visible to seekers. All dashboard features are unlocked.</div>
           </div>
         </div>
       )}
 
-      {!isLoading && kyc && (
-        <div className="mb-4 flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">KYC Status:</span>
-          <Badge variant="outline" className={cfg?.class}>{cfg?.label}</Badge>
+      {currentStatus === 'submitted' && (
+        <div className="flex gap-3 rounded-xl border border-yellow-250 bg-yellow-50/30 p-4 text-yellow-800 dark:text-yellow-400">
+          <Loader2 className="size-5 text-yellow-600 shrink-0 animate-spin" />
+          <div>
+            <div className="font-semibold">KYC Submitted. Under review — usually within 48 hours.</div>
+            <div className="text-sm opacity-90">Our admin team is currently reviewing your document proofs. We will notify you via email shortly.</div>
+          </div>
         </div>
       )}
 
-      {kyc?.admin_notes && (
-        <div className="mb-4 rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-700">
-          Admin notes: {kyc.admin_notes}
+      {currentStatus === 'resubmission_requested' && (
+        <div className="flex gap-3 rounded-xl border border-orange-250 bg-orange-50/30 p-4 text-orange-850 dark:text-orange-400">
+          <AlertCircle className="size-5 text-orange-600 shrink-0" />
+          <div>
+            <div className="font-semibold">Resubmission Required</div>
+            <div className="text-sm font-medium mt-0.5">Admin notes: <span className="italic">{profile?.kyc_notes || 'Please resubmit incorrect files.'}</span></div>
+          </div>
         </div>
       )}
 
-      <Card>
-        <CardHeader><CardTitle className="text-base flex items-center gap-2"><FileCheck className="size-5" /> KYC Details</CardTitle></CardHeader>
-        <CardContent>
-          <form onSubmit={(e) => { e.preventDefault(); saveMutation.mutate() }} className="space-y-4">
-            <div className="space-y-1.5">
-              <Label>PAN Number</Label>
-              <Input value={form.pan_number} onChange={(e) => setForm((p) => ({ ...p, pan_number: e.target.value.toUpperCase() }))} placeholder="ABCDE1234F" maxLength={10} />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Aadhaar Number (last 4 digits)</Label>
-              <Input value={form.aadhaar_number} onChange={(e) => setForm((p) => ({ ...p, aadhaar_number: e.target.value }))} placeholder="XXXX-XXXX-4567" />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Bank Account Number</Label>
-              <Input value={form.bank_account} onChange={(e) => setForm((p) => ({ ...p, bank_account: e.target.value }))} placeholder="1234567890" />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <Label>IFSC Code</Label>
-                <Input value={form.bank_ifsc} onChange={(e) => setForm((p) => ({ ...p, bank_ifsc: e.target.value.toUpperCase() }))} placeholder="HDFC0001234" />
+      <div className="flex items-center gap-2">
+        <span className="text-sm text-muted-foreground">Status:</span>
+        <Badge variant="outline" className={`font-semibold border-0 ${cfg.class}`}>
+          {cfg.label}
+        </Badge>
+      </div>
+
+      <div className="grid grid-cols-1 gap-6">
+        {/* Step 1: Upload Documents */}
+        <Card className={isLocked ? 'opacity-80' : ''}>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2"><FileText className="size-5 text-indigo-650" /> 1. Upload Document Proofs</CardTitle>
+            <CardDescription>Upload clear scans or photos (max 5MB, PDF/JPG/PNG).</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Identity Proof */}
+            <div className="border border-slate-100 dark:border-slate-800 rounded-xl p-4 bg-muted/10 space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="text-sm font-bold text-slate-800 dark:text-slate-200">Identity Proof</span>
+                  <span className="text-xs text-muted-foreground block">Aadhaar Card OR PAN Card</span>
+                </div>
+                {!isLocked && (
+                  <label className="flex items-center gap-1.5 bg-indigo-50 hover:bg-indigo-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-indigo-700 dark:text-indigo-400 font-semibold px-3 py-1.5 rounded-lg text-xs cursor-pointer transition-all">
+                    <Upload className="size-3.5" /> Select File
+                    <input
+                      type="file"
+                      accept=".pdf,.jpg,.jpeg,.png"
+                      className="hidden"
+                      onChange={(e) => e.target.files?.[0] && simulateUpload('id_proof', e.target.files[0].name)}
+                    />
+                  </label>
+                )}
               </div>
-              <div className="space-y-1.5">
-                <Label>Bank Name</Label>
-                <Input value={form.bank_name} onChange={(e) => setForm((p) => ({ ...p, bank_name: e.target.value }))} placeholder="HDFC Bank" />
-              </div>
+              {files.id_proof && (
+                <div className="text-xs flex flex-col gap-1.5 bg-background p-2.5 rounded-lg border border-slate-100 dark:border-slate-800">
+                  <div className="flex justify-between font-semibold">
+                    <span className="truncate">{files.id_proof.name}</span>
+                    <span>{files.id_proof.progress}%</span>
+                  </div>
+                  <div className="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                    <div className="bg-indigo-600 h-full rounded-full transition-all duration-200" style={{ width: `${files.id_proof.progress}%` }} />
+                  </div>
+                </div>
+              )}
             </div>
-            <Button type="submit" disabled={saveMutation.isPending || kyc?.status === 'approved'} className="w-full">
-              {saveMutation.isPending ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
-              {kyc ? 'Update KYC' : 'Submit for Review'}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+
+            {/* Address Proof */}
+            <div className="border border-slate-100 dark:border-slate-800 rounded-xl p-4 bg-muted/10 space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="text-sm font-bold text-slate-800 dark:text-slate-200">Address Proof</span>
+                  <span className="text-xs text-muted-foreground block">Utility Bill, Voter ID, or Aadhaar showing current address</span>
+                </div>
+                {!isLocked && (
+                  <label className="flex items-center gap-1.5 bg-indigo-50 hover:bg-indigo-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-indigo-700 dark:text-indigo-400 font-semibold px-3 py-1.5 rounded-lg text-xs cursor-pointer transition-all">
+                    <Upload className="size-3.5" /> Select File
+                    <input
+                      type="file"
+                      accept=".pdf,.jpg,.jpeg,.png"
+                      className="hidden"
+                      onChange={(e) => e.target.files?.[0] && simulateUpload('address_proof', e.target.files[0].name)}
+                    />
+                  </label>
+                )}
+              </div>
+              {files.address_proof && (
+                <div className="text-xs flex flex-col gap-1.5 bg-background p-2.5 rounded-lg border border-slate-100 dark:border-slate-800">
+                  <div className="flex justify-between font-semibold">
+                    <span className="truncate">{files.address_proof.name}</span>
+                    <span>{files.address_proof.progress}%</span>
+                  </div>
+                  <div className="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                    <div className="bg-indigo-600 h-full rounded-full transition-all duration-200" style={{ width: `${files.address_proof.progress}%` }} />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Property Proof */}
+            <div className="border border-slate-100 dark:border-slate-800 rounded-xl p-4 bg-muted/10 space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="text-sm font-bold text-slate-800 dark:text-slate-200">Property Proof</span>
+                  <span className="text-xs text-muted-foreground block">Ownership certificate OR rental agreement for PG premises</span>
+                </div>
+                {!isLocked && (
+                  <label className="flex items-center gap-1.5 bg-indigo-50 hover:bg-indigo-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-indigo-700 dark:text-indigo-400 font-semibold px-3 py-1.5 rounded-lg text-xs cursor-pointer transition-all">
+                    <Upload className="size-3.5" /> Select File
+                    <input
+                      type="file"
+                      accept=".pdf,.jpg,.jpeg,.png"
+                      className="hidden"
+                      onChange={(e) => e.target.files?.[0] && simulateUpload('ownership_proof', e.target.files[0].name)}
+                    />
+                  </label>
+                )}
+              </div>
+              {files.ownership_proof && (
+                <div className="text-xs flex flex-col gap-1.5 bg-background p-2.5 rounded-lg border border-slate-100 dark:border-slate-800">
+                  <div className="flex justify-between font-semibold">
+                    <span className="truncate">{files.ownership_proof.name}</span>
+                    <span>{files.ownership_proof.progress}%</span>
+                  </div>
+                  <div className="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                    <div className="bg-indigo-600 h-full rounded-full transition-all duration-200" style={{ width: `${files.ownership_proof.progress}%` }} />
+                  </div>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Step 2: Bank details */}
+        <Card className={isLocked ? 'opacity-80' : ''}>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2"><CreditCard className="size-5 text-indigo-650" /> 2. Bank Payout details</CardTitle>
+            <CardDescription>Enter details where you wish to receive payouts (disbursements calculated minus commission).</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={(e) => { e.preventDefault(); submitKycMutation.mutate() }} className="space-y-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="bankHolderName">Account Holder Name</Label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="bankHolderName"
+                    value={bankHolderName}
+                    onChange={(e) => setBankHolderName(e.target.value)}
+                    disabled={isLocked}
+                    placeholder="Suresh Patel"
+                    className="pl-9"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="bankAccountNumber">Bank Account Number</Label>
+                <div className="relative">
+                  <Building className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="bankAccountNumber"
+                    value={bankAccountNumber}
+                    onChange={(e) => setBankAccountNumber(e.target.value)}
+                    disabled={isLocked}
+                    placeholder="123456789012"
+                    className="pl-9"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="bankIfsc">IFSC Code</Label>
+                  <Input
+                    id="bankIfsc"
+                    value={bankIfsc}
+                    onChange={(e) => setBankIfsc(e.target.value.toUpperCase())}
+                    disabled={isLocked}
+                    placeholder="HDFC0001234"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="aadhaarNumber">Aadhaar Number (Optional)</Label>
+                  <Input
+                    id="aadhaarNumber"
+                    value={aadhaarNumber}
+                    onChange={(e) => setAadhaarNumber(e.target.value)}
+                    disabled={isLocked}
+                    placeholder="Last 4 digits only"
+                    maxLength={4}
+                  />
+                </div>
+              </div>
+
+              {!isLocked && (
+                <Button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-6" disabled={submitKycMutation.isPending}>
+                  {submitKycMutation.isPending ? <Loader2 className="size-5 animate-spin mr-2" /> : <Save className="size-5 mr-2" />}
+                  Submit for Verification
+                </Button>
+              )}
+            </form>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }

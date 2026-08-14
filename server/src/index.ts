@@ -93,6 +93,7 @@ import bookingRoutes from './routes/booking.js'
 import paymentRoutes from './routes/payment.js'
 import webhookRoutes from './routes/webhook.js'
 import notificationRoutes from './routes/notifications.js'
+import ownerOnboardingRoutes from './routes/ownerOnboarding.js'
 
 app.use('/api/auth', authRoutes)
 app.use('/api/pg', pgRoutes)
@@ -102,6 +103,7 @@ app.use('/api/booking', bookingRoutes)
 app.use('/api/payment', paymentRoutes)
 app.use('/api/webhook', webhookRoutes)
 app.use('/api/notifications', notificationRoutes)
+app.use('/', ownerOnboardingRoutes)
 
 // Error handler
 app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
