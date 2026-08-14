@@ -283,7 +283,7 @@ export function AdminListingInquiriesPage() {
 
       {/* Detailed Owner Inquiry Review Modal */}
       <Dialog open={!!reviewOwner} onOpenChange={(open) => { if (!open) setReviewOwner(null) }}>
-        <DialogContent className="max-w-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl">
+        <DialogContent className="max-w-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
               <ClipboardList className="size-5.5 text-indigo-600 dark:text-indigo-400" />

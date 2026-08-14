@@ -376,7 +376,7 @@ export function AdminOwnerInquiriesPage() {
 
       {/* Details Dialog */}
       <Dialog open={!!selectedInquiry} onOpenChange={(open) => !open && setSelectedInquiry(null)}>
-        <DialogContent className="max-w-xl">
+        <DialogContent className="max-w-xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold flex items-center gap-2">
               <Building className="h-5 w-5 text-indigo-600" /> Inquiry Details
