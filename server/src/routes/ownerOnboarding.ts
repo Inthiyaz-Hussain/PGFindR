@@ -2,6 +2,7 @@ import { Router } from 'express'
 import crypto from 'crypto'
 import { supabase } from '../index.js'
 import { authenticateToken, requireRole } from '../middleware/auth.js'
+import { sendMail } from '../utils/mailer.js'
 
 const router = Router()
 
@@ -220,16 +221,37 @@ router.put('/api/admin/owner-inquiries/:id/approve', authenticateToken, requireR
 
     const setPasswordLink = `${clientUrl}/owner/set-password?token=${token}`
     
+    const emailSubject = `SwiftPG - Your Owner Account Has Been Approved - Set Your Password`
+    const emailHtml = `
+      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
+        <h2 style="color: #4f46e5; margin-bottom: 20px;">Hello ${inquiry.full_name},</h2>
+        <p style="font-size: 16px; line-height: 1.6; color: #334155;">
+          Your PG listing inquiry for <strong>${inquiry.pg_name}</strong> in <strong>${inquiry.pg_city}</strong> has been reviewed and approved by the SwiftPG team.
+        </p>
+        <p style="font-size: 16px; line-height: 1.6; color: #334155; margin-top: 20px; margin-bottom: 20px;">
+          Please click the button below to configure your SwiftPG owner account password. This link is valid for 24 hours only:
+        </p>
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${setPasswordLink}" style="background-color: #4f46e5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 500; font-size: 16px; display: inline-block;">Set Your Password</a>
+        </div>
+        <p style="font-size: 14px; line-height: 1.6; color: #64748b; word-break: break-all;">
+          Or copy and paste this link in your browser:<br/>
+          <a href="${setPasswordLink}" style="color: #4f46e5;">${setPasswordLink}</a>
+        </p>
+        <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 30px 0;" />
+        <p style="font-size: 12px; line-height: 1.6; color: #94a3b8;">
+          If you did not request this, please ignore this email or contact support@swiftpg.in
+        </p>
+      </div>
+    `
+
     console.log(`\n=========================================`)
     console.log(`SIMULATING EMAIL DISPATCH TO OWNER: ${inquiry.email}`)
-    console.log(`Subject: SwiftPG - Your Owner Account Has Been Approved - Set Your Password`)
-    console.log(`Body:`)
-    console.log(`Hello ${inquiry.full_name},`)
-    console.log(`Your PG listing inquiry for "${inquiry.pg_name}" in "${inquiry.pg_city}" has been reviewed and approved by the SwiftPG team.`)
-    console.log(`Please click the button below to set your SwiftPG account password. This link is valid for 24 hours only.`)
+    console.log(`Subject: ${emailSubject}`)
     console.log(`Set Password Link: ${setPasswordLink}`)
-    console.log(`If you did not request this, please ignore this email or contact support@swiftpg.in`)
     console.log(`=========================================\n`)
+
+    await sendMail(inquiry.email, emailSubject, emailHtml)
 
     return res.json({
       message: 'Inquiry approved and Set Password email sent.',
@@ -312,15 +334,37 @@ router.put('/api/admin/owner-inquiries/:id/resend-email', authenticateToken, req
 
     const setPasswordLink = `${clientUrl}/owner/set-password?token=${token}`
 
+    const emailSubject = `SwiftPG - Your Owner Account Has Been Approved - Set Your Password (Resend)`
+    const emailHtml = `
+      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
+        <h2 style="color: #4f46e5; margin-bottom: 20px;">Hello ${inquiry.full_name},</h2>
+        <p style="font-size: 16px; line-height: 1.6; color: #334155;">
+          Your PG listing inquiry for <strong>${inquiry.pg_name}</strong> in <strong>${inquiry.pg_city}</strong> has been reviewed and approved by the SwiftPG team.
+        </p>
+        <p style="font-size: 16px; line-height: 1.6; color: #334155; margin-top: 20px; margin-bottom: 20px;">
+          Please click the button below to configure your SwiftPG owner account password. This link is valid for 24 hours only:
+        </p>
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${setPasswordLink}" style="background-color: #4f46e5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 500; font-size: 16px; display: inline-block;">Set Your Password</a>
+        </div>
+        <p style="font-size: 14px; line-height: 1.6; color: #64748b; word-break: break-all;">
+          Or copy and paste this link in your browser:<br/>
+          <a href="${setPasswordLink}" style="color: #4f46e5;">${setPasswordLink}</a>
+        </p>
+        <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 30px 0;" />
+        <p style="font-size: 12px; line-height: 1.6; color: #94a3b8;">
+          If you did not request this, please ignore this email or contact support@swiftpg.in
+        </p>
+      </div>
+    `
+
     console.log(`\n=========================================`)
     console.log(`SIMULATING EMAIL DISPATCH (RESEND) TO OWNER: ${inquiry.email}`)
-    console.log(`Subject: SwiftPG - Your Owner Account Has Been Approved - Set Your Password`)
-    console.log(`Body:`)
-    console.log(`Hello ${inquiry.full_name},`)
-    console.log(`Your PG listing inquiry for "${inquiry.pg_name}" in "${inquiry.pg_city}" has been reviewed and approved by the SwiftPG team.`)
-    console.log(`Please click the button below to set your SwiftPG account password. This link is valid for 24 hours only.`)
+    console.log(`Subject: ${emailSubject}`)
     console.log(`Set Password Link: ${setPasswordLink}`)
     console.log(`=========================================\n`)
+
+    await sendMail(inquiry.email, emailSubject, emailHtml)
 
     return res.json({
       message: 'Set Password email resent successfully',
