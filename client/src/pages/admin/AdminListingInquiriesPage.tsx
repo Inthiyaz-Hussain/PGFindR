@@ -10,8 +10,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { Empty, EmptyMedia, EmptyTitle, EmptyDescription } from '@/components/ui/empty'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { supabaseUntyped, supabase } from '@/lib/supabase'
+import { supabaseUntyped } from '@/lib/supabase'
 import { toast } from 'sonner'
+import { useAuth } from '@/hooks/useAuth'
 
 const ITEMS_PER_PAGE = 10
 
@@ -37,6 +38,7 @@ interface PendingOwner {
 export function AdminListingInquiriesPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const queryClient = useQueryClient()
+  const { session } = useAuth()
   const [selectedOwner, setSelectedOwner] = useState<PendingOwner | null>(null)
   const [reviewOwner, setReviewOwner] = useState<PendingOwner | null>(null)
   const [generatedLink, setGeneratedLink] = useState<string | null>(null)
@@ -77,7 +79,6 @@ export function AdminListingInquiriesPage() {
 
   const verifyMutation = useMutation({
     mutationFn: async (ownerId: string) => {
-      const { data: { session } } = await supabase.auth.getSession()
       if (!session) throw new Error('Not authenticated')
 
       const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001'

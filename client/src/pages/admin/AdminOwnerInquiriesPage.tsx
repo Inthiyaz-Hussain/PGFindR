@@ -26,8 +26,8 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Empty, EmptyMedia, EmptyTitle, EmptyDescription } from '@/components/ui/empty'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
+import { useAuth } from '@/hooks/useAuth'
 
 const STATUS_CONFIG: Record<string, { label: string; class: string }> = {
   pending_admin_review: { label: 'Pending Review', class: 'bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400' },
@@ -75,14 +75,9 @@ export function AdminOwnerInquiriesPage() {
   const cityFilter = searchParams.get('city') || 'all'
   const searchQuery = searchParams.get('search') || ''
 
-  // Fetch Session for Auth Header
-  const { data: sessionData } = useQuery({
-    queryKey: ['session'],
-    queryFn: async () => {
-      const { data } = await supabase.auth.getSession()
-      return data.session
-    }
-  })
+  // Fetch Session from auth hook
+  const { session } = useAuth()
+  const sessionData = session
 
   // Fetch inquiries from backend
   const { data: inquiriesData, isLoading, refetch } = useQuery({

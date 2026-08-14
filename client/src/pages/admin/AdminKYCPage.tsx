@@ -10,8 +10,8 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Empty, EmptyMedia, EmptyTitle, EmptyDescription } from '@/components/ui/empty'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
+import { useAuth } from '@/hooks/useAuth'
 import { cn } from '@/lib/utils'
 
 interface KYCSubmission {
@@ -43,14 +43,9 @@ export function AdminKYCPage() {
     ownership_proof: false
   })
 
-  // Fetch Session for Auth Header
-  const { data: sessionData } = useQuery({
-    queryKey: ['session'],
-    queryFn: async () => {
-      const { data } = await supabase.auth.getSession()
-      return data.session
-    }
-  })
+  // Fetch Session from auth hook
+  const { session } = useAuth()
+  const sessionData = session
 
   // Fetch KYC queue
   const { data: kycQueue, isLoading, refetch } = useQuery({

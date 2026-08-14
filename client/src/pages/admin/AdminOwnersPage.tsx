@@ -11,9 +11,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Textarea } from '@/components/ui/textarea'
 import { Empty, EmptyMedia, EmptyTitle, EmptyDescription } from '@/components/ui/empty'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { supabaseUntyped, supabase } from '@/lib/supabase'
+import { supabaseUntyped } from '@/lib/supabase'
 import type { KYCStatus, Profile } from '@/types'
 import { toast } from 'sonner'
+import { useAuth } from '@/hooks/useAuth'
 
 const KYC_STATUS_CONFIG: Record<KYCStatus, { label: string; class: string }> = {
   pending: { label: 'Pending', class: 'bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-400' },
@@ -43,6 +44,7 @@ interface OwnerWithDetails extends Profile {
 export function AdminOwnersPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const queryClient = useQueryClient()
+  const { session } = useAuth()
   const [selectedOwner, setSelectedOwner] = useState<OwnerWithDetails | null>(null)
   const [kycNote, setKycNote] = useState('')
   const [generatedLink, setGeneratedLink] = useState<string | null>(null)
@@ -151,7 +153,6 @@ export function AdminOwnersPage() {
 
   const verifyOwnerMutation = useMutation({
     mutationFn: async ({ ownerId, verify }: { ownerId: string; email?: string | null; verify: boolean }) => {
-      const { data: { session } } = await supabase.auth.getSession()
       if (!session) throw new Error('Not authenticated')
 
       const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001'
