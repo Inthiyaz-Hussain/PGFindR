@@ -206,8 +206,18 @@ router.put('/api/admin/owner-inquiries/:id/approve', authenticateToken, requireR
 
     if (updateErr) throw updateErr
 
-    // Simulate Email Dispatch
-    const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173'
+    // Determine client URL dynamically from request origin/referer if available
+    let clientUrl = process.env.CLIENT_URL
+    if (!clientUrl && req.headers.origin) {
+      clientUrl = req.headers.origin
+    }
+    if (!clientUrl && req.headers.referer) {
+      try {
+        clientUrl = new URL(req.headers.referer).origin
+      } catch (e) {}
+    }
+    clientUrl = clientUrl || 'http://localhost:5173'
+
     const setPasswordLink = `${clientUrl}/owner/set-password?token=${token}`
     
     console.log(`\n=========================================`)
@@ -288,7 +298,18 @@ router.put('/api/admin/owner-inquiries/:id/resend-email', authenticateToken, req
 
     if (updateErr) throw updateErr
 
-    const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173'
+    // Determine client URL dynamically from request origin/referer if available
+    let clientUrl = process.env.CLIENT_URL
+    if (!clientUrl && req.headers.origin) {
+      clientUrl = req.headers.origin
+    }
+    if (!clientUrl && req.headers.referer) {
+      try {
+        clientUrl = new URL(req.headers.referer).origin
+      } catch (e) {}
+    }
+    clientUrl = clientUrl || 'http://localhost:5173'
+
     const setPasswordLink = `${clientUrl}/owner/set-password?token=${token}`
 
     console.log(`\n=========================================`)
