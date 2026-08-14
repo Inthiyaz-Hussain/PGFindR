@@ -376,7 +376,7 @@ export function AdminOwnerInquiriesPage() {
 
       {/* Details Dialog */}
       <Dialog open={!!selectedInquiry} onOpenChange={(open) => !open && setSelectedInquiry(null)}>
-        <DialogContent className="max-w-xl max-h-[85vh] overflow-y-auto">
+        <DialogContent className="max-w-xl">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold flex items-center gap-2">
               <Building className="h-5 w-5 text-indigo-600" /> Inquiry Details
@@ -387,92 +387,94 @@ export function AdminOwnerInquiriesPage() {
           </DialogHeader>
 
           {selectedInquiry && (
-            <div className="space-y-5 pt-2">
-              {/* Owner Info Grid */}
-              <div className="grid grid-cols-2 gap-4 rounded-xl border border-slate-100 dark:border-slate-800 p-4 bg-muted/20 text-sm">
-                <div>
-                  <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider block">Full Name</span>
-                  <span className="font-semibold text-slate-800 dark:text-slate-200">{selectedInquiry.full_name}</span>
-                </div>
-                <div>
-                  <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider block">Google Verified</span>
-                  <Badge variant="outline" className="bg-green-50 border-green-200 text-green-700 font-bold uppercase text-[10px] mt-0.5">YES</Badge>
-                </div>
-                <div>
-                  <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider block">Email Address</span>
-                  <span className="font-medium">{selectedInquiry.email}</span>
-                </div>
-                <div>
-                  <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider block">Mobile Number</span>
-                  <span className="font-medium">{selectedInquiry.mobile}</span>
-                </div>
-                <div className="col-span-2">
-                  <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider block">Google UID</span>
-                  <code className="text-xs text-slate-500 block truncate">{selectedInquiry.google_uid || 'N/A'}</code>
-                </div>
-              </div>
-
-              {/* PG Details */}
-              <div className="space-y-3">
-                <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
-                  <MapPin className="h-4 w-4 text-indigo-500" /> PG Listing Target
-                </h3>
-                <div className="grid grid-cols-2 gap-4 border border-slate-100 dark:border-slate-800 p-4 rounded-xl text-sm">
+            <div className="flex flex-col gap-4">
+              <div className="overflow-y-auto max-h-[50vh] pr-2 -mr-2 space-y-4 pt-1">
+                {/* Owner Info Grid */}
+                <div className="grid grid-cols-2 gap-4 rounded-xl border border-slate-100 dark:border-slate-800 p-4 bg-muted/20 text-sm">
                   <div>
-                    <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider block">PG Name</span>
-                    <span className="font-semibold text-slate-800 dark:text-slate-200">{selectedInquiry.pg_name}</span>
+                    <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider block">Full Name</span>
+                    <span className="font-semibold text-slate-800 dark:text-slate-200">{selectedInquiry.full_name}</span>
                   </div>
                   <div>
-                    <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider block">PG City</span>
-                    <span className="font-semibold text-slate-800 dark:text-slate-200">{selectedInquiry.pg_city}</span>
+                    <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider block">Google Verified</span>
+                    <Badge variant="outline" className="bg-green-50 border-green-200 text-green-700 font-bold uppercase text-[10px] mt-0.5">YES</Badge>
+                  </div>
+                  <div>
+                    <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider block">Email Address</span>
+                    <span className="font-medium">{selectedInquiry.email}</span>
+                  </div>
+                  <div>
+                    <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider block">Mobile Number</span>
+                    <span className="font-medium">{selectedInquiry.mobile}</span>
                   </div>
                   <div className="col-span-2">
-                    <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider block">PG Address</span>
-                    <span className="text-slate-700 dark:text-slate-350">{selectedInquiry.pg_address}</span>
+                    <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider block">Google UID</span>
+                    <code className="text-xs text-slate-500 block truncate">{selectedInquiry.google_uid || 'N/A'}</code>
                   </div>
-                  <div>
-                    <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider block">Rooms count</span>
-                    <span className="font-medium">{selectedInquiry.room_count} rooms</span>
-                  </div>
-                  <div>
-                    <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider block">Beds count</span>
-                    <span className="font-medium">{selectedInquiry.bed_count} beds</span>
-                  </div>
-                  {selectedInquiry.referral_source && (
+                </div>
+
+                {/* PG Details */}
+                <div className="space-y-3">
+                  <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
+                    <MapPin className="h-4 w-4 text-indigo-500" /> PG Listing Target
+                  </h3>
+                  <div className="grid grid-cols-2 gap-4 border border-slate-100 dark:border-slate-800 p-4 rounded-xl text-sm">
+                    <div>
+                      <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider block">PG Name</span>
+                      <span className="font-semibold text-slate-800 dark:text-slate-200">{selectedInquiry.pg_name}</span>
+                    </div>
+                    <div>
+                      <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider block">PG City</span>
+                      <span className="font-semibold text-slate-800 dark:text-slate-200">{selectedInquiry.pg_city}</span>
+                    </div>
                     <div className="col-span-2">
-                      <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider block">Referral Source</span>
-                      <span className="font-medium">{selectedInquiry.referral_source}</span>
+                      <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider block">PG Address</span>
+                      <span className="text-slate-700 dark:text-slate-350">{selectedInquiry.pg_address}</span>
+                    </div>
+                    <div>
+                      <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider block">Rooms count</span>
+                      <span className="font-medium">{selectedInquiry.room_count} rooms</span>
+                    </div>
+                    <div>
+                      <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider block">Beds count</span>
+                      <span className="font-medium">{selectedInquiry.bed_count} beds</span>
+                    </div>
+                    {selectedInquiry.referral_source && (
+                      <div className="col-span-2">
+                        <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider block">Referral Source</span>
+                        <span className="font-medium">{selectedInquiry.referral_source}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Date & Token Tracker */}
+                <div className="border border-slate-100 dark:border-slate-850 rounded-xl p-4 text-xs space-y-2 bg-muted/10">
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground flex items-center gap-1"><Calendar className="h-3.5 w-3.5 text-indigo-500" /> Submitted At:</span>
+                    <span className="font-semibold">{new Date(selectedInquiry.created_at).toLocaleString('en-IN')}</span>
+                  </div>
+                  {selectedInquiry.reset_token && (
+                    <div className="flex flex-col gap-1 border-t pt-2 mt-2">
+                      <span className="text-muted-foreground font-semibold">Active Invitation Link:</span>
+                      <code className="bg-muted px-2 py-1.5 rounded text-xs select-all text-indigo-650 dark:text-indigo-400 block truncate">
+                        {window.location.origin}/owner/set-password?token={selectedInquiry.reset_token}
+                      </code>
+                      <span className="text-[10px] text-muted-foreground">Expires: {new Date(selectedInquiry.reset_token_expires_at || '').toLocaleString('en-IN')}</span>
                     </div>
                   )}
                 </div>
-              </div>
 
-              {/* Date & Token Tracker */}
-              <div className="border border-slate-100 dark:border-slate-850 rounded-xl p-4 text-xs space-y-2 bg-muted/10">
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground flex items-center gap-1"><Calendar className="h-3.5 w-3.5 text-indigo-500" /> Submitted At:</span>
-                  <span className="font-semibold">{new Date(selectedInquiry.created_at).toLocaleString('en-IN')}</span>
+                {/* Admin Notes */}
+                <div className="space-y-1.5">
+                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 block">Admin Review Notes</span>
+                  <Textarea
+                    placeholder="Add notes for internal reference, or rejection reasons..."
+                    value={adminNotes}
+                    onChange={(e) => setFormNotes(e.target.value)}
+                    rows={2}
+                  />
                 </div>
-                {selectedInquiry.reset_token && (
-                  <div className="flex flex-col gap-1 border-t pt-2 mt-2">
-                    <span className="text-muted-foreground font-semibold">Active Invitation Link:</span>
-                    <code className="bg-muted px-2 py-1.5 rounded text-xs select-all text-indigo-650 dark:text-indigo-400 block truncate">
-                      {window.location.origin}/owner/set-password?token={selectedInquiry.reset_token}
-                    </code>
-                    <span className="text-[10px] text-muted-foreground">Expires: {new Date(selectedInquiry.reset_token_expires_at || '').toLocaleString('en-IN')}</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Admin Notes */}
-              <div className="space-y-1.5">
-                <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 block">Admin Review Notes</span>
-                <Textarea
-                  placeholder="Add notes for internal reference, or rejection reasons..."
-                  value={adminNotes}
-                  onChange={(e) => setFormNotes(e.target.value)}
-                  rows={2}
-                />
               </div>
 
               {/* Action buttons */}
