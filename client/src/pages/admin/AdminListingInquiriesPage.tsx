@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { ClipboardList, Search, ChevronLeft, ChevronRight, CheckCircle, Loader2, Link2, Copy, Check } from 'lucide-react'
+import { ClipboardList, Search, ChevronLeft, ChevronRight, CheckCircle, Loader2, Link2, Copy, Check, Eye, User, Phone, Mail, MapPin, Building, ShieldAlert } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -38,6 +38,7 @@ export function AdminListingInquiriesPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const queryClient = useQueryClient()
   const [selectedOwner, setSelectedOwner] = useState<PendingOwner | null>(null)
+  const [reviewOwner, setReviewOwner] = useState<PendingOwner | null>(null)
   const [generatedLink, setGeneratedLink] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
 
@@ -105,6 +106,7 @@ export function AdminListingInquiriesPage() {
       if (owner) {
         setSelectedOwner(owner)
       }
+      setReviewOwner(null) // Close the review dialog
       if (data.actionLink) {
         setGeneratedLink(data.actionLink)
       } else {
@@ -217,16 +219,12 @@ export function AdminListingInquiriesPage() {
                         <TableCell className="text-right">
                           <Button
                             size="sm"
-                            className="bg-indigo-600 hover:bg-indigo-700 text-white"
-                            onClick={() => verifyMutation.mutate(owner.id)}
-                            disabled={verifyMutation.isPending}
+                            variant="outline"
+                            onClick={() => setReviewOwner(owner)}
+                            className="border-slate-200 text-slate-700 dark:border-slate-800 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
                           >
-                            {verifyMutation.isPending && verifyMutation.variables === owner.id ? (
-                              <Loader2 className="size-3.5 animate-spin mr-1.5" />
-                            ) : (
-                              <ClipboardList className="size-3.5 mr-1.5" />
-                            )}
-                            Verify & Send Link
+                            <Eye className="size-3.5 mr-1.5" />
+                            Open Inquiry
                           </Button>
                         </TableCell>
                       </TableRow>
@@ -282,16 +280,126 @@ export function AdminListingInquiriesPage() {
         </CardContent>
       </Card>
 
+      {/* Detailed Owner Inquiry Review Modal */}
+      <Dialog open={!!reviewOwner} onOpenChange={(open) => { if (!open) setReviewOwner(null) }}>
+        <DialogContent className="max-w-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+              <ClipboardList className="size-5.5 text-indigo-600 dark:text-indigo-400" />
+              PG Listing Inquiry Details
+            </DialogTitle>
+            <DialogDescription className="text-slate-500 dark:text-slate-400">
+              Below are the exact details submitted by the owner in the registration form. Please review carefully before granting dashboard access.
+            </DialogDescription>
+          </DialogHeader>
+
+          {reviewOwner && (() => {
+            const pg = Array.isArray(reviewOwner.pg_listings) 
+              ? reviewOwner.pg_listings[0] 
+              : reviewOwner.pg_listings
+
+            return (
+              <div className="space-y-5 py-2">
+                {/* Profile Information Block */}
+                <div className="space-y-3.5 p-4 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800">
+                  <h4 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                    Owner Details
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-y-3 gap-x-4 text-sm">
+                    <div className="space-y-0.5">
+                      <span className="text-xs text-muted-foreground flex items-center gap-1">
+                        <User className="size-3" /> Full Name
+                      </span>
+                      <span className="font-semibold text-slate-800 dark:text-slate-200">{reviewOwner.full_name}</span>
+                    </div>
+                    <div className="space-y-0.5">
+                      <span className="text-xs text-muted-foreground flex items-center gap-1">
+                        <Mail className="size-3" /> Email Address
+                      </span>
+                      <span className="font-semibold text-slate-800 dark:text-slate-200 select-all">{reviewOwner.email || '—'}</span>
+                    </div>
+                    <div className="space-y-0.5">
+                      <span className="text-xs text-muted-foreground flex items-center gap-1">
+                        <Phone className="size-3" /> Mobile Number
+                      </span>
+                      <span className="font-semibold text-slate-800 dark:text-slate-200">{reviewOwner.phone || '—'}</span>
+                    </div>
+                    <div className="space-y-0.5">
+                      <span className="text-xs text-muted-foreground flex items-center gap-1">
+                        <Phone className="size-3" /> Alternate Mobile
+                      </span>
+                      <span className="font-semibold text-slate-800 dark:text-slate-200">{reviewOwner.phone_alternate || '—'}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Listing Details Block */}
+                <div className="space-y-3.5 p-4 rounded-xl bg-indigo-50/20 dark:bg-slate-950 border border-indigo-100/30 dark:border-slate-800">
+                  <h4 className="text-xs font-bold text-indigo-600/80 dark:text-indigo-400/80 uppercase tracking-wider">
+                    PG Listing Information
+                  </h4>
+                  <div className="space-y-3 text-sm">
+                    <div className="space-y-0.5">
+                      <span className="text-xs text-muted-foreground flex items-center gap-1">
+                        <Building className="size-3" /> Proposed PG Name
+                      </span>
+                      <span className="font-semibold text-indigo-700 dark:text-indigo-400 text-base">{pg?.name || 'Pending Onboarding'}</span>
+                    </div>
+                    <div className="space-y-0.5">
+                      <span className="text-xs text-muted-foreground flex items-center gap-1">
+                        <MapPin className="size-3" /> Address & Location
+                      </span>
+                      <span className="font-semibold text-slate-800 dark:text-slate-200 leading-relaxed block">{pg?.address || '—'}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Identity Verification Alert */}
+                <div className="flex items-start gap-3 p-3 rounded-lg border border-yellow-100 bg-yellow-50/30 dark:border-yellow-950/20 dark:bg-yellow-950/10 text-xs">
+                  <ShieldAlert className="size-4.5 text-yellow-600 dark:text-yellow-500 shrink-0 mt-0.5" />
+                  <div className="text-slate-600 dark:text-slate-400 space-y-1">
+                    <span className="font-bold text-slate-700 dark:text-slate-300">Identity Status: </span>
+                    {reviewOwner.google_verified ? (
+                      <span>The user has completed verification through Google Auth.</span>
+                    ) : (
+                      <span>The user has not yet completed Google Authentication. Verification is recommended after Google Auth completes.</span>
+                    )}
+                  </div>
+                </div>
+
+                <DialogFooter className="gap-2 sm:gap-0 pt-2 border-t border-slate-100 dark:border-slate-800">
+                  <Button variant="ghost" onClick={() => setReviewOwner(null)}>
+                    Cancel
+                  </Button>
+                  <Button
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold"
+                    onClick={() => verifyMutation.mutate(reviewOwner.id)}
+                    disabled={verifyMutation.isPending}
+                  >
+                    {verifyMutation.isPending ? (
+                      <Loader2 className="size-4 animate-spin mr-1.5" />
+                    ) : (
+                      <CheckCircle className="size-4 mr-1.5" />
+                    )}
+                    Approve & Send Verification Mail
+                  </Button>
+                </DialogFooter>
+              </div>
+            )
+          })()}
+        </DialogContent>
+      </Dialog>
+
       {/* Verification Success Link Modal */}
       <Dialog open={!!generatedLink} onOpenChange={(open) => { if (!open) setGeneratedLink(null) }}>
-        <DialogContent className="max-w-md bg-white dark:bg-slate-900">
+        <DialogContent className="max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Link2 className="size-5 text-green-600" />
+            <DialogTitle className="flex items-center gap-2 text-lg font-bold text-slate-900 dark:text-slate-100">
+              <Link2 className="size-5 text-green-600 dark:text-green-400" />
               Password Setup Recovery Link
             </DialogTitle>
-            <DialogDescription>
-              The owner profile for <strong className="text-foreground">{selectedOwner?.full_name}</strong> has been verified. A password setup email has been simulated. You can also copy the recovery link below manually:
+            <DialogDescription className="text-slate-500 dark:text-slate-400">
+              The owner profile for <strong className="text-slate-900 dark:text-slate-100">{selectedOwner?.full_name}</strong> has been successfully verified! A simulated password setup email has been dispatched. You may also copy the recovery link manually below:
             </DialogDescription>
           </DialogHeader>
 
@@ -307,7 +415,7 @@ export function AdminListingInquiriesPage() {
           )}
 
           <DialogFooter className="mt-4">
-            <Button className="bg-slate-900 text-white hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-200" onClick={() => setGeneratedLink(null)}>
+            <Button className="bg-slate-900 text-white hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-200 font-semibold" onClick={() => setGeneratedLink(null)}>
               Done
             </Button>
           </DialogFooter>
