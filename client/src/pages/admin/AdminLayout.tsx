@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
-import { LayoutDashboard, Users, UserCheck, CreditCard, Percent, LogOut, ChevronDown, ChevronRight, Building, User, Settings, History, ShieldCheck } from 'lucide-react'
+import { LayoutDashboard, Users, UserCheck, CreditCard, Percent, LogOut, ChevronDown, ChevronRight, Building, User, Settings, History, ShieldCheck, FileText } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { useAuth } from '@/hooks/useAuth'
@@ -22,6 +22,7 @@ const NAV_GROUPS = [
     items: [
       { to: '/admin/pgs', label: 'PG Listings', icon: Building, end: false },
       { to: '/admin/owners', label: 'Owners', icon: UserCheck, end: false },
+      { to: '/admin/listing-inquiries', label: 'Listing Inquiries', icon: FileText, end: false },
       { to: '/admin/kyc', label: 'KYC Review', icon: ShieldCheck, end: false },
       { to: '/admin/users', label: 'Seekers', icon: Users, end: false },
     ],
@@ -124,8 +125,8 @@ export function AdminLayout() {
         {[
           { to: '/admin', label: 'Dashboard', icon: LayoutDashboard, end: true },
           { to: '/admin/pgs', label: 'PGs', icon: Building, end: false },
+          { to: '/admin/listing-inquiries', label: 'Inquiries', icon: FileText, end: false },
           { to: '/admin/owners', label: 'Owners', icon: UserCheck, end: false },
-          { to: '/admin/users', label: 'Seekers', icon: Users, end: false },
           { to: '/admin/transactions', label: 'Financials', icon: CreditCard, end: false },
         ].map(({ to, label, icon: Icon, end }) => {
           return (

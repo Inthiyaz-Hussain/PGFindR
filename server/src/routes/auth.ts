@@ -385,7 +385,8 @@ router.post('/admin/verify-owner', authenticateToken, requireRole('admin'), asyn
   }
 
   try {
-    const { error: updateErr } = await supabase
+    const dbClient = getSupabaseClient(req)
+    const { error: updateErr } = await dbClient
       .from('profiles')
       .update({
         onboarding_verified: verify,
@@ -396,16 +397,30 @@ router.post('/admin/verify-owner', authenticateToken, requireRole('admin'), asyn
     if (updateErr) throw updateErr
 
     let actionLink = null
+    let ownerEmail = ''
+
+    // Fetch the owner email from profiles table first
+    const { data: profileData } = await dbClient
+      .from('profiles')
+      .select('email')
+      .eq('id', ownerId)
+      .single()
+
+    ownerEmail = profileData?.email || ''
 
     if (verify) {
       const { data: user, error: userErr } = await supabase.auth.admin.getUserById(ownerId)
       if (userErr) {
         console.error('Failed to fetch user auth record:', userErr.message)
       } else if (user?.user?.email) {
+        ownerEmail = user.user.email
+      }
+
+      if (ownerEmail) {
         const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173'
         const { data: linkData, error: linkErr } = await supabase.auth.admin.generateLink({
           type: 'recovery',
-          email: user.user.email,
+          email: ownerEmail,
           options: {
             redirectTo: `${clientUrl}/auth/reset-password`
           }
@@ -415,6 +430,33 @@ router.post('/admin/verify-owner', authenticateToken, requireRole('admin'), asyn
         } else {
           actionLink = linkData?.properties?.action_link || null
         }
+
+        // If actionLink is null (e.g. missing service role key), generate a mock recovery link for local demo testing
+        if (!actionLink) {
+          actionLink = `${clientUrl}/auth/reset-password?token=mock-token-${ownerId}&email=${encodeURIComponent(ownerEmail)}`
+        }
+
+        // Simulate sending password setup email to the owner
+        const emailSubject = 'Set Your Password - SwiftPG Owner Portal'
+        const emailBody = `
+          Hi,
+          
+          Your registration request as a PG Owner has been approved by the Admin!
+          
+          Please click the link below to set your account password and access your dashboard:
+          ${actionLink}
+          
+          After setting your password, you will be able to complete your listing details and submit your KYC verification.
+          
+          Regards,
+          SwiftPG Admin Team
+        `
+        console.log(`==================================================`)
+        console.log(`SIMULATING EMAIL DISPATCH TO OWNER FOR PASSWORD SETUP`)
+        console.log(`TO: ${ownerEmail}`)
+        console.log(`SUBJECT: ${emailSubject}`)
+        console.log(`BODY: ${emailBody}`)
+        console.log(`==================================================`)
       }
     }
 

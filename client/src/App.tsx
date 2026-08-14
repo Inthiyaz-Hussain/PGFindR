@@ -57,6 +57,7 @@ import { AdminUsersPage } from '@/pages/admin/AdminUsersPage'
 import { AdminPlatformSettingsPage } from '@/pages/admin/AdminPlatformSettingsPage'
 import { AdminAuditLogsPage } from '@/pages/admin/AdminAuditLogsPage'
 import { AdminKYCPage } from '@/pages/admin/AdminKYCPage'
+import { AdminListingInquiriesPage } from '@/pages/admin/AdminListingInquiriesPage'
 
 export function App() {
   return (
@@ -133,6 +134,7 @@ export function App() {
                   <Route path="/admin/pgs/new" element={<PGFormPage />} />
                   <Route path="/admin/pgs/:id/edit" element={<PGFormPage />} />
                   <Route path="/admin/owners" element={<AdminOwnersPage />} />
+                  <Route path="/admin/listing-inquiries" element={<AdminListingInquiriesPage />} />
                   <Route path="/admin/transactions" element={<AdminTransactionsPage />} />
                   <Route path="/admin/commission" element={<AdminCommissionPage />} />
                   <Route path="/admin/users" element={<AdminUsersPage />} />
