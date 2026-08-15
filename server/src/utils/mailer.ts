@@ -1,5 +1,7 @@
 import nodemailer from 'nodemailer'
 
+let transporterInstance: nodemailer.Transporter | null = null
+
 /**
  * Sends a real email using Nodemailer if SMTP credentials are configured in .env.
  * Falls back gracefully to console log simulation if credentials are missing.
@@ -21,17 +23,22 @@ export async function sendMail(to: string, subject: string, htmlContent: string)
   }
 
   try {
-    const transporter = nodemailer.createTransport({
-      host: smtpHost,
-      port: Number(process.env.SMTP_PORT || 587),
-      secure: Number(process.env.SMTP_PORT || 587) === 465,
-      auth: {
-        user: smtpUser,
-        pass: smtpPass,
-      },
-    })
+    if (!transporterInstance) {
+      transporterInstance = nodemailer.createTransport({
+        host: smtpHost,
+        port: Number(process.env.SMTP_PORT || 587),
+        secure: Number(process.env.SMTP_PORT || 587) === 465,
+        auth: {
+          user: smtpUser,
+          pass: smtpPass,
+        },
+        pool: true, // Enable connection pooling
+        maxConnections: 3, // Keep up to 3 open connections
+        maxMessages: 100, // Close connection after 100 messages
+      })
+    }
 
-    const info = await transporter.sendMail({
+    const info = await transporterInstance.sendMail({
       from: process.env.SMTP_FROM || `"SwiftPG Admin" <${smtpUser}>`,
       to,
       subject,
@@ -42,6 +49,9 @@ export async function sendMail(to: string, subject: string, htmlContent: string)
     return true
   } catch (err: any) {
     console.error(`❌ Failed to send email to ${to}:`, err.message || err)
+    // If there is an authentication or network error, reset the transporter instance so it recreates on next attempt
+    transporterInstance = null
     return false
   }
 }
+
