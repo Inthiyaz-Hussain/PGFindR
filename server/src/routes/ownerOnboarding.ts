@@ -251,10 +251,13 @@ router.put('/api/admin/owner-inquiries/:id/approve', authenticateToken, requireR
     console.log(`Set Password Link: ${setPasswordLink}`)
     console.log(`=========================================\n`)
 
-    await sendMail(inquiry.email, emailSubject, emailHtml)
+    const emailSent = await sendMail(inquiry.email, emailSubject, emailHtml)
 
     return res.json({
-      message: 'Inquiry approved and Set Password email sent.',
+      message: emailSent
+        ? 'Inquiry approved and Set Password email sent.'
+        : 'Inquiry approved, but email dispatch failed (please share the invitation link manually).',
+      emailSent,
       token,
       email: inquiry.email
     })
@@ -364,10 +367,13 @@ router.put('/api/admin/owner-inquiries/:id/resend-email', authenticateToken, req
     console.log(`Set Password Link: ${setPasswordLink}`)
     console.log(`=========================================\n`)
 
-    await sendMail(inquiry.email, emailSubject, emailHtml)
+    const emailSent = await sendMail(inquiry.email, emailSubject, emailHtml)
 
     return res.json({
-      message: 'Set Password email resent successfully',
+      message: emailSent
+        ? 'Set Password email resent successfully'
+        : 'Set Password email token updated, but email dispatch failed (please share the invitation link manually).',
+      emailSent,
       token,
       email: inquiry.email
     })

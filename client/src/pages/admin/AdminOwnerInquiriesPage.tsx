@@ -127,7 +127,13 @@ export function AdminOwnerInquiriesPage() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['admin-owner-inquiries'] })
-      toast.success('Inquiry approved successfully!')
+      if (data.emailSent === false) {
+        toast.warning('Approved, but email dispatch failed. Copy and share the link manually!', {
+          duration: 8000,
+        })
+      } else {
+        toast.success('Inquiry approved successfully!')
+      }
       
       // Update selected modal details
       if (selectedInquiry) {
@@ -187,7 +193,13 @@ export function AdminOwnerInquiriesPage() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['admin-owner-inquiries'] })
-      toast.success('Set Password email resent successfully!')
+      if (data.emailSent === false) {
+        toast.warning('Token regenerated, but email dispatch failed. Copy and share the link manually!', {
+          duration: 8000,
+        })
+      } else {
+        toast.success('Set Password email resent successfully!')
+      }
       if (selectedInquiry) {
         setSelectedInquiry((prev) => prev ? { ...prev, reset_token: data.token } : null)
       }
