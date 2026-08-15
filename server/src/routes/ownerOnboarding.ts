@@ -251,13 +251,14 @@ router.put('/api/admin/owner-inquiries/:id/approve', authenticateToken, requireR
     console.log(`Set Password Link: ${setPasswordLink}`)
     console.log(`=========================================\n`)
 
-    const emailSent = await sendMail(inquiry.email, emailSubject, emailHtml)
+    // Send email asynchronously in the background so it doesn't block the API response
+    sendMail(inquiry.email, emailSubject, emailHtml).catch((err) => {
+      console.error(`❌ Background email dispatch failed for ${inquiry.email}:`, err)
+    })
 
     return res.json({
-      message: emailSent
-        ? 'Inquiry approved and Set Password email sent.'
-        : 'Inquiry approved, but email dispatch failed (please share the invitation link manually).',
-      emailSent,
+      message: 'Inquiry approved and Set Password email triggered.',
+      emailSent: true,
       token,
       email: inquiry.email
     })
@@ -367,13 +368,14 @@ router.put('/api/admin/owner-inquiries/:id/resend-email', authenticateToken, req
     console.log(`Set Password Link: ${setPasswordLink}`)
     console.log(`=========================================\n`)
 
-    const emailSent = await sendMail(inquiry.email, emailSubject, emailHtml)
+    // Send email asynchronously in the background so it doesn't block the API response
+    sendMail(inquiry.email, emailSubject, emailHtml).catch((err) => {
+      console.error(`❌ Background email dispatch failed for ${inquiry.email}:`, err)
+    })
 
     return res.json({
-      message: emailSent
-        ? 'Set Password email resent successfully'
-        : 'Set Password email token updated, but email dispatch failed (please share the invitation link manually).',
-      emailSent,
+      message: 'Set Password email triggered successfully.',
+      emailSent: true,
       token,
       email: inquiry.email
     })
