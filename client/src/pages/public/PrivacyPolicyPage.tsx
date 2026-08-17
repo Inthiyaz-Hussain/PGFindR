@@ -99,12 +99,12 @@ export function PrivacyPolicyPage() {
           <section className="pt-6 border-t border-slate-800/80 space-y-3">
             <h3 className="text-lg font-bold text-white">Privacy Support & Grievance</h3>
             <p className="text-sm text-slate-400">
-              For any queries, corrections, or data removal requests, please contact our Grievance Officer:
+              For any queries, corrections, or data removal requests, please contact our support team at:
             </p>
             <div className="text-sm text-slate-300 space-y-1">
-              <p><strong>Grievance Officer:</strong> Inthiyaz Hussain</p>
-              <p><strong>Email:</strong> privacy@findpgr.com</p>
-              <p><strong>Corporate Address:</strong> FindPgR Coliving Spaces Pvt. Ltd., Madhapur, Hyderabad, Telangana, 500081.</p>
+              <p><strong>Email:</strong> inthiyazhussain69@gmail.com</p>
+              <p><strong>Support Helpline:</strong> +91 6302854691</p>
+              <p><strong>Corporate Address:</strong> Bangalore, 560068</p>
             </div>
           </section>
         </div>

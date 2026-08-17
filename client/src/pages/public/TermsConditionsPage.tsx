@@ -114,9 +114,9 @@ export function TermsConditionsPage() {
               If you have any questions regarding these Terms, please contact our support team at:
             </p>
             <div className="text-sm text-slate-300 space-y-1">
-              <p><strong>Email:</strong> support@findpgr.com</p>
-              <p><strong>Support Helpline:</strong> +91 98765 43210</p>
-              <p><strong>Corporate Address:</strong> FindPgR Coliving Spaces Pvt. Ltd., Madhapur, Hyderabad, Telangana, 500081.</p>
+              <p><strong>Email:</strong> inthiyazhussain69@gmail.com</p>
+              <p><strong>Support Helpline:</strong> +91 6302854691</p>
+              <p><strong>Corporate Address:</strong> Bangalore, 560068</p>
             </div>
           </section>
         </div>

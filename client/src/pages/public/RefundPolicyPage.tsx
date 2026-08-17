@@ -83,16 +83,16 @@ export function RefundPolicyPage() {
               Chargebacks & Payment Disputes
             </h2>
             <p className="text-slate-300 leading-relaxed">
-              For any duplicate charges, failed transaction checkouts where money was debited but room booking was not confirmed, or disputable card charges, please reach out to us at billing@findpgr.com before initiating chargebacks with your card-issuing bank. We resolve duplicate charge disputes within 24 hours.
+              For any duplicate charges, failed transaction checkouts where money was debited but room booking was not confirmed, or disputable card charges, please reach out to us at inthiyazhussain69@gmail.com before initiating chargebacks with your card-issuing bank. We resolve duplicate charge disputes within 24 hours.
             </p>
           </section>
 
           <section className="pt-6 border-t border-slate-800/80 space-y-3">
             <h3 className="text-lg font-bold text-white">Refund Support</h3>
             <div className="text-sm text-slate-300 space-y-1">
-              <p><strong>Billing Support:</strong> billing@findpgr.com</p>
-              <p><strong>Corporate Helpline:</strong> +91 98765 43210</p>
-              <p><strong>Address:</strong> FindPgR Coliving Spaces Pvt. Ltd., Madhapur, Hyderabad, Telangana, 500081.</p>
+              <p><strong>Email:</strong> inthiyazhussain69@gmail.com</p>
+              <p><strong>Support Helpline:</strong> +91 6302854691</p>
+              <p><strong>Corporate Address:</strong> Bangalore, 560068</p>
             </div>
           </section>
         </div>
