@@ -11,6 +11,14 @@ export async function sendMail(to: string, subject: string, htmlContent: string)
   const smtpUser = process.env.SMTP_USER
   const smtpPass = process.env.SMTP_PASS
 
+  console.log('[MAILER DEBUG] Attempting to send email:', {
+    to,
+    subject,
+    smtpHost,
+    smtpUser,
+    hasPass: !!smtpPass
+  })
+
   if (!smtpHost || !smtpUser || !smtpPass) {
     console.warn('\n⚠️ SMTP credentials not fully configured in .env. Skipping real email dispatch.')
     console.warn('To enable real emails, please set the following variables in server/.env & .env at workspace root:')
