@@ -33,6 +33,7 @@ interface KYCSubmission {
 export function AdminKYCPage() {
   const queryClient = useQueryClient()
   const [selectedKyc, setSelectedKyc] = useState<KYCSubmission | null>(null)
+  const [previewDoc, setPreviewDoc] = useState<{ doc_type: string; url: string } | null>(null)
   
   // Resubmission request states
   const [showResubmitDialog, setShowResubmitDialog] = useState(false)
@@ -263,15 +264,15 @@ export function AdminKYCPage() {
                           <span className="text-xs font-semibold capitalize">{doc.doc_type.replace(/_/g, ' ')}</span>
                         </div>
                         <div className="flex items-center gap-1.5">
-                          <a
-                            href={doc.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex h-7 w-7 items-center justify-center rounded bg-slate-100 hover:bg-slate-200 text-slate-600 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700 transition-colors"
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="flex h-7 w-7 items-center justify-center rounded bg-slate-100 hover:bg-slate-200 text-slate-600 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                            onClick={() => setPreviewDoc({ doc_type: doc.doc_type, url: doc.url })}
                             title="Preview File"
                           >
                             <Eye className="size-3.5" />
-                          </a>
+                          </Button>
                         </div>
                       </div>
                     ))}
@@ -385,6 +386,42 @@ export function AdminKYCPage() {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Document Preview Dialog */}
+      <Dialog open={!!previewDoc} onOpenChange={(open) => !open && setPreviewDoc(null)}>
+        <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="capitalize">
+              {previewDoc?.doc_type.replace(/_/g, ' ')} Preview
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 overflow-auto flex items-center justify-center p-4 bg-slate-950/5 rounded-lg border min-h-[50vh]">
+            {previewDoc?.url.startsWith('data:application/pdf') ? (
+              <iframe
+                src={previewDoc.url}
+                className="w-full h-[70vh] border-0 rounded-lg"
+                title="PDF Preview"
+              />
+            ) : previewDoc?.url.startsWith('data:image') || previewDoc?.url.includes('image') || previewDoc?.url.includes('.jpg') || previewDoc?.url.includes('.png') || previewDoc?.url.includes('.jpeg') ? (
+              <img
+                src={previewDoc.url}
+                alt="Document Preview"
+                className="max-w-full max-h-[70vh] object-contain rounded-lg shadow-sm"
+              />
+            ) : (
+              <div className="text-center space-y-3">
+                <FileText className="h-16 w-16 text-slate-400 mx-auto" />
+                <p className="text-sm text-muted-foreground">Preview not available for this file type.</p>
+                <Button asChild variant="outline">
+                  <a href={previewDoc?.url} download={`document_${previewDoc?.doc_type}`}>
+                    Download File
+                  </a>
+                </Button>
+              </div>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </div>
