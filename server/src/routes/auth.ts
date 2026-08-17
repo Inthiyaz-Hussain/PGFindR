@@ -417,7 +417,17 @@ router.post('/admin/verify-owner', authenticateToken, requireRole('admin'), asyn
       }
 
       if (ownerEmail) {
-        const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173'
+        let clientUrl = process.env.CLIENT_URL
+        if (clientUrl && clientUrl.includes(',')) {
+          clientUrl = clientUrl.split(',')[0].trim()
+        }
+        if (!clientUrl || clientUrl.includes('localhost') || clientUrl.includes('127.0.0.1')) {
+          if (process.env.NODE_ENV === 'production') {
+            clientUrl = 'https://findpgr.vercel.app'
+          } else {
+            clientUrl = clientUrl || 'http://localhost:5173'
+          }
+        }
         const { data: linkData, error: linkErr } = await supabase.auth.admin.generateLink({
           type: 'recovery',
           email: ownerEmail,

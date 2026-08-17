@@ -209,6 +209,9 @@ router.put('/api/admin/owner-inquiries/:id/approve', authenticateToken, requireR
 
     // Determine client URL dynamically from request origin/referer if available
     let clientUrl = process.env.CLIENT_URL
+    if (clientUrl && clientUrl.includes(',')) {
+      clientUrl = clientUrl.split(',')[0].trim()
+    }
     if (!clientUrl && req.headers.origin) {
       clientUrl = req.headers.origin
     }
@@ -217,7 +220,14 @@ router.put('/api/admin/owner-inquiries/:id/approve', authenticateToken, requireR
         clientUrl = new URL(req.headers.referer).origin
       } catch (e) {}
     }
-    clientUrl = clientUrl || 'http://localhost:5173'
+    // Safe fallbacks to prevent localhost leaking in production email templates
+    if (!clientUrl || clientUrl.includes('localhost') || clientUrl.includes('127.0.0.1')) {
+      if (process.env.NODE_ENV === 'production') {
+        clientUrl = 'https://findpgr.vercel.app'
+      } else {
+        clientUrl = clientUrl || 'http://localhost:5173'
+      }
+    }
 
     const setPasswordLink = `${clientUrl}/owner/set-password?token=${token}`
     
@@ -326,6 +336,9 @@ router.put('/api/admin/owner-inquiries/:id/resend-email', authenticateToken, req
 
     // Determine client URL dynamically from request origin/referer if available
     let clientUrl = process.env.CLIENT_URL
+    if (clientUrl && clientUrl.includes(',')) {
+      clientUrl = clientUrl.split(',')[0].trim()
+    }
     if (!clientUrl && req.headers.origin) {
       clientUrl = req.headers.origin
     }
@@ -334,7 +347,14 @@ router.put('/api/admin/owner-inquiries/:id/resend-email', authenticateToken, req
         clientUrl = new URL(req.headers.referer).origin
       } catch (e) {}
     }
-    clientUrl = clientUrl || 'http://localhost:5173'
+    // Safe fallbacks to prevent localhost leaking in production email templates
+    if (!clientUrl || clientUrl.includes('localhost') || clientUrl.includes('127.0.0.1')) {
+      if (process.env.NODE_ENV === 'production') {
+        clientUrl = 'https://findpgr.vercel.app'
+      } else {
+        clientUrl = clientUrl || 'http://localhost:5173'
+      }
+    }
 
     const setPasswordLink = `${clientUrl}/owner/set-password?token=${token}`
 
