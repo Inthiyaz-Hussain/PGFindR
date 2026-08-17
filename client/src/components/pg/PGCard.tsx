@@ -65,7 +65,7 @@ export function PGCard({ pg, liveAvailableBeds = null, className }: PGCardProps)
           )}
           <div className="absolute top-3 left-3">
             <Badge className={cn('border-0 text-xs font-medium', typeColor[pg.pg_type as keyof typeof typeColor] || typeColor['coliving'])}>
-              {pg.pg_type === 'coliving' ? 'Coliving' : pg.pg_type === 'co-ed' ? 'Co-ed' : pg.pg_type === 'boys' ? 'Boys' : 'Girls'}
+              {pg.pg_type === 'coliving' || pg.pg_type === 'co-ed' ? 'Coliving' : pg.pg_type === 'boys' ? 'Boys' : 'Girls'}
             </Badge>
           </div>
           <div className="absolute top-3 right-3">

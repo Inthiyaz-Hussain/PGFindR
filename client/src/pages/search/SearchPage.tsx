@@ -34,6 +34,8 @@ export function SearchPage() {
   const [inputValue, setInputValue] = useState(query)
   const [pgType, setPgType] = useState<string>(searchParams.get('type') || 'all')
   const [amenities, setAmenities] = useState<Set<string>>(new Set())
+  const [sharingTypes, setSharingTypes] = useState<Set<string>>(new Set())
+  const [availableOnly, setAvailableOnly] = useState(false)
   const [maxRent, setMaxRent] = useState<string>('')
   const [filterOpen, setFilterOpen] = useState(false)
 
@@ -88,7 +90,7 @@ export function SearchPage() {
   }
 
   const { data: pgs, isLoading } = useQuery({
-    queryKey: ['search-pgs', query, pgType, Array.from(amenities), maxRent, selectedCity],
+    queryKey: ['search-pgs', query, pgType, Array.from(amenities), Array.from(sharingTypes), availableOnly, maxRent, selectedCity],
     queryFn: async () => {
       const params = new URLSearchParams()
       
@@ -109,10 +111,16 @@ export function SearchPage() {
       if (query) params.set('q', query)
       if (pgType !== 'all') params.set('gender', pgType)
       if (maxRent && Number(maxRent) > 0) params.set('max_price', maxRent)
+      if (availableOnly) params.set('available_only', 'true')
       
       const amenityArray = Array.from(amenities)
       if (amenityArray.length > 0) {
         params.set('amenities', amenityArray.join(','))
+      }
+
+      const sharingArray = Array.from(sharingTypes)
+      if (sharingArray.length > 0) {
+        params.set('sharing', sharingArray.join(','))
       }
 
       params.set('limit', '50')
@@ -162,7 +170,16 @@ export function SearchPage() {
     })
   }
 
-  const activeFilters = amenities.size + (pgType !== 'all' ? 1 : 0) + (maxRent ? 1 : 0)
+  function toggleSharingType(id: string) {
+    setSharingTypes((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  const activeFilters = amenities.size + sharingTypes.size + (pgType !== 'all' ? 1 : 0) + (maxRent ? 1 : 0) + (availableOnly ? 1 : 0)
 
   function renderFilters() {
     return (
@@ -177,7 +194,7 @@ export function SearchPage() {
               <SelectItem value="all">Any type</SelectItem>
               <SelectItem value="boys">Boys</SelectItem>
               <SelectItem value="girls">Girls</SelectItem>
-              <SelectItem value="co-ed">Co-ed</SelectItem>
+              <SelectItem value="co-ed">Coliving</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -223,13 +240,53 @@ export function SearchPage() {
           </div>
         </div>
 
+        <Separator />
+
+        <div className="space-y-3">
+          <Label className="text-sm font-medium">Room Sharing</Label>
+          <div className="space-y-2.5">
+            {[
+              { id: '1', label: 'Single Room' },
+              { id: '2', label: 'Double Sharing' },
+              { id: '3', label: 'Triple Sharing' },
+              { id: '4', label: 'Dormitory' },
+            ].map(({ id, label }) => (
+              <div key={id} className="flex items-center gap-2">
+                <Checkbox
+                  id={`sharing-${id}`}
+                  checked={sharingTypes.has(id)}
+                  onCheckedChange={() => toggleSharingType(id)}
+                />
+                <Label htmlFor={`sharing-${id}`} className="font-normal cursor-pointer">{label}</Label>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <Separator />
+
+        <div className="flex items-center gap-2 py-1">
+          <Checkbox
+            id="availableOnly"
+            checked={availableOnly}
+            onCheckedChange={(checked) => setAvailableOnly(!!checked)}
+          />
+          <Label htmlFor="availableOnly" className="font-medium cursor-pointer">Only Show Available Beds</Label>
+        </div>
+
         {activeFilters > 0 && (
           <>
             <Separator />
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => { setAmenities(new Set()); setPgType('all'); setMaxRent('') }}
+              onClick={() => { 
+                setAmenities(new Set()); 
+                setSharingTypes(new Set());
+                setAvailableOnly(false);
+                setPgType('all'); 
+                setMaxRent(''); 
+              }}
               className="w-full text-muted-foreground"
             >
               <X className="size-4" /> Clear all filters
