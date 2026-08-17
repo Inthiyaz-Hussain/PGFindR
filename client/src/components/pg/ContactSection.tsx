@@ -101,6 +101,7 @@ export function ContactSection({
         pgId={pgId}
         pgName={pgName}
         sharingTypes={sharingTypes}
+        selectedSharingType={_selectedSharing?.type || null}
         onSuccess={handleSuccess}
       />
     </>

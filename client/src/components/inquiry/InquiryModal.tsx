@@ -47,6 +47,7 @@ interface InquiryModalProps {
   pgId: string
   pgName: string
   sharingTypes: SharingTypeItem[]
+  selectedSharingType?: number | null
   onSuccess: (inquiryId: string) => void
 }
 
@@ -56,6 +57,7 @@ export function InquiryModal({
   pgId,
   pgName,
   sharingTypes,
+  selectedSharingType,
   onSuccess,
 }: InquiryModalProps) {
   const isMobile = useIsMobile()
@@ -99,7 +101,7 @@ export function InquiryModal({
       email: user?.email || '',
       age: 25,
       move_in_date: '',
-      sharing_preference: sharingTypes[0]?.type || 1,
+      sharing_preference: selectedSharingType || sharingTypes[0]?.type || 1,
       num_beds: 1,
       occupation: 'Student',
       city_of_origin: '',
@@ -129,7 +131,7 @@ export function InquiryModal({
         email: user?.email || '',
         age: 25,
         move_in_date: '',
-        sharing_preference: sharingTypes[0]?.type || 1,
+        sharing_preference: selectedSharingType || sharingTypes[0]?.type || 1,
         num_beds: 1,
         occupation: 'Student',
         city_of_origin: '',
