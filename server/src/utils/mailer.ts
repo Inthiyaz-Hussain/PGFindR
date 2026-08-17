@@ -1,4 +1,6 @@
 import nodemailer from 'nodemailer'
+import dotenv from 'dotenv'
+import path from 'path'
 
 let transporterInstance: nodemailer.Transporter | null = null
 
@@ -7,6 +9,12 @@ let transporterInstance: nodemailer.Transporter | null = null
  * Falls back gracefully to console log simulation if credentials are missing.
  */
 export async function sendMail(to: string, subject: string, htmlContent: string): Promise<boolean> {
+  // Reload env in case process was started before SMTP credentials were added
+  if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
+    dotenv.config({ path: path.resolve(process.cwd(), '.env') })
+    dotenv.config({ path: path.resolve(process.cwd(), 'server/.env') })
+  }
+
   const smtpHost = process.env.SMTP_HOST
   const smtpUser = process.env.SMTP_USER
   const smtpPass = process.env.SMTP_PASS
@@ -40,9 +48,9 @@ export async function sendMail(to: string, subject: string, htmlContent: string)
           user: smtpUser,
           pass: smtpPass,
         },
-        pool: true, // Enable connection pooling
-        maxConnections: 3, // Keep up to 3 open connections
-        maxMessages: 100, // Close connection after 100 messages
+        tls: {
+          rejectUnauthorized: false,
+        },
       })
     }
 
