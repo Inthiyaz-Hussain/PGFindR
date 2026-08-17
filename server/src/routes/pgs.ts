@@ -67,10 +67,21 @@ router.get('/', async (req, res) => {
       .select('*, photos:pg_photos(url, is_primary)')
       .eq('status', 'approved')
 
+    const CATEGORY_KEYWORDS = [
+      'mall', 'malls', 'restaurant', 'restaurants', 'metro', 'station', 'cafe', 
+      'food', 'dining', 'park', 'theater', 'cinema', 'hospital', 'landmark', 
+      'market', 'shop', 'multiplex', 'highway', 'bus stop', 'dhabha'
+    ]
+
+    const hasCoords = !!(lat && lng)
+    const isCategory = q ? CATEGORY_KEYWORDS.some(k => q.toLowerCase().includes(k)) : false
+
     if (q) {
-      query = query.or(
-        `name.ilike.%${q}%,city.ilike.%${q}%,locality.ilike.%${q}%,address.ilike.%${q}%`
-      )
+      if (!isCategory || !hasCoords) {
+        query = query.or(
+          `name.ilike.%${q}%,city.ilike.%${q}%,locality.ilike.%${q}%,address.ilike.%${q}%,description.ilike.%${q}%`
+        )
+      }
     }
     if (min_price) query = query.gte('monthly_rent_min', Number(min_price))
     if (max_price) query = query.lte('monthly_rent_min', Number(max_price))
@@ -133,19 +144,47 @@ router.get('/', async (req, res) => {
         .filter((pg) => {
           if (q) {
             const queryLower = q.toLowerCase().trim()
-            const cityLower = pg.city ? pg.city.toLowerCase() : ''
-            const localityLower = pg.locality ? pg.locality.toLowerCase() : ''
+            
+            if (!isCategory) {
+              // Exact address/location search -> show that location ONLY
+              const nameLower = pg.name ? pg.name.toLowerCase() : ''
+              const cityLower = pg.city ? pg.city.toLowerCase() : ''
+              const localityLower = pg.locality ? pg.locality.toLowerCase() : ''
+              const addressLower = pg.address ? pg.address.toLowerCase() : ''
+              const descLower = pg.description ? pg.description.toLowerCase() : ''
 
-            const isCityMatch = cityLower && (queryLower.includes(cityLower) || cityLower.includes(queryLower))
-            const isLocalityMatch = localityLower && (queryLower.includes(localityLower) || localityLower.includes(queryLower))
+              const isMatch = 
+                nameLower.includes(queryLower) ||
+                cityLower.includes(queryLower) ||
+                localityLower.includes(queryLower) ||
+                addressLower.includes(queryLower) ||
+                descLower.includes(queryLower)
 
-            if (isCityMatch || isLocalityMatch) {
-              return true
+              if (!isMatch) return false
             }
           }
           return pg.distance_meters == null || pg.distance_meters <= radiusM
         })
-        .sort((a, b) => (a.distance_meters ?? Infinity) - (b.distance_meters ?? Infinity))
+        .sort((a, b) => {
+          // If it's a category/nearby search, bubble up PGs that explicitly mention the landmark
+          if (q && isCategory) {
+            const queryLower = q.toLowerCase().trim()
+            
+            const aMatch = 
+              (a.name && a.name.toLowerCase().includes(queryLower)) ||
+              (a.address && a.address.toLowerCase().includes(queryLower)) ||
+              (a.description && a.description.toLowerCase().includes(queryLower))
+              
+            const bMatch = 
+              (b.name && b.name.toLowerCase().includes(queryLower)) ||
+              (b.address && b.address.toLowerCase().includes(queryLower)) ||
+              (b.description && b.description.toLowerCase().includes(queryLower))
+
+            if (aMatch && !bMatch) return -1
+            if (!aMatch && bMatch) return 1
+          }
+          return (a.distance_meters ?? Infinity) - (b.distance_meters ?? Infinity)
+        })
     }
 
     const pgIdsOnPage = results.slice(pgOffset, pgOffset + pgLimit).map(pg => pg.id)
