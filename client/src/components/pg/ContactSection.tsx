@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Phone, MessageSquare, Lock, User } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -15,6 +14,8 @@ interface ContactSectionProps {
   ownerPhoneAlternate?: string | null
   selectedSharing: SharingTypeItem | null
   sharingTypes: SharingTypeItem[]
+  inquiryOpen: boolean
+  setInquiryOpen: (open: boolean) => void
 }
 
 export function ContactSection({
@@ -25,10 +26,11 @@ export function ContactSection({
   ownerPhoneAlternate,
   selectedSharing: _selectedSharing,
   sharingTypes,
+  inquiryOpen,
+  setInquiryOpen,
 }: ContactSectionProps) {
   const { user } = useAuth()
   const navigate = useNavigate()
-  const [inquiryOpen, setInquiryOpen] = useState(false)
 
   const isLoggedIn = !!user
 

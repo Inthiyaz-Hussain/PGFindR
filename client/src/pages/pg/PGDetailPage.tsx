@@ -210,7 +210,13 @@ export function PGDetailPage() {
   const navigate = useNavigate()
   const { user: _user } = useAuth()
   const [selectedSharing, setSelectedSharing] = useState<SharingTypeItem | null>(null)
+  const [inquiryOpen, setInquiryOpen] = useState(false)
   const [reviewOffset, setReviewOffset] = useState(0)
+
+  function handleSelectSharing(sharing: SharingTypeItem) {
+    setSelectedSharing(sharing)
+    setInquiryOpen(true)
+  }
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -456,7 +462,7 @@ export function PGDetailPage() {
             <AvailabilitySection
               pgId={pg.id}
               initialSharingTypes={pg.sharing_types || []}
-              onSelect={setSelectedSharing}
+              onSelect={handleSelectSharing}
               selectedId={selectedSharing?.id}
             />
           </section>
@@ -539,6 +545,8 @@ export function PGDetailPage() {
             ownerPhoneAlternate={pg.owner?.phone_alternate || null}
             selectedSharing={selectedSharing}
             sharingTypes={pg.sharing_types || []}
+            inquiryOpen={inquiryOpen}
+            setInquiryOpen={setInquiryOpen}
           />
         </div>
       </div>
