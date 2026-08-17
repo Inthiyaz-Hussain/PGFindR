@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef } from 'react'
-import { Search, MapPin, SlidersHorizontal, X } from 'lucide-react'
+import { Search, MapPin, SlidersHorizontal, X, Navigation } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import type { SearchFilters, LocationState } from '@/types/filters'
 import { countActiveFilters } from '@/types/filters'
-import { LocationPopover } from './LocationPopover'
+import { cn } from '@/lib/utils'
 
 interface SearchBarProps {
   location: LocationState
@@ -30,6 +30,32 @@ export function SearchBar({
   const inputRef = useRef<HTMLInputElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const activeFilterCount = countActiveFilters(filters)
+
+  const [gpsLoading, setGpsLoading] = useState(false)
+
+  function requestGPS() {
+    if (!navigator.geolocation) {
+      console.warn('Geolocation is not supported')
+      return
+    }
+    setGpsLoading(true)
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        onLocationSelect({
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+          city: 'Near me',
+          radius: 25000,
+        })
+        setGpsLoading(false)
+      },
+      (err) => {
+        console.warn(err.message || 'Could not get location')
+        setGpsLoading(false)
+      },
+      { timeout: 8000 }
+    )
+  }
 
   useEffect(() => {
     setQuery(filters.query)
@@ -90,11 +116,19 @@ export function SearchBar({
 
   return (
     <div className="space-y-3">
-      <LocationPopover
-        selectedCity={location.city || ''}
-        onSelect={onLocationSelect}
-        variant="full"
-      />
+      <Button
+        type="button"
+        variant="outline"
+        onClick={requestGPS}
+        disabled={gpsLoading}
+        className={cn(
+          "w-full flex items-center justify-center gap-2 rounded-xl border bg-card px-4 py-3 h-12 text-sm font-medium hover:border-primary hover:bg-accent cursor-pointer",
+          location.city === 'Near me' && "bg-indigo-50 border-indigo-200 text-indigo-700 dark:bg-indigo-950/20 dark:border-indigo-800 dark:text-indigo-400"
+        )}
+      >
+        <Navigation className={cn("size-4 text-primary shrink-0", gpsLoading && "animate-spin", location.city === 'Near me' && "text-indigo-600 dark:text-indigo-400")} />
+        <span>{gpsLoading ? 'Locating...' : location.city === 'Near me' ? 'Using Current Location' : 'Use Current Location'}</span>
+      </Button>
 
       {/* Search Input + Filter */}
       <form onSubmit={handleSubmit} className="flex gap-2">

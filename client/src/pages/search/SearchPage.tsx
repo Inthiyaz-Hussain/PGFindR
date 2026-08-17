@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Search, SlidersHorizontal, X, Filter } from 'lucide-react'
+import { Search, SlidersHorizontal, X, Filter, Navigation } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -16,8 +16,8 @@ import { PGCard } from '@/components/pg/PGCard'
 import { Empty, EmptyMedia, EmptyTitle, EmptyDescription } from '@/components/ui/empty'
 import { Building2 } from 'lucide-react'
 import { type LocationState } from '@/types/filters'
-import { LocationPopover } from '@/components/home/LocationPopover'
 import { POPULAR_CITIES } from '@/components/home/LocationPrompt'
+import { cn } from '@/lib/utils'
 
 const AMENITIES = [
   { id: 'wifi_included', label: 'WiFi' },
@@ -44,6 +44,7 @@ export function SearchPage() {
   }, [searchParams])
 
   const [selectedCity, setSelectedCity] = useState('')
+  const [gpsLoading, setGpsLoading] = useState(false)
 
   useEffect(() => {
     try {
@@ -60,6 +61,30 @@ export function SearchPage() {
   function handleLocationSelect(newLocation: LocationState) {
     setSelectedCity(newLocation.city || '')
     localStorage.setItem('pgr_location', JSON.stringify(newLocation))
+  }
+
+  function requestGPS() {
+    if (!navigator.geolocation) {
+      console.warn('Geolocation is not supported')
+      return
+    }
+    setGpsLoading(true)
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        handleLocationSelect({
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+          city: 'Near me',
+          radius: 25000,
+        })
+        setGpsLoading(false)
+      },
+      (err) => {
+        console.warn(err.message || 'Could not get location')
+        setGpsLoading(false)
+      },
+      { timeout: 8000 }
+    )
   }
 
   const { data: pgs, isLoading } = useQuery({
@@ -228,10 +253,19 @@ export function SearchPage() {
             className="pl-10"
           />
         </div>
-        <LocationPopover
-          selectedCity={selectedCity}
-          onSelect={handleLocationSelect}
-        />
+        <Button
+          type="button"
+          variant="outline"
+          onClick={requestGPS}
+          disabled={gpsLoading}
+          className={cn(
+            "flex items-center gap-1.5 cursor-pointer h-9 md:h-10 text-xs sm:text-sm font-medium border-slate-200 dark:border-slate-800 shrink-0",
+            selectedCity === 'Near me' && "bg-indigo-50 border-indigo-200 text-indigo-700 dark:bg-indigo-950/20 dark:border-indigo-800 dark:text-indigo-400"
+          )}
+        >
+          <Navigation className={cn("size-3.5 text-primary shrink-0", gpsLoading && "animate-spin", selectedCity === 'Near me' && "text-indigo-600 dark:text-indigo-400")} />
+          <span>{gpsLoading ? 'Locating...' : selectedCity === 'Near me' ? 'Current Location' : 'Use Current Location'}</span>
+        </Button>
         <Button type="submit">Search</Button>
         {/* Mobile Filter Button */}
         <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
