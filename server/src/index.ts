@@ -76,7 +76,11 @@ app.use(cors({
   credentials: true
 }))
 app.use(morgan('combined'))
-app.use(express.json())
+app.use(express.json({
+  verify: (req: any, res, buf) => {
+    req.rawBody = buf.toString()
+  }
+}))
 app.use(express.urlencoded({ extended: true }))
 
 // Health check

@@ -2,6 +2,8 @@ import { Router } from 'express'
 import { supabase } from '../index.js'
 import { sendPushNotification } from '../lib/firebase.js'
 import { createNotification, getUserFcmToken } from '../lib/notifications.js'
+import { authenticateToken, requireRole } from '../middleware/auth.js'
+import crypto from 'crypto'
 
 const router = Router()
 
@@ -270,6 +272,245 @@ router.put('/:id/cancel', async (req, res) => {
     res.json(data)
   } catch (err) {
     res.status(500).json({ error: (err as Error).message })
+  }
+})
+
+// ─── OWNER PORTAL & TENANT MANAGEMENT ENDPOINTS ──────────────────────────────
+
+// 1. POST /api/booking/walk-in — Log an offline walk-in booking
+router.post('/walk-in', authenticateToken, requireRole('owner', 'admin'), async (req: any, res) => {
+  try {
+    const { pg_id, bed_id, tenant_name, tenant_email, tenant_phone, monthly_rent, move_in_date } = req.body
+
+    if (!pg_id || !bed_id || !tenant_name || !tenant_email || !monthly_rent || !move_in_date) {
+      return res.status(400).json({ error: 'pg_id, bed_id, tenant_name, tenant_email, monthly_rent, and move_in_date are required' })
+    }
+
+    // A. Check if the bed is available
+    const { data: bed, error: bedErr } = await supabase
+      .from('beds')
+      .select('status')
+      .eq('id', bed_id)
+      .single()
+
+    if (bedErr || !bed) {
+      return res.status(404).json({ error: 'Bed not found' })
+    }
+
+    if (bed.status !== 'available') {
+      return res.status(400).json({ error: 'Bed is not available for walk-in' })
+    }
+
+    // B. Check if profile exists by email, if not create a placeholder seeker profile
+    let seekerId: string
+    const { data: existingProfile } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('email', tenant_email)
+      .maybeSingle()
+
+    if (existingProfile) {
+      seekerId = existingProfile.id
+    } else {
+      // Create a dummy UUID since we don't have Supabase Auth user record yet (auth handles it later)
+      seekerId = crypto.randomUUID()
+      const { error: profileErr } = await supabase
+        .from('profiles')
+        .insert({
+          id: seekerId,
+          full_name: tenant_name,
+          email: tenant_email,
+          phone: tenant_phone || null,
+          role: 'seeker'
+        })
+      if (profileErr) throw profileErr
+    }
+
+    // C. Create direct active booking
+    const { data: booking, error: bookingErr } = await supabase
+      .from('bookings')
+      .insert({
+        pg_id,
+        seeker_id: seekerId,
+        owner_id: req.user.id,
+        bed_id,
+        num_beds: 1,
+        monthly_rent,
+        deposit_amount: monthly_rent, // Default to 1 month rent as deposit for offline
+        amount: monthly_rent * 2, // Total rent + deposit
+        status: 'active',
+        move_in_date,
+        confirmed_at: new Date().toISOString()
+      })
+      .select()
+      .single()
+
+    if (bookingErr) throw bookingErr
+
+    // D. Mark bed as occupied
+    await supabase
+      .from('beds')
+      .update({
+        status: 'occupied',
+        occupied_by_booking_id: booking.id,
+        occupied_since: move_in_date,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', bed_id)
+
+    // E. Generate initial invoice for walk-in rent + deposit
+    const invoiceNumber = `INV-WK-${Date.now()}`
+    await supabase
+      .from('invoices')
+      .insert({
+        booking_id: booking.id,
+        seeker_id: seekerId,
+        owner_id: req.user.id,
+        invoice_number: invoiceNumber,
+        amount: monthly_rent * 2,
+        status: 'unpaid',
+        due_date: new Date().toISOString().split('T')[0]
+      })
+
+    res.status(201).json({
+      message: 'Offline walk-in registered successfully',
+      booking
+    })
+  } catch (err: any) {
+    console.error('Walk-in error:', err)
+    res.status(500).json({ error: err.message || 'Internal server error' })
+  }
+})
+
+// 2. GET /api/booking/:bookingId/invoices — Fetch all invoices for a booking
+router.get('/:bookingId/invoices', authenticateToken, async (req: any, res) => {
+  try {
+    const { data: invoices, error } = await supabase
+      .from('invoices')
+      .select('*')
+      .eq('booking_id', req.params.bookingId)
+      .order('created_at', { ascending: false })
+
+    if (error) throw error
+    res.json(invoices)
+  } catch (err: any) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// 3. POST /api/booking/:bookingId/invoices — Generate manual invoice (monthly rent dues)
+router.post('/:bookingId/invoices', authenticateToken, requireRole('owner', 'admin'), async (req: any, res) => {
+  try {
+    const { amount, due_date, billing_period_start, billing_period_end } = req.body
+
+    if (!amount || !due_date) {
+      return res.status(400).json({ error: 'amount and due_date are required' })
+    }
+
+    const { data: booking, error: bookingErr } = await supabase
+      .from('bookings')
+      .select('seeker_id, owner_id')
+      .eq('id', req.params.bookingId)
+      .single()
+
+    if (bookingErr || !booking) {
+      return res.status(404).json({ error: 'Booking not found' })
+    }
+
+    const invoiceNumber = `INV-${Date.now()}`
+    const { data: invoice, error: invoiceErr } = await supabase
+      .from('invoices')
+      .insert({
+        booking_id: req.params.bookingId,
+        seeker_id: booking.seeker_id,
+        owner_id: booking.owner_id,
+        invoice_number: invoiceNumber,
+        amount,
+        status: 'unpaid',
+        due_date,
+        billing_period_start,
+        billing_period_end
+      })
+      .select()
+      .single()
+
+    if (invoiceErr) throw invoiceErr
+    res.status(201).json(invoice)
+  } catch (err: any) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// 4. PUT /api/booking/invoices/:invoiceId/pay — Mark invoice paid
+router.put('/invoices/:invoiceId/pay', authenticateToken, requireRole('owner', 'admin'), async (req: any, res) => {
+  try {
+    const { data: invoice, error } = await supabase
+      .from('invoices')
+      .update({
+        status: 'paid',
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', req.params.invoiceId)
+      .select()
+      .single()
+
+    if (error) throw error
+    res.json({ message: 'Invoice marked as paid successfully', invoice })
+  } catch (err: any) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// 5. POST /api/booking/:bookingId/tenant-documents — Upload/store tenant document
+router.post('/:bookingId/tenant-documents', authenticateToken, async (req: any, res) => {
+  try {
+    const { doc_type, url } = req.body
+
+    if (!doc_type || !url) {
+      return res.status(400).json({ error: 'doc_type and url are required' })
+    }
+
+    const { data: booking, error: bookingErr } = await supabase
+      .from('bookings')
+      .select('seeker_id')
+      .eq('id', req.params.bookingId)
+      .single()
+
+    if (bookingErr || !booking) {
+      return res.status(404).json({ error: 'Booking not found' })
+    }
+
+    const { data: document, error: docErr } = await supabase
+      .from('tenant_documents')
+      .insert({
+        booking_id: req.params.bookingId,
+        seeker_id: booking.seeker_id,
+        doc_type,
+        url
+      })
+      .select()
+      .single()
+
+    if (docErr) throw docErr
+    res.status(201).json(document)
+  } catch (err: any) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// 6. GET /api/booking/:bookingId/tenant-documents — Retrieve tenant documents
+router.get('/:bookingId/tenant-documents', authenticateToken, async (req: any, res) => {
+  try {
+    const { data: documents, error } = await supabase
+      .from('tenant_documents')
+      .select('*')
+      .eq('booking_id', req.params.bookingId)
+      .order('created_at', { ascending: false })
+
+    if (error) throw error
+    res.json(documents)
+  } catch (err: any) {
+    res.status(500).json({ error: err.message })
   }
 })
 

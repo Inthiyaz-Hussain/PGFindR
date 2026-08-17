@@ -1,7 +1,23 @@
 import { Router } from 'express'
 import { supabase } from '../index.js'
+import { z } from 'zod'
+import { validateRequest } from '../middleware/validation.js'
+import { paymentRateLimiter } from '../middleware/rateLimiter.js'
 
 const router = Router()
+
+const initiatePaymentSchema = z.object({
+  body: z.object({
+    booking_id: z.string().uuid('Invalid booking ID format'),
+    include_rent: z.boolean().optional(),
+  })
+})
+
+const verifyPaymentSchema = z.object({
+  body: z.object({
+    booking_id: z.string().uuid('Invalid booking ID format'),
+  })
+})
 
 // Helper to determine Cashfree environment details
 const getCashfreeConfig = () => {
@@ -15,7 +31,7 @@ const getCashfreeConfig = () => {
 // POST /api/payment/initiate — Create Cashfree order for a booking
 // Input: { booking_id, include_rent }
 // Returns: { cashfree_order_id, payment_session_id, amount, currency }
-router.post('/initiate', async (req, res) => {
+router.post('/initiate', paymentRateLimiter, validateRequest(initiatePaymentSchema), async (req, res) => {
   try {
     const { booking_id, include_rent } = req.body
 
@@ -147,7 +163,7 @@ router.post('/initiate', async (req, res) => {
 
 // POST /api/payment/demo-confirm — Instant payment completion for demo/test mode
 // Input: { booking_id, include_rent }
-router.post('/demo-confirm', async (req, res) => {
+router.post('/demo-confirm', paymentRateLimiter, validateRequest(initiatePaymentSchema), async (req, res) => {
   try {
     const { booking_id, include_rent } = req.body
 
@@ -230,29 +246,20 @@ router.post('/demo-confirm', async (req, res) => {
       })
       .eq('id', booking_id)
 
-    // Mark beds as reserved
+    // Mark beds as reserved safely using RPC database transaction
     if (booking.bed_id) {
-      const numBeds = booking.num_beds || 1
-      const { data: siblingBeds } = await supabase
-        .from('beds')
-        .select('id')
-        .eq('pg_id', booking.pg_id)
-        .eq('status', 'available')
-        .limit(numBeds)
+      const { data: reservedOk, error: reserveErr } = await supabase.rpc('reserve_bed_safely', {
+        p_bed_id: booking.bed_id,
+        p_pg_id: booking.pg_id,
+        p_num_beds: booking.num_beds || 1
+      })
 
-      const bedIdsToReserve = [booking.bed_id]
-      if (siblingBeds) {
-        siblingBeds.forEach((b: any) => {
-          if (!bedIdsToReserve.includes(b.id)) {
-            bedIdsToReserve.push(b.id)
-          }
-        })
+      if (reserveErr || !reservedOk) {
+        console.error('Safe bed reservation failed (demo):', reserveErr?.message || 'Bed no longer available')
+        await supabase.from('payments').update({ status: 'failed' }).eq('id', payment.id)
+        await supabase.from('bookings').update({ status: 'cancelled', updated_at: new Date().toISOString() }).eq('id', booking_id)
+        return res.status(400).json({ error: 'This bed is no longer available. Double-booking prevented.' })
       }
-
-      await supabase
-        .from('beds')
-        .update({ status: 'reserved', updated_at: new Date().toISOString() })
-        .in('id', bedIdsToReserve.slice(0, numBeds))
     }
 
     // Send confirmation notifications
@@ -288,7 +295,7 @@ router.post('/demo-confirm', async (req, res) => {
 
 // POST /api/payment/verify — Validate Cashfree signature, confirm payment
 // Input: { booking_id }
-router.post('/verify', async (req, res) => {
+router.post('/verify', paymentRateLimiter, validateRequest(verifyPaymentSchema), async (req, res) => {
   try {
     const { booking_id } = req.body
 
@@ -375,29 +382,20 @@ router.post('/verify', async (req, res) => {
       .select('bed_id, seeker_id, owner_id, pg_id, num_beds')
       .single()
 
-    // Mark beds as reserved (will be 'occupied' on move-in confirmation)
+    // Mark beds as reserved safely using RPC database transaction (will be 'occupied' on move-in confirmation)
     if (booking?.bed_id) {
-      const numBeds = booking.num_beds || 1
-      const { data: siblingBeds } = await supabase
-        .from('beds')
-        .select('id')
-        .eq('pg_id', booking.pg_id)
-        .eq('status', 'available')
-        .limit(numBeds)
+      const { data: reservedOk, error: reserveErr } = await supabase.rpc('reserve_bed_safely', {
+        p_bed_id: booking.bed_id,
+        p_pg_id: booking.pg_id,
+        p_num_beds: booking.num_beds || 1
+      })
 
-      const bedIdsToReserve = [booking.bed_id]
-      if (siblingBeds) {
-        siblingBeds.forEach((b: any) => {
-          if (!bedIdsToReserve.includes(b.id)) {
-            bedIdsToReserve.push(b.id)
-          }
-        })
+      if (reserveErr || !reservedOk) {
+        console.error('Safe bed reservation failed (verify):', reserveErr?.message || 'Bed no longer available')
+        await supabase.from('payments').update({ status: 'failed' }).eq('id', updatedPayment.id)
+        await supabase.from('bookings').update({ status: 'cancelled', updated_at: new Date().toISOString() }).eq('id', booking_id)
+        return res.status(400).json({ error: 'This bed is no longer available. Double-booking prevented.' })
       }
-
-      await supabase
-        .from('beds')
-        .update({ status: 'reserved', updated_at: new Date().toISOString() })
-        .in('id', bedIdsToReserve.slice(0, numBeds))
     }
 
     // Send confirmation notifications

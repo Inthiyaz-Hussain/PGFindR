@@ -3,6 +3,33 @@ import { createClient } from '@supabase/supabase-js'
 import crypto from 'crypto'
 import { supabase, getSupabaseClient } from '../index.js'
 import { authenticateToken, requireRole } from '../middleware/auth.js'
+import { z } from 'zod'
+import { validateRequest } from '../middleware/validation.js'
+import { authRateLimiter } from '../middleware/rateLimiter.js'
+
+const registerSchema = z.object({
+  body: z.object({
+    name: z.string().min(1, 'Name is required'),
+    email: z.string().email('Invalid email address'),
+    mobile: z.string().optional(),
+    password: z.string().min(6, 'Password must be at least 6 characters'),
+    role: z.enum(['seeker', 'owner']),
+  })
+})
+
+const loginSchema = z.object({
+  body: z.object({
+    email: z.string().email('Invalid email address'),
+    password: z.string().min(1, 'Password is required'),
+  })
+})
+
+const verifyOtpSchema = z.object({
+  body: z.object({
+    phone: z.string().min(1, 'Phone is required'),
+    token: z.string().min(1, 'Token is required'),
+  })
+})
 
 const router = Router()
 
@@ -22,18 +49,8 @@ interface RegisterBody {
   role: 'seeker' | 'owner'
 }
 
-router.post('/register', async (req, res) => {
+router.post('/register', authRateLimiter, validateRequest(registerSchema), async (req, res) => {
   const { name, email, mobile, password, role }: RegisterBody = req.body
-
-  if (!name || !email || !password || !role) {
-    return res.status(400).json({ error: 'name, email, password, and role are required' })
-  }
-  if (!['seeker', 'owner'].includes(role)) {
-    return res.status(400).json({ error: 'role must be "seeker" or "owner"' })
-  }
-  if (password.length < 6) {
-    return res.status(400).json({ error: 'Password must be at least 6 characters' })
-  }
 
   // Create user via admin API (auto-confirms email so they can log in immediately)
   const { data: created, error: createErr } = await supabase.auth.admin.createUser({
@@ -65,6 +82,15 @@ router.post('/register', async (req, res) => {
 
   if (signInErr) {
     return res.status(500).json({ error: 'Account created but login failed. Please sign in.' })
+  }
+
+  if (session?.session?.access_token) {
+    res.cookie('sb-access-token', session.session.access_token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 30 * 24 * 3600 * 1000 // 30 days
+    })
   }
 
   return res.status(201).json({
@@ -193,12 +219,8 @@ interface LoginBody {
   password: string
 }
 
-router.post('/login', async (req, res) => {
+router.post('/login', authRateLimiter, validateRequest(loginSchema), async (req, res) => {
   const { email, password }: LoginBody = req.body
-
-  if (!email || !password) {
-    return res.status(400).json({ error: 'email and password are required' })
-  }
 
   const { data, error } = await supabaseAnon.auth.signInWithPassword({ email, password })
 
@@ -212,6 +234,15 @@ router.post('/login', async (req, res) => {
     .select('*')
     .eq('id', data.user.id)
     .single()
+
+  if (data?.session?.access_token) {
+    res.cookie('sb-access-token', data.session.access_token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 30 * 24 * 3600 * 1000 // 30 days
+    })
+  }
 
   return res.json({
     user: {
@@ -236,12 +267,8 @@ interface VerifyOtpBody {
   token: string
 }
 
-router.post('/verify-otp', async (req, res) => {
+router.post('/verify-otp', authRateLimiter, validateRequest(verifyOtpSchema), async (req, res) => {
   const { phone, token }: VerifyOtpBody = req.body
-
-  if (!phone || !token) {
-    return res.status(400).json({ error: 'phone and token are required' })
-  }
 
   const { data, error } = await supabaseAnon.auth.verifyOtp({
     phone,
@@ -259,6 +286,15 @@ router.post('/verify-otp', async (req, res) => {
       .from('profiles')
       .update({ phone })
       .eq('id', data.user.id)
+  }
+
+  if (data?.session?.access_token) {
+    res.cookie('sb-access-token', data.session.access_token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 30 * 24 * 3600 * 1000 // 30 days
+    })
   }
 
   return res.json({
@@ -478,6 +514,16 @@ router.post('/admin/verify-owner', authenticateToken, requireRole('admin'), asyn
     console.error('Verify owner error:', err)
     return res.status(500).json({ error: err.message })
   }
+})
+
+// ─── POST /api/auth/logout ───────────────────────────────────────────────────
+router.post('/logout', (req, res) => {
+  res.clearCookie('sb-access-token', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict'
+  })
+  res.json({ success: true, message: 'Logged out successfully' })
 })
 
 export default router

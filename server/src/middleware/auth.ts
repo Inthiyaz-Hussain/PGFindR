@@ -17,7 +17,20 @@ export async function authenticateToken(
   next: NextFunction
 ): Promise<void> {
   const authHeader = req.headers.authorization
-  const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null
+  let token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null
+
+  // Fallback to httpOnly secure cookies
+  if (!token && req.headers.cookie) {
+    try {
+      const cookies = Object.fromEntries(
+        req.headers.cookie.split(';').map(c => {
+          const parts = c.trim().split('=')
+          return [parts[0], parts.slice(1).join('=')]
+        })
+      )
+      token = cookies['sb-access-token'] || cookies['access_token'] || null
+    } catch (e) {}
+  }
 
   if (!token) {
     res.status(401).json({ error: 'Authorization token required' })
