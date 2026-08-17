@@ -221,8 +221,9 @@ router.put('/api/admin/owner-inquiries/:id/approve', authenticateToken, requireR
       } catch (e) {}
     }
     // Safe fallbacks to prevent localhost leaking in production email templates
+    const isLocalhostRequest = !!(req.headers.host?.includes('localhost') || req.headers.host?.includes('127.0.0.1'))
     if (!clientUrl || clientUrl.includes('localhost') || clientUrl.includes('127.0.0.1')) {
-      if (process.env.NODE_ENV === 'production') {
+      if (!isLocalhostRequest || process.env.NODE_ENV === 'production') {
         clientUrl = 'https://findpgr.vercel.app'
       } else {
         clientUrl = clientUrl || 'http://localhost:5173'
@@ -348,8 +349,9 @@ router.put('/api/admin/owner-inquiries/:id/resend-email', authenticateToken, req
       } catch (e) {}
     }
     // Safe fallbacks to prevent localhost leaking in production email templates
+    const isLocalhostRequest = !!(req.headers.host?.includes('localhost') || req.headers.host?.includes('127.0.0.1'))
     if (!clientUrl || clientUrl.includes('localhost') || clientUrl.includes('127.0.0.1')) {
-      if (process.env.NODE_ENV === 'production') {
+      if (!isLocalhostRequest || process.env.NODE_ENV === 'production') {
         clientUrl = 'https://findpgr.vercel.app'
       } else {
         clientUrl = clientUrl || 'http://localhost:5173'
