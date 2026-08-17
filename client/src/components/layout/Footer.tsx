@@ -230,9 +230,10 @@ export function Footer({ compact = false }: FooterProps) {
                   <ul className="space-y-2.5 text-sm">
                     {[
                       { label: 'Safety Guidelines', to: '/seeker/help?tab=safety' },
-                      { label: 'Refund Policies', to: '/seeker/help?tab=refund' },
+                      { label: 'Refund Policies', to: '/refund-policy' },
                       { label: 'FAQs & Guidelines', to: '/seeker/help?tab=faqs' },
-                      { label: 'Privacy & Terms', to: '/seeker/help?tab=privacy' },
+                      { label: 'Terms & Conditions', to: '/terms' },
+                      { label: 'Privacy Policy', to: '/privacy' },
                     ].map((item) => (
                       <li key={item.label}>
                         <Link to={item.to} className="hover:text-white transition-colors duration-150 flex items-center gap-1.5">
@@ -296,9 +297,9 @@ export function Footer({ compact = false }: FooterProps) {
                   <ul className="space-y-2.5 text-sm">
                     {[
                       { label: 'About Us', to: '/' },
-                      { label: 'Careers', to: '/' },
-                      { label: 'Terms & Conditions', to: '/seeker/help?tab=privacy' },
-                      { label: 'Privacy Policy', to: '/seeker/help?tab=privacy' },
+                      { label: 'Terms & Conditions', to: '/terms' },
+                      { label: 'Privacy Policy', to: '/privacy' },
+                      { label: 'Refund Policy', to: '/refund-policy' },
                       { label: 'Support & Help', to: '/seeker/help?tab=faqs' },
                     ].map((link, idx) => (
                       <li key={idx}>

@@ -19,6 +19,9 @@ import { MyInquiriesPage } from '@/pages/inquiry/MyInquiriesPage'
 import { PaymentPage } from '@/pages/payment/PaymentPage'
 import { PaymentSuccess } from '@/pages/payment/PaymentSuccess'
 import { PaymentFailed } from '@/pages/payment/PaymentFailed'
+import { TermsConditionsPage } from '@/pages/public/TermsConditionsPage'
+import { PrivacyPolicyPage } from '@/pages/public/PrivacyPolicyPage'
+import { RefundPolicyPage } from '@/pages/public/RefundPolicyPage'
 
 // Seeker
 import { SeekerLayout } from '@/pages/seeker/SeekerLayout'
@@ -74,6 +77,9 @@ export function App() {
                 <Route path="/search" element={<SearchPage />} />
                 <Route path="/pg/:id" element={<PGDetailPage />} />
                 <Route path="/my-inquiries" element={<MyInquiriesPage />} />
+                <Route path="/terms" element={<TermsConditionsPage />} />
+                <Route path="/privacy" element={<PrivacyPolicyPage />} />
+                <Route path="/refund-policy" element={<RefundPolicyPage />} />
 
                 {/* Payment */}
                 <Route path="/payment/:id" element={<PaymentPage />} />

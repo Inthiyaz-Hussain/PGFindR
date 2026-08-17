@@ -359,9 +359,9 @@ export function OwnerLoginPage() {
 
         <p className="text-center text-xs text-muted-foreground">
           By continuing, you agree to our{' '}
-          <Link to="/seeker/help?tab=privacy" className="underline underline-offset-2 cursor-pointer hover:text-foreground">Terms</Link>{' '}
+          <Link to="/terms" className="underline underline-offset-2 cursor-pointer hover:text-foreground">Terms</Link>{' '}
           and{' '}
-          <Link to="/seeker/help?tab=privacy" className="underline underline-offset-2 cursor-pointer hover:text-foreground">Privacy Policy</Link>.
+          <Link to="/privacy" className="underline underline-offset-2 cursor-pointer hover:text-foreground">Privacy Policy</Link>.
         </p>
       </div>
     </div>
