@@ -15,6 +15,32 @@ function haversineMeters(lat1: number, lng1: number, lat2: number, lng2: number)
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
 }
 
+async function geocodeQuery(q: string): Promise<{ lat: number; lng: number } | null> {
+  try {
+    const controller = new AbortController()
+    const id = setTimeout(() => controller.abort(), 2000)
+
+    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1`
+    const res = await fetch(url, {
+      headers: { 'User-Agent': 'PGFindR/1.0' },
+      signal: controller.signal
+    })
+    clearTimeout(id)
+
+    if (!res.ok) return null
+    const data: any = await res.json()
+    if (data && data[0]) {
+      return {
+        lat: parseFloat(data[0].lat),
+        lng: parseFloat(data[0].lon)
+      }
+    }
+  } catch (err) {
+    console.warn(`Geocoding failed for "${q}":`, err)
+  }
+  return null
+}
+
 const SHARING_MAP: Record<string, string> = {
   '1': 'single',
   '2': 'double',
@@ -73,8 +99,21 @@ router.get('/', async (req, res) => {
       'market', 'shop', 'multiplex', 'highway', 'bus stop', 'dhabha'
     ]
 
-    const hasCoords = !!(lat && lng)
     const isCategory = q ? CATEGORY_KEYWORDS.some(k => q.toLowerCase().includes(k)) : false
+
+    // Resolve geocoded coordinates if searching for a specific location
+    let refLat: number | null = lat ? Number(lat) : null
+    let refLng: number | null = lng ? Number(lng) : null
+
+    if (q && !isCategory) {
+      const geocoded = await geocodeQuery(q)
+      if (geocoded) {
+        refLat = geocoded.lat
+        refLng = geocoded.lng
+      }
+    }
+
+    const hasCoords = refLat != null && refLng != null
 
     if (q) {
       if (!isCategory || !hasCoords) {
@@ -118,7 +157,7 @@ router.get('/', async (req, res) => {
     // Fetch up to 500 for geo filtering (JS Haversine)
     const { data: pgs, error } = await query
       .order('available_beds', { ascending: false })
-      .limit(lat && lng ? 500 : pgOffset + pgLimit)
+      .limit(hasCoords ? 500 : pgOffset + pgLimit)
 
     if (error) throw error
 
@@ -126,9 +165,9 @@ router.get('/', async (req, res) => {
     type PGWithDistance = (typeof pgs)[0] & { distance_meters?: number }
     let results: PGWithDistance[] = pgs || []
 
-    if (lat && lng) {
-      const userLat = Number(lat)
-      const userLng = Number(lng)
+    if (hasCoords) {
+      const userLat = refLat!
+      const userLng = refLng!
       const radiusM = Number(radius)
 
       results = results
@@ -153,14 +192,17 @@ router.get('/', async (req, res) => {
               const addressLower = pg.address ? pg.address.toLowerCase() : ''
               const descLower = pg.description ? pg.description.toLowerCase() : ''
 
-              const isMatch = 
+              const isTextMatch = 
                 nameLower.includes(queryLower) ||
                 cityLower.includes(queryLower) ||
                 localityLower.includes(queryLower) ||
                 addressLower.includes(queryLower) ||
                 descLower.includes(queryLower)
 
-              if (!isMatch) return false
+              const isCloseGeoMatch = 
+                pg.distance_meters != null && pg.distance_meters <= 5000
+
+              if (!isTextMatch && !isCloseGeoMatch) return false
             }
           }
           return pg.distance_meters == null || pg.distance_meters <= radiusM
