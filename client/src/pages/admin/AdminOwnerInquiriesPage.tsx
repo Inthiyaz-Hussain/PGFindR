@@ -468,7 +468,21 @@ export function AdminOwnerInquiriesPage() {
                   </div>
                   {selectedInquiry.reset_token && (
                     <div className="flex flex-col gap-1 border-t pt-2 mt-2">
-                      <span className="text-muted-foreground font-semibold">Active Invitation Link:</span>
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground font-semibold">Active Invitation Link:</span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 text-xs px-2 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 dark:hover:bg-indigo-950/30 cursor-pointer"
+                          onClick={() => {
+                            const link = `${window.location.origin}/owner/set-password?token=${selectedInquiry.reset_token}`
+                            navigator.clipboard.writeText(link)
+                            toast.success('Link copied to clipboard!')
+                          }}
+                        >
+                          Copy Link
+                        </Button>
+                      </div>
                       <code className="bg-muted px-2 py-1.5 rounded text-xs select-all text-indigo-650 dark:text-indigo-400 block break-all whitespace-normal">
                         {window.location.origin}/owner/set-password?token={selectedInquiry.reset_token}
                       </code>
