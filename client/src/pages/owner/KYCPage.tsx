@@ -81,26 +81,32 @@ export function KYCPage() {
     }
   }, [profile, user])
 
-  // Mock File Upload Simulator
-  const simulateUpload = (type: 'id_proof' | 'address_proof' | 'ownership_proof', fileName: string) => {
+  // Mock File Upload Simulator with Base64 conversion
+  const simulateUpload = (type: 'id_proof' | 'address_proof' | 'ownership_proof', file: File) => {
+    const fileName = file.name
     setFiles((prev) => ({
       ...prev,
       [type]: { name: fileName, url: '', progress: 10 }
     }))
 
-    let currentProgress = 10
-    const interval = setInterval(() => {
-      currentProgress += 30
-      if (currentProgress >= 100) {
-        currentProgress = 100
-        clearInterval(interval)
-        toast.success(`${fileName} uploaded successfully!`)
-      }
-      setFiles((prev) => ({
-        ...prev,
-        [type]: prev[type] ? { ...prev[type]!, progress: currentProgress, url: `https://supabase-storage-mock/kyc/${user!.id}/${type}_${fileName}` } : null
-      }))
-    }, 200)
+    const reader = new FileReader()
+    reader.onload = () => {
+      const dataUrl = reader.result as string
+      let currentProgress = 10
+      const interval = setInterval(() => {
+        currentProgress += 30
+        if (currentProgress >= 100) {
+          currentProgress = 100
+          clearInterval(interval)
+          toast.success(`${fileName} uploaded successfully!`)
+        }
+        setFiles((prev) => ({
+          ...prev,
+          [type]: prev[type] ? { ...prev[type]!, progress: currentProgress, url: dataUrl } : null
+        }))
+      }, 200)
+    }
+    reader.readAsDataURL(file)
   }
 
   // Submit KYC mutation
@@ -222,7 +228,7 @@ export function KYCPage() {
                       type="file"
                       accept=".pdf,.jpg,.jpeg,.png"
                       className="hidden"
-                      onChange={(e) => e.target.files?.[0] && simulateUpload('id_proof', e.target.files[0].name)}
+                      onChange={(e) => e.target.files?.[0] && simulateUpload('id_proof', e.target.files[0])}
                     />
                   </label>
                 )}
@@ -254,7 +260,7 @@ export function KYCPage() {
                       type="file"
                       accept=".pdf,.jpg,.jpeg,.png"
                       className="hidden"
-                      onChange={(e) => e.target.files?.[0] && simulateUpload('address_proof', e.target.files[0].name)}
+                      onChange={(e) => e.target.files?.[0] && simulateUpload('address_proof', e.target.files[0])}
                     />
                   </label>
                 )}
@@ -286,7 +292,7 @@ export function KYCPage() {
                       type="file"
                       accept=".pdf,.jpg,.jpeg,.png"
                       className="hidden"
-                      onChange={(e) => e.target.files?.[0] && simulateUpload('ownership_proof', e.target.files[0].name)}
+                      onChange={(e) => e.target.files?.[0] && simulateUpload('ownership_proof', e.target.files[0])}
                     />
                   </label>
                 )}
