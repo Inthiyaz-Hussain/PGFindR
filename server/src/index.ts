@@ -77,11 +77,12 @@ app.use(cors({
 }))
 app.use(morgan('combined'))
 app.use(express.json({
+  limit: '15mb',
   verify: (req: any, res, buf) => {
     req.rawBody = buf.toString()
   }
 }))
-app.use(express.urlencoded({ extended: true }))
+app.use(express.urlencoded({ limit: '15mb', extended: true }))
 
 // Health check
 app.get('/health', (_req, res) => {
