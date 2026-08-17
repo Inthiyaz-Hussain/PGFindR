@@ -486,42 +486,56 @@ router.post('/api/owner/set-password', async (req: any, res) => {
       return res.status(400).json({ error: 'Inquiry may have been revoked by admin.' })
     }
 
-    // 5. Check no existing account with same email
+    // 5. Password meets strength rules
+    const passwordError = validatePasswordStrength(password)
+    if (passwordError) {
+      return res.status(400).json({ error: passwordError })
+    }
+
+    // 6. Both passwords match
+    if (password !== confirmPassword) {
+      return res.status(400).json({ error: 'Passwords do not match.' })
+    }
+
+    // 7. Check if user already exists
     const { data: existingUser } = await supabase
       .from('profiles')
       .select('id')
       .eq('email', inquiry.email)
       .maybeSingle()
 
+    let userId: string
+
     if (existingUser) {
-      return res.status(400).json({ error: 'An account with this email address already exists.' })
-    }
-
-    // 6. Password meets strength rules
-    const passwordError = validatePasswordStrength(password)
-    if (passwordError) {
-      return res.status(400).json({ error: passwordError })
-    }
-
-    // 7. Both passwords match
-    if (password !== confirmPassword) {
-      return res.status(400).json({ error: 'Passwords do not match.' })
-    }
-
-    // CREATE AUTH USER via Admin SDK (Supabase Auth)
-    const { data: authUser, error: authErr } = await supabase.auth.admin.createUser({
-      email: inquiry.email,
-      password,
-      email_confirm: true,
-      user_metadata: {
-        full_name: inquiry.full_name,
-        role: 'owner'
+      // Elevate existing Google/seeker account to owner
+      const { data: authUser, error: authErr } = await supabase.auth.admin.updateUserById(
+        existingUser.id,
+        {
+          password,
+          user_metadata: {
+            full_name: inquiry.full_name,
+            role: 'owner'
+          }
+        }
+      )
+      if (authErr) throw authErr
+      userId = existingUser.id
+    } else {
+      // Create a brand new account
+      const { data: authUser, error: authErr } = await supabase.auth.admin.createUser({
+        email: inquiry.email,
+        password,
+        email_confirm: true,
+        user_metadata: {
+          full_name: inquiry.full_name,
+          role: 'owner'
+        }
+      })
+      if (authErr) throw authErr
+      if (!authUser?.user) {
+        return res.status(500).json({ error: 'Failed to create user account' })
       }
-    })
-
-    if (authErr) throw authErr
-    if (!authUser?.user) {
-      return res.status(500).json({ error: 'Failed to create user account' })
+      userId = authUser.user.id
     }
 
     const { error: profileErr } = await supabase
@@ -535,7 +549,7 @@ router.post('/api/owner/set-password', async (req: any, res) => {
         kyc_status: 'pending',
         listing_status: 'hidden'
       })
-      .eq('id', authUser.user.id)
+      .eq('id', userId)
 
     if (profileErr) throw profileErr
 
@@ -545,7 +559,7 @@ router.post('/api/owner/set-password', async (req: any, res) => {
       .update({
         reset_token_used: true,
         password_set_at: new Date().toISOString(),
-        owner_user_id: authUser.user.id,
+        owner_user_id: userId,
         status: 'onboarded'
       })
       .eq('id', inquiry.id)
@@ -556,7 +570,7 @@ router.post('/api/owner/set-password', async (req: any, res) => {
     const { error: pgErr } = await supabase
       .from('pg_listings')
       .insert({
-        owner_id: authUser.user.id,
+        owner_id: userId,
         name: inquiry.pg_name,
         address: inquiry.pg_address,
         city: inquiry.pg_city,
