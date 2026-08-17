@@ -92,6 +92,7 @@ export function InquiryModal({
     control,
     reset,
     setValue,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<InquiryFormData>({
     resolver: zodResolver(inquirySchema),
@@ -111,6 +112,9 @@ export function InquiryModal({
     },
     mode: 'onChange',
   })
+
+  const selectedPref = watch('sharing_preference')
+  const sharingPrefLabel = selectedPref ? SHARING_LABELS[selectedPref] : ''
 
   const maxBedsAllowed = 10
 
@@ -425,7 +429,9 @@ export function InquiryModal({
       <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetContent side="bottom" className="h-[90vh] overflow-y-auto bg-[#F8FAFC] text-slate-900 border-t border-slate-200">
           <SheetHeader className="mb-4">
-            <SheetTitle className="text-slate-900">Send Inquiry — {pgName}</SheetTitle>
+            <SheetTitle className="text-slate-900">
+              Send Inquiry — {pgName} {sharingPrefLabel ? `(${sharingPrefLabel})` : ''}
+            </SheetTitle>
           </SheetHeader>
           {formContent}
         </SheetContent>
@@ -437,7 +443,9 @@ export function InquiryModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto bg-[#F8FAFC] text-slate-900 border border-slate-200">
         <DialogHeader>
-          <DialogTitle className="text-slate-900">Send Inquiry — {pgName}</DialogTitle>
+          <DialogTitle className="text-slate-900">
+            Send Inquiry — {pgName} {sharingPrefLabel ? `(${sharingPrefLabel})` : ''}
+          </DialogTitle>
         </DialogHeader>
         {formContent}
       </DialogContent>
