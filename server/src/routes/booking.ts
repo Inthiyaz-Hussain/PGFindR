@@ -44,7 +44,7 @@ router.get('/', async (req, res) => {
 
     let query = supabase
       .from('bookings')
-      .select('*, pg:pg_listings(name, city), bed:beds(room_number, bed_label), seeker:profiles!bookings_seeker_id_fkey(full_name)')
+      .select('*, pg:pg_listings(name, city), bed:beds!bookings_bed_id_fkey(room_number, bed_label), seeker:profiles!bookings_seeker_id_fkey(full_name)')
       .order('created_at', { ascending: false })
 
     if (owner_id) {
@@ -67,7 +67,7 @@ router.get('/:id', async (req, res) => {
   try {
     const { data, error } = await supabase
       .from('bookings')
-      .select('*, pg:pg_listings(*), bed:beds(*), seeker:profiles!bookings_seeker_id_fkey(full_name, phone)')
+      .select('*, pg:pg_listings(*), bed:beds!bookings_bed_id_fkey(*), seeker:profiles!bookings_seeker_id_fkey(full_name, phone)')
       .eq('id', req.params.id)
       .single()
 
