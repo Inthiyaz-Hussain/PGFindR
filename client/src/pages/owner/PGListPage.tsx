@@ -79,7 +79,11 @@ export function PGListPage() {
             const photoUrl = photo ? (photo as { url: string }).url : null
 
             return (
-              <Card key={l.id} className="overflow-hidden">
+              <Card
+                key={l.id}
+                className="overflow-hidden cursor-pointer hover:border-primary/50 hover:shadow-md transition-all duration-200"
+                onClick={() => navigate(`/owner/pgs/${l.id}/edit`)}
+              >
                 <CardContent className="p-0">
                   <div className="flex flex-col sm:flex-row">
                     {/* Photo */}
@@ -112,13 +116,16 @@ export function PGListPage() {
                           </div>
                         </div>
                         <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
+                          <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                             <Button variant="ghost" size="icon-sm">
                               <MoreVertical className="size-4" />
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => navigate(`/owner/pgs/${l.id}/edit`)}>
+                          <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                            <DropdownMenuItem onClick={(e) => {
+                              e.stopPropagation()
+                              navigate(`/owner/pgs/${l.id}/edit`)
+                            }}>
                               <Edit className="size-4" /> Edit Listing
                             </DropdownMenuItem>
                           </DropdownMenuContent>

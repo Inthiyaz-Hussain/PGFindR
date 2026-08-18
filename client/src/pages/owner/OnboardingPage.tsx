@@ -331,6 +331,13 @@ export function OnboardingPage() {
     }
   }
 
+  // Load existing onboarding data on mount (skip in test mode to avoid race conditions)
+  useEffect(() => {
+    if (user?.id && import.meta.env.MODE !== 'test') {
+      loadExistingData()
+    }
+  }, [user?.id])
+
   // Submit onboarding directly to the database
   async function handleFinalSubmit() {
     try {

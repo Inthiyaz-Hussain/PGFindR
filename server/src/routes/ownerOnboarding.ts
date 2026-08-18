@@ -1001,6 +1001,14 @@ router.post('/api/owner/onboard', authenticateToken, requireRole('owner'), async
 
     if (pgUpdateErr) throw pgUpdateErr
 
+    // Delete any older duplicate placeholder listings for this owner to keep portal data in sync
+    await supabase
+      .from('pg_listings')
+      .delete()
+      .eq('owner_id', userId)
+      .eq('locality', 'Pending Onboarding')
+      .neq('id', pgId)
+
     // D. Setup Sharing Types & Rooms & Beds
     // Delete any existing room configurations to rebuild clean
     await supabase.from('rooms').delete().eq('pg_id', pgId)
