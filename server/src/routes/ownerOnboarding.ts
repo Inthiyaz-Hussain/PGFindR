@@ -946,6 +946,33 @@ router.post('/api/owner/onboard', authenticateToken, requireRole('owner'), async
     if (pgFetchErr) throw pgFetchErr
     const pgId = pg.id
 
+    // Calculate PG listing summary stats
+    let totalBeds = 0
+    let occupiedBeds = 0
+    let minRent = Infinity
+    let maxRent = -Infinity
+
+    if (rooms && Array.isArray(rooms)) {
+      for (const room of rooms) {
+        const roomTotal = room.beds?.length || 0
+        const roomOccupied = room.beds?.filter((b: any) => b.status === 'occupied').length || 0
+        totalBeds += roomTotal
+        occupiedBeds += roomOccupied
+
+        if (room.beds && Array.isArray(room.beds)) {
+          for (const bed of room.beds) {
+            const rent = Number(bed.monthly_rent) || 0
+            if (rent < minRent) minRent = rent
+            if (rent > maxRent) maxRent = rent
+          }
+        }
+      }
+    }
+
+    const availableBeds = totalBeds - occupiedBeds
+    const monthlyRentMin = minRent === Infinity ? 0 : minRent
+    const monthlyRentMax = maxRent === -Infinity ? 0 : maxRent
+
     // C. Update PG listing with full basic details
     const { error: pgUpdateErr } = await supabase
       .from('pg_listings')
@@ -964,6 +991,10 @@ router.post('/api/owner/onboard', authenticateToken, requireRole('owner'), async
         near_pubs: pgDetails.near_pubs || null,
         near_transit: pgDetails.near_transit || null,
         status: 'pending', // Re-submit for review
+        total_beds: totalBeds,
+        available_beds: availableBeds,
+        monthly_rent_min: monthlyRentMin,
+        monthly_rent_max: monthlyRentMax,
         updated_at: new Date().toISOString()
       })
       .eq('id', pgId)
