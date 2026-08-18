@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Loader2, ArrowLeft, ArrowRight, CheckCircle2, Plus, Trash2, Shield, Upload, Info, Clock, AlertTriangle, LogOut } from 'lucide-react'
+import { Loader2, ArrowLeft, ArrowRight, CheckCircle2, Shield, Upload, Info, Clock, AlertTriangle, LogOut } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAuth } from '@/hooks/useAuth'
 
@@ -86,13 +86,65 @@ export function OnboardingPage() {
     }
   ])
 
+  // Step 2 bulk configuration state
+  const [bulkConfig, setBulkConfig] = useState({
+    num_rooms: 10,
+    sharing_type: 2 as 1 | 2 | 3 | 4,
+    monthly_rent: 8000,
+    occupied_beds: 0,
+    door_facing: 'NE',
+    has_balcony: false
+  })
+
+  // Synchronize bulk configuration changes to rooms array dynamically
   useEffect(() => {
-    if (pgDetails.pg_type === 'coliving' || pgDetails.pg_type === 'co-ed') {
-      setRooms(prev =>
-        prev.map(r => r.sharing_type !== 1 ? { ...r, sharing_type: 1 } : r)
-      )
+    const R = Number(bulkConfig.num_rooms) || 1
+    const S = Number(bulkConfig.sharing_type) || 2
+    const O = Number(bulkConfig.occupied_beds) || 0
+    const M = Number(bulkConfig.monthly_rent) || 8000
+    const F = bulkConfig.door_facing
+    const B = bulkConfig.has_balcony
+
+    const totalBeds = R * S
+    const safeOccupied = Math.min(O, totalBeds)
+
+    let remainingOccupiedBeds = safeOccupied
+    const generatedRooms = []
+
+    for (let i = 1; i <= R; i++) {
+      const roomId = `room-${i}`
+      const beds = []
+      for (let j = 1; j <= S; j++) {
+        const bedId = `bed-${i}-${j}`
+        const isOccupied = remainingOccupiedBeds > 0
+        if (isOccupied) {
+          remainingOccupiedBeds--
+        }
+        beds.push({
+          id: bedId,
+          bed_label: `Bed ${String.fromCharCode(65 + j - 1)}`,
+          bed_type: S === 1 ? 'Single' as const : 'Double' as const,
+          status: isOccupied ? 'occupied' as const : 'available' as const,
+          monthly_rent: M
+        })
+      }
+
+      generatedRooms.push({
+        id: roomId,
+        room_label: `Room ${100 + i}`,
+        floor: 1,
+        sharing_type: S as 1 | 2 | 3 | 4,
+        door_facing: F,
+        has_window: true,
+        window_facing: F,
+        room_notes: B ? 'Includes balcony' : '',
+        photos: [],
+        beds
+      })
     }
-  }, [pgDetails.pg_type])
+
+    setRooms(generatedRooms)
+  }, [bulkConfig])
 
   // Step 3: Amenities
   const [standardAmenities, setStandardAmenities] = useState<Record<string, boolean>>({
@@ -117,59 +169,7 @@ export function OnboardingPage() {
     bank_name: '',
   })
 
-  // Room additions & deletions helpers
-  function addRoom() {
-    const newId = `room-${Date.now()}`
-    setRooms([...rooms, {
-      id: newId,
-      room_label: `Room ${rooms.length + 101}`,
-      floor: 1,
-      sharing_type: 2,
-      door_facing: 'N',
-      has_window: false,
-      photos: ['https://images.unsplash.com/photo-1598928506311-c55ded91a20c?auto=format&fit=crop&w=500&q=80', 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=500&q=80'],
-      beds: [
-        { id: `bed-${newId}-1`, bed_label: 'Bed A', bed_type: 'Single', status: 'available', monthly_rent: 10000 },
-        { id: `bed-${newId}-2`, bed_label: 'Bed B', bed_type: 'Single', status: 'available', monthly_rent: 10000 },
-      ]
-    }])
-  }
 
-  function removeRoom(id: string) {
-    setRooms(rooms.filter(r => r.id !== id))
-  }
-
-  function handleRoomChange(roomId: string, field: string, value: any) {
-    setRooms(rooms.map(r => {
-      if (r.id !== roomId) return r
-      if (field === 'sharing_type') {
-        // Adjust bed count to match sharing type exactly
-        const sharingVal = Number(value) as 1 | 2 | 3 | 4
-        const adjustedBeds = Array.from({ length: sharingVal }, (_, index) => {
-          const oldBed = r.beds[index]
-          return oldBed || {
-            id: `bed-${r.id}-${index + 1}`,
-            bed_label: `Bed ${String.fromCharCode(65 + index)}`, // Bed A, B, C, D
-            bed_type: 'Single' as const,
-            status: 'available' as const,
-            monthly_rent: 10000
-          }
-        })
-        return { ...r, sharing_type: sharingVal, beds: adjustedBeds }
-      }
-      return { ...r, [field]: value }
-    }))
-  }
-
-  function handleBedChange(roomId: string, bedId: string, field: string, value: any) {
-    setRooms(rooms.map(r => {
-      if (r.id !== roomId) return r
-      return {
-        ...r,
-        beds: r.beds.map(b => b.id === bedId ? { ...b, [field]: value } : b)
-      }
-    }))
-  }
 
   // Custom Amenity addition
   function addCustomAmenity() {
@@ -534,216 +534,155 @@ export function OnboardingPage() {
 
       {step === 2 && (
         <div className="space-y-6">
-          <div className="flex justify-between items-center">
-            <h2 className="text-xl font-bold">Room & Bed Configuration</h2>
-            <Button onClick={addRoom} size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white">
-              <Plus className="size-4 mr-1.5" /> Add Room
-            </Button>
-          </div>
+          <Card className="border-slate-200/80 dark:border-slate-800/80 shadow-lg">
+            <CardHeader className="pb-3 border-b">
+              <CardTitle className="text-xl font-bold text-indigo-950 dark:text-slate-100">Step 2 — Room & Bed Configuration</CardTitle>
+              <CardDescription>
+                Configure the standard rooms and beds layout of your PG in bulk. We will generate the detailed room inventory automatically.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="pt-6 space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <Field>
+                  <Label className="text-sm font-semibold">Number of Rooms</Label>
+                  <Input
+                    type="number"
+                    min="1"
+                    max="100"
+                    value={bulkConfig.num_rooms}
+                    onChange={e => {
+                      const val = Math.max(1, Number(e.target.value) || 1)
+                      setBulkConfig({ ...bulkConfig, num_rooms: val })
+                    }}
+                    placeholder="e.g. 10"
+                  />
+                  <span className="text-[10px] text-muted-foreground">Total rooms to generate in this PG</span>
+                </Field>
 
-          {rooms.map((room, roomIndex) => (
-            <Card key={room.id} className="border-slate-200/80 dark:border-slate-800/80 shadow-md">
-              <CardHeader className="flex flex-row items-center justify-between pb-3 bg-slate-50/50 dark:bg-slate-900/50 rounded-t-xl border-b">
-                <div>
-                  <CardTitle className="text-base font-bold">Room #{roomIndex + 1} — Details</CardTitle>
-                </div>
-                {rooms.length > 1 && (
-                  <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-700" onClick={() => removeRoom(room.id)}>
-                    <Trash2 className="size-4" />
-                  </Button>
-                )}
-              </CardHeader>
-              <CardContent className="pt-4 space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <Field>
-                    <Label className="text-xs font-semibold">Room Label / Number</Label>
-                    <Input
-                      value={room.room_label}
-                      onChange={e => handleRoomChange(room.id, 'room_label', e.target.value)}
-                      placeholder="e.g. Room 101"
-                    />
-                  </Field>
-                  <Field>
-                    <Label className="text-xs font-semibold">Floor Number</Label>
-                    <Input
-                      type="number"
-                      value={room.floor}
-                      onChange={e => handleRoomChange(room.id, 'floor', Number(e.target.value))}
-                      placeholder="0 = Ground"
-                    />
-                  </Field>
-                  <Field>
-                    <Label className="text-xs font-semibold">Sharing Type</Label>
-                    <Select
-                      value={String(room.sharing_type)}
-                      onValueChange={v => handleRoomChange(room.id, 'sharing_type', Number(v))}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="1">1-Share (Single)</SelectItem>
-                        {pgDetails.pg_type !== 'coliving' && pgDetails.pg_type !== 'co-ed' && (
-                          <>
-                            <SelectItem value="2">2-Share (Double)</SelectItem>
-                            <SelectItem value="3">3-Share (Triple)</SelectItem>
-                            <SelectItem value="4">4-Share (Quadruple)</SelectItem>
-                          </>
-                        )}
-                      </SelectContent>
-                    </Select>
-                  </Field>
-                  <Field>
-                    <Label className="text-xs font-semibold">Door Facing Direction</Label>
-                    <Select
-                      value={room.door_facing}
-                      onValueChange={v => handleRoomChange(room.id, 'door_facing', v)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {COMPASS_DIRECTIONS.map(dir => (
-                          <SelectItem key={dir.value} value={dir.value}>{dir.value} - {dir.label.split(' (')[0]}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </Field>
-                </div>
+                <Field>
+                  <Label className="text-sm font-semibold">Sharing Type</Label>
+                  <Select
+                    value={String(bulkConfig.sharing_type)}
+                    onValueChange={v => {
+                      const val = Number(v) as 1 | 2 | 3 | 4
+                      setBulkConfig(prev => {
+                        const totalBeds = prev.num_rooms * val
+                        const occupied = Math.min(prev.occupied_beds, totalBeds)
+                        return { ...prev, sharing_type: val, occupied_beds: occupied }
+                      })
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1">1-Share (Single)</SelectItem>
+                      <SelectItem value="2">2-Share (Double)</SelectItem>
+                      <SelectItem value="3">3-Share (Triple)</SelectItem>
+                      <SelectItem value="4">4-Share (Quadruple)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <span className="text-[10px] text-muted-foreground">Beds count per standard room</span>
+                </Field>
 
-                {/* Window toggle & conditional select */}
-                <div className="border border-slate-100 dark:border-slate-800 rounded-lg p-3 bg-slate-50/20 dark:bg-slate-900/20 space-y-3">
+                <Field>
+                  <Label className="text-sm font-semibold">Monthly Rent per Bed (₹)</Label>
+                  <Input
+                    type="number"
+                    min="100"
+                    value={bulkConfig.monthly_rent}
+                    onChange={e => setBulkConfig({ ...bulkConfig, monthly_rent: Math.max(0, Number(e.target.value) || 0) })}
+                    placeholder="e.g. 8000"
+                  />
+                  <span className="text-[10px] text-muted-foreground">Base rent per bed per month</span>
+                </Field>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
+                <Field>
+                  <Label className="text-sm font-semibold">Occupied (Filled) Beds</Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    max={bulkConfig.num_rooms * bulkConfig.sharing_type}
+                    value={bulkConfig.occupied_beds}
+                    onChange={e => {
+                      const totalBeds = bulkConfig.num_rooms * bulkConfig.sharing_type
+                      const val = Math.max(0, Math.min(totalBeds, Number(e.target.value) || 0))
+                      setBulkConfig({ ...bulkConfig, occupied_beds: val })
+                    }}
+                    placeholder="e.g. 4"
+                  />
+                  <span className="text-[10px] text-muted-foreground">Beds currently occupied by tenants</span>
+                </Field>
+
+                <Field>
+                  <Label className="text-sm font-semibold">Room Facing Direction</Label>
+                  <Select
+                    value={bulkConfig.door_facing}
+                    onValueChange={v => setBulkConfig({ ...bulkConfig, door_facing: v })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {COMPASS_DIRECTIONS.map(dir => (
+                        <SelectItem key={dir.value} value={dir.value}>{dir.value} - {dir.label.split(' (')[0]}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <span className="text-[10px] text-muted-foreground">Main door facing direction of rooms</span>
+                </Field>
+
+                <div className="flex flex-col justify-center space-y-1.5 border border-slate-100 dark:border-slate-800 p-3 rounded-lg bg-slate-50/30 dark:bg-slate-900/30">
                   <div className="flex items-center justify-between">
                     <div>
-                      <div className="text-sm font-semibold">Has Window?</div>
-                      <div className="text-xs text-muted-foreground">Natural lighting and air ventilation</div>
+                      <div className="text-sm font-semibold">Includes Balcony?</div>
+                      <div className="text-[10px] text-muted-foreground">Whether rooms have balcony access</div>
                     </div>
                     <Switch
-                      checked={room.has_window}
-                      onCheckedChange={checked => handleRoomChange(room.id, 'has_window', checked)}
+                      checked={bulkConfig.has_balcony}
+                      onCheckedChange={checked => setBulkConfig({ ...bulkConfig, has_balcony: checked })}
                     />
                   </div>
-
-                  {room.has_window && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t">
-                      <Field>
-                        <Label className="text-xs font-semibold">Window Facing Direction</Label>
-                        <Select
-                          value={room.window_facing || 'E'}
-                          onValueChange={v => handleRoomChange(room.id, 'window_facing', v)}
-                        >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {COMPASS_DIRECTIONS.map(dir => (
-                              <SelectItem key={dir.value} value={dir.value}>{dir.value} - {dir.label}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </Field>
-                      <Field>
-                        <Label className="text-xs font-semibold">Window Count</Label>
-                        <Input
-                          type="number"
-                          value={room.window_count || 1}
-                          onChange={e => handleRoomChange(room.id, 'window_count', Number(e.target.value))}
-                          placeholder="1"
-                        />
-                      </Field>
-                    </div>
-                  )}
                 </div>
+              </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <Field>
-                    <Label className="text-xs font-semibold">Room Size (sq ft - Optional)</Label>
-                    <Input
-                      type="number"
-                      value={room.room_size_sqft || ''}
-                      onChange={e => handleRoomChange(room.id, 'room_size_sqft', Number(e.target.value))}
-                      placeholder="e.g. 180"
-                    />
-                  </Field>
-                  <Field>
-                    <Label className="text-xs font-semibold">Room Notes (Optional)</Label>
-                    <Input
-                      value={room.room_notes || ''}
-                      onChange={e => handleRoomChange(room.id, 'room_notes', e.target.value)}
-                      placeholder="e.g. Attached washroom, includes balcony"
-                    />
-                  </Field>
-                </div>
-
-                {/* Beds Configuration */}
-                <div className="space-y-3 pt-3 border-t">
-                  <div className="text-sm font-bold text-slate-800 dark:text-slate-200">Beds in this Room ({room.beds.length})</div>
-                  <div className="grid grid-cols-1 gap-3">
-                    {room.beds.map((bed, bedIndex) => (
-                      <div key={bed.id} className="flex flex-col md:flex-row items-start md:items-center gap-3 border p-3 rounded-lg bg-card/50">
-                        <div className="text-xs font-bold text-slate-500 shrink-0">Bed #{bedIndex + 1}</div>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 flex-1 w-full">
-                          <Field>
-                            <Label className="text-[10px] font-semibold">Bed Label</Label>
-                            <Input
-                              value={bed.bed_label}
-                              onChange={e => handleBedChange(room.id, bed.id, 'bed_label', e.target.value)}
-                              placeholder="e.g. Bed A"
-                              className="h-8 text-xs"
-                            />
-                          </Field>
-                          <Field>
-                            <Label className="text-[10px] font-semibold">Bed Type</Label>
-                            <Select
-                              value={bed.bed_type}
-                              onValueChange={v => handleBedChange(room.id, bed.id, 'bed_type', v)}
-                            >
-                              <SelectTrigger className="h-8 text-xs">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="Single">Single bed</SelectItem>
-                                <SelectItem value="Double">Double bed</SelectItem>
-                                <SelectItem value="Bunk Top">Bunk (Top)</SelectItem>
-                                <SelectItem value="Bunk Bottom">Bunk (Bottom)</SelectItem>
-                                <SelectItem value="Floor Mattress">Floor Mattress</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </Field>
-                          <Field>
-                            <Label className="text-[10px] font-semibold">Initial Status</Label>
-                            <Select
-                              value={bed.status}
-                              onValueChange={v => handleBedChange(room.id, bed.id, 'status', v)}
-                            >
-                              <SelectTrigger className="h-8 text-xs">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="available">Available (Green)</SelectItem>
-                                <SelectItem value="occupied">Occupied (Grey)</SelectItem>
-                                <SelectItem value="maintenance">Maintenance (Orange)</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </Field>
-                          <Field>
-                            <Label className="text-[10px] font-semibold">Monthly Rent (₹)</Label>
-                            <Input
-                              type="number"
-                              value={bed.monthly_rent}
-                              onChange={e => handleBedChange(room.id, bed.id, 'monthly_rent', Number(e.target.value))}
-                              placeholder="12000"
-                              className="h-8 text-xs"
-                            />
-                          </Field>
-                        </div>
-                      </div>
-                    ))}
+              {/* Real-time Summary Card */}
+              <div className="mt-6 border border-indigo-100 dark:border-indigo-900/50 rounded-xl bg-indigo-50/30 dark:bg-slate-900/50 p-5 space-y-4">
+                <h4 className="text-sm font-bold text-indigo-900 dark:text-indigo-400 flex items-center gap-1.5 uppercase tracking-wider">
+                  <Shield className="size-4" /> Real-time Configuration Summary
+                </h4>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
+                  <div className="bg-white dark:bg-slate-900 border p-3 rounded-lg">
+                    <span className="text-muted-foreground block mb-0.5">Total Rooms</span>
+                    <span className="text-lg font-bold text-slate-800 dark:text-slate-200">{bulkConfig.num_rooms} Rooms</span>
+                  </div>
+                  <div className="bg-white dark:bg-slate-900 border p-3 rounded-lg">
+                    <span className="text-muted-foreground block mb-0.5">Sharing Mode</span>
+                    <span className="text-lg font-bold text-slate-800 dark:text-slate-200">{bulkConfig.sharing_type}-Share</span>
+                  </div>
+                  <div className="bg-white dark:bg-slate-900 border p-3 rounded-lg">
+                    <span className="text-muted-foreground block mb-0.5">Occupied (Filled) Beds</span>
+                    <span className="text-lg font-bold text-slate-500">{bulkConfig.occupied_beds} Beds</span>
+                  </div>
+                  <div className="bg-white dark:bg-slate-900 border p-3 rounded-lg border-emerald-200 dark:border-emerald-900/30 bg-emerald-50/10">
+                    <span className="text-muted-foreground block mb-0.5">Available (Empty) Beds</span>
+                    <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
+                      {Math.max(0, bulkConfig.num_rooms * bulkConfig.sharing_type - bulkConfig.occupied_beds)} Beds
+                    </span>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          ))}
+                <div className="text-xs text-slate-500 flex flex-wrap gap-x-4 gap-y-1">
+                  <span>Room Facing: <strong>{bulkConfig.door_facing}</strong></span>
+                  <span>•</span>
+                  <span>Balcony Access: <strong>{bulkConfig.has_balcony ? 'Yes' : 'No'}</strong></span>
+                  <span>•</span>
+                  <span>Calculated Total Beds: <strong>{bulkConfig.num_rooms * bulkConfig.sharing_type}</strong></span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       )}
 

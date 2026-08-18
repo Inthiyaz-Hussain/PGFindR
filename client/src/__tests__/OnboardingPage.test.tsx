@@ -54,10 +54,10 @@ describe('OnboardingPage Component', () => {
     await user.click(nextBtn)
 
     // Verify step 2 title
-    expect(screen.getByText('Room & Bed Configuration')).toBeInTheDocument()
+    expect(screen.getByText('Step 2 — Room & Bed Configuration')).toBeInTheDocument()
   })
 
-  it('toggles window controls in Room & Bed Configuration correctly', async () => {
+  it('renders Step 2 bulk room configuration and toggles balcony switch correctly', async () => {
     const user = userEvent.setup()
     renderWithProviders(<OnboardingPage />)
 
@@ -67,15 +67,20 @@ describe('OnboardingPage Component', () => {
     // Navigate to Step 2
     await user.click(screen.getByRole('button', { name: /next/i }))
 
-    // Expect window facing input to be visible initially (default checked in code)
-    expect(screen.getByText('Window Facing Direction')).toBeInTheDocument()
+    // Expect Step 2 Title
+    expect(screen.getByText('Step 2 — Room & Bed Configuration')).toBeInTheDocument()
 
-    // Toggle window switch to off
-    const switchBtn = screen.getByRole('switch')
-    await user.click(switchBtn)
+    // Check default values render in Real-time summary panel
+    expect(screen.getByText('10 Rooms')).toBeInTheDocument()
+    expect(screen.getByText('2-Share')).toBeInTheDocument()
+    expect(screen.getByText(/Balcony Access:/i)).toHaveTextContent('Balcony Access: No')
 
-    // Expect window facing input to be hidden
-    expect(screen.queryByText('Window Facing Direction')).not.toBeInTheDocument()
+    // Toggle Balcony Switch
+    const balconySwitch = screen.getByRole('switch')
+    await user.click(balconySwitch)
+
+    // Verify update in the summary
+    expect(screen.getByText(/Balcony Access:/i)).toHaveTextContent('Balcony Access: Yes')
   })
 
   it('adds custom amenities and respects max character limit and list constraints', async () => {
