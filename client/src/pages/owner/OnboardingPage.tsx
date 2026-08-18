@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
-import { Loader2, ArrowLeft, ArrowRight, CheckCircle2, Shield, Upload, Info, Clock, AlertTriangle, LogOut } from 'lucide-react'
+import { Loader2, ArrowLeft, ArrowRight, CheckCircle2, Shield, Upload, Info, Clock, AlertTriangle, LogOut, Edit } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAuth } from '@/hooks/useAuth'
+import { supabaseUntyped } from '@/lib/supabase'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -195,6 +196,141 @@ export function OnboardingPage() {
     setCustomAmenities(customAmenities.filter((_, i) => i !== index))
   }
 
+  // Load existing onboarding/PG data if the owner wants to edit
+  async function loadExistingData() {
+    if (!user?.id) return
+    try {
+      // 1. Fetch PG listing
+      const { data: pg, error: pgErr } = await supabaseUntyped
+        .from('pg_listings')
+        .select('*')
+        .eq('owner_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+      if (pg && !pgErr) {
+        setPgDetails({
+          name: pg.name || '',
+          description: pg.description || '',
+          address: pg.address || '',
+          pincode: pg.pincode || '',
+          city: pg.city || 'Bengaluru',
+          locality: pg.locality || '',
+          pg_type: pg.pg_type || 'coliving',
+          deposit_amount: String(pg.deposit_amount || 5000),
+          rules: pg.rules || '',
+          near_malls: pg.near_malls || '',
+          near_parks: pg.near_parks || '',
+          near_pubs: pg.near_pubs || '',
+          near_transit: pg.near_transit || '',
+        })
+
+        // Fetch rooms & beds
+        const { data: roomsList } = await supabaseUntyped
+          .from('rooms')
+          .select('*, beds(*)')
+          .eq('pg_id', pg.id)
+
+        if (roomsList && roomsList.length > 0) {
+          const mappedRooms = roomsList.map((rm: any) => {
+            const sharingTypeInt = rm.beds?.length || 2
+            return {
+              id: rm.id,
+              room_label: rm.room_label,
+              floor: rm.floor || 1,
+              sharing_type: (sharingTypeInt >= 1 && sharingTypeInt <= 4 ? sharingTypeInt : 2) as 1 | 2 | 3 | 4,
+              door_facing: rm.door_facing || 'NE',
+              has_window: rm.has_window || false,
+              window_facing: rm.window_facing || '',
+              window_count: rm.window_count || 1,
+              room_size_sqft: rm.room_size_sqft || 150,
+              room_notes: rm.room_notes || '',
+              photos: [],
+              beds: (rm.beds || []).map((b: any) => ({
+                id: b.id,
+                bed_label: b.bed_label,
+                bed_type: b.bed_type || 'Double',
+                status: b.status || 'available',
+                monthly_rent: b.monthly_rent || 8000,
+              }))
+            }
+          })
+          setRooms(mappedRooms)
+
+          // Pre-populate bulkConfig if rooms exist
+          const firstRoom = roomsList[0]
+          const sharingTypeVal = firstRoom.beds?.length || 2
+          const monthlyRentVal = firstRoom.beds?.[0]?.monthly_rent || 8000
+          setBulkConfig({
+            num_rooms: roomsList.length,
+            sharing_type: (sharingTypeVal >= 1 && sharingTypeVal <= 4 ? sharingTypeVal : 2) as 1 | 2 | 3 | 4,
+            monthly_rent: monthlyRentVal,
+            occupied_beds: roomsList.reduce((sum: number, r: any) => sum + (r.beds || []).filter((b: any) => b.status === 'occupied').length, 0),
+            door_facing: firstRoom.door_facing || 'NE',
+            has_balcony: firstRoom.room_notes?.toLowerCase().includes('balcony') || false
+          })
+        }
+
+        // Fetch amenities
+        const { data: amenitiesList } = await supabaseUntyped
+          .from('amenities')
+          .select('*')
+          .eq('pg_id', pg.id)
+
+        if (amenitiesList) {
+          const std: Record<string, boolean> = {
+            wifi: false, ac: false, food_veg: false, food_nonveg: false,
+            laundry: false, parking: false, cctv: false, generator: false
+          }
+          amenitiesList.forEach((am: any) => {
+            if (am.key in std) std[am.key] = am.is_available
+          })
+          setStandardAmenities(std)
+        }
+
+        // Fetch custom amenities
+        const { data: custAmenitiesList } = await supabaseUntyped
+          .from('custom_amenities')
+          .select('*')
+          .eq('pg_id', pg.id)
+
+        if (custAmenitiesList) {
+          setCustomAmenities(custAmenitiesList.map((c: any) => c.label))
+        }
+
+        // Fetch Photos
+        const { data: photosList } = await supabaseUntyped
+          .from('pg_photos')
+          .select('*')
+          .eq('pg_id', pg.id)
+
+        if (photosList && photosList.length > 0) {
+          setCommonPhotos(photosList.map((p: any) => p.url))
+        }
+      }
+
+      // 2. Fetch KYC details
+      const { data: kyc, error: kycErr } = await supabaseUntyped
+        .from('owner_kyc')
+        .select('*')
+        .eq('owner_id', user.id)
+        .maybeSingle()
+
+      if (kyc && !kycErr) {
+        setKycDetails({
+          pan_number: kyc.pan_number || '',
+          aadhaar_number: kyc.aadhaar_number || '',
+          bank_account: kyc.bank_account || '',
+          bank_ifsc: kyc.bank_ifsc || '',
+          bank_name: kyc.bank_name || '',
+        })
+      }
+    } catch (e) {
+      console.error('Error loading existing onboarding data:', e)
+    }
+  }
+
   // Submit onboarding directly to the database
   async function handleFinalSubmit() {
     try {
@@ -313,7 +449,17 @@ export function OnboardingPage() {
             </p>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-3 justify-center w-full max-w-xs">
+          <div className="flex flex-col sm:flex-row gap-3 justify-center w-full max-w-md">
+            <Button
+              onClick={async () => {
+                await loadExistingData()
+                setIsEditing(true)
+                setStep(1)
+              }}
+              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium shadow-md transition-all duration-200"
+            >
+              <Edit className="size-4 mr-2" /> View / Edit PG & KYC Details
+            </Button>
             <Button
               variant="outline"
               onClick={signOut}
@@ -356,16 +502,8 @@ export function OnboardingPage() {
 
           <div className="flex flex-col sm:flex-row gap-3 justify-center w-full max-w-md pt-2">
             <Button
-              onClick={() => {
-                // Populate wizard state with profile info if they want to edit
-                if (profile.bank_account_number) {
-                  setKycDetails(prev => ({
-                    ...prev,
-                    bank_account: profile.bank_account_number || '',
-                    bank_ifsc: profile.bank_ifsc || '',
-                    bank_name: profile.bank_holder_name || ''
-                  }))
-                }
+              onClick={async () => {
+                await loadExistingData()
                 setIsEditing(true)
                 setStep(5) // Start directly at KYC details step
               }}

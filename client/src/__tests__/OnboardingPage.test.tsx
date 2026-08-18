@@ -31,6 +31,7 @@ vi.mock('@/lib/supabase', () => {
     eq: vi.fn().mockReturnThis(),
     order: vi.fn().mockReturnThis(),
     limit: vi.fn().mockReturnThis(),
+    maybeSingle: vi.fn().mockResolvedValue({ data: { id: 'pg-123' }, error: null }),
     single: vi.fn().mockResolvedValue({ data: { id: 'pg-123' }, error: null })
   }
   return {
