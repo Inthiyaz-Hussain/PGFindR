@@ -15,18 +15,29 @@ vi.mock('@/hooks/useAuth', () => ({
 }))
 
 // Mock Supabase
-vi.mock('@/lib/supabase', () => ({
-  supabase: {
-    auth: {
-      signInWithOAuth: vi.fn().mockResolvedValue({ data: { url: 'http://mock-oauth.com' }, error: null }),
+vi.mock('@/lib/supabase', () => {
+  const mockChain = {
+    update: vi.fn().mockReturnThis(),
+    select: vi.fn().mockReturnThis(),
+    insert: vi.fn().mockReturnThis(),
+    delete: vi.fn().mockReturnThis(),
+    upsert: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockReturnThis(),
+    order: vi.fn().mockReturnThis(),
+    limit: vi.fn().mockReturnThis(),
+    single: vi.fn().mockResolvedValue({ data: { id: 'pg-123' }, error: null })
+  }
+  return {
+    supabase: {
+      auth: {
+        signInWithOAuth: vi.fn().mockResolvedValue({ data: { url: 'http://mock-oauth.com' }, error: null }),
+      },
     },
-  },
-  supabaseUntyped: {
-    auth: {
-      getSession: vi.fn().mockResolvedValue({ data: { session: { user: { id: 'owner-123', email: 'owner@example.com' } } }, error: null }),
-    },
-  },
-}))
+    supabaseUntyped: {
+      from: vi.fn().mockReturnValue(mockChain)
+    }
+  }
+})
 
 describe('OnboardingPage Component', () => {
   beforeEach(() => {

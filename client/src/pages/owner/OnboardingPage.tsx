@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Loader2, ArrowLeft, ArrowRight, CheckCircle2, Shield, Upload, Info, Clock, AlertTriangle, LogOut } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAuth } from '@/hooks/useAuth'
+import { supabaseUntyped } from '@/lib/supabase'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -10,12 +11,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
 import { Progress } from '@/components/ui/progress'
-import { supabase } from '@/lib/supabase'
 import { Field } from '@/components/ui/field'
 
 const COMPASS_DIRECTIONS = [
-  { value: 'N', label: 'North (Coolest room — least direct sun)' },
-  { value: 'NE', label: 'North-East (Morning sun, cool afternoons)' },
+  { value: 'N', label: 'North (Good light, no direct sun)' },
+  { value: 'NE', label: 'North-East (Morning sunlight, cool afternoons)' },
   { value: 'E', label: 'East (Morning sunlight)' },
   { value: 'SE', label: 'South-East (Warm morning to midday light)' },
   { value: 'S', label: 'South (Sunlight throughout the day)' },
@@ -25,7 +25,7 @@ const COMPASS_DIRECTIONS = [
 ]
 
 export function OnboardingPage() {
-  const { user, profile, signOut } = useAuth()
+  const { user, profile, signOut, refreshProfile } = useAuth()
   const [isEditing, setIsEditing] = useState(false)
   const [step, setStep] = useState(1)
   const [submitting, setSubmitting] = useState(false)
@@ -190,7 +190,7 @@ export function OnboardingPage() {
     setCustomAmenities(customAmenities.filter((_, i) => i !== index))
   }
 
-  // Submit onboarding & trigger Checkpoint 2 OAuth
+  // Submit onboarding directly to the database
   async function handleFinalSubmit() {
     try {
       setSubmitting(true)
@@ -217,36 +217,205 @@ export function OnboardingPage() {
         return
       }
 
-      // 1. Save onboarding state in localStorage so callback page can write to DB on OAuth success
-      const onboardingData = {
-        pgDetails,
-        rooms,
-        standardAmenities,
-        customAmenities,
-        commonPhotos,
-        kycDetails,
+      if (!user?.id) {
+        toast.error('No active session found. Please log in again.')
+        setSubmitting(false)
+        return
       }
-      localStorage.setItem('owner_onboarding_data', JSON.stringify(onboardingData))
 
-      // 2. Initiate Google OAuth (Checkpoint 2)
-      const callbackUrl = `${window.location.origin}/owner/onboarding-callback`
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: callbackUrl,
-          queryParams: {
-            prompt: 'select_account', // Forces active authentication
-          },
-        },
-      })
+      // 1. Update profiles table to set onboarding_verified = true and submit KYC
+      const { error: profileErr } = await supabaseUntyped
+        .from('profiles')
+        .update({
+          onboarding_verified: true,
+          onboarding_verified_at: new Date().toISOString(),
+          kyc_status: 'submitted',
+          kyc_submitted_at: new Date().toISOString(),
+          bank_account_number: kycDetails.bank_account,
+          bank_ifsc: kycDetails.bank_ifsc,
+          bank_holder_name: kycDetails.bank_name,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', user.id)
 
-      if (error) throw error
-      if (data?.url) {
-        console.log('Redirecting to Google OAuth re-verification...')
+      if (profileErr) throw profileErr
+
+      // 2. Get the blank PG listing created during registration
+      const { data: pg, error: pgFetchErr } = await supabaseUntyped
+        .from('pg_listings')
+        .select('id')
+        .eq('owner_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single()
+
+      if (pgFetchErr) throw pgFetchErr
+      const pgId = pg.id
+
+      // 3. Update PG listing with full basic details
+      const { error: pgUpdateErr } = await supabaseUntyped
+        .from('pg_listings')
+        .update({
+          name: pgDetails.name,
+          description: pgDetails.description,
+          address: pgDetails.address,
+          city: pgDetails.city,
+          locality: pgDetails.locality,
+          pincode: pgDetails.pincode || null,
+          pg_type: pgDetails.pg_type,
+          deposit_amount: Number(pgDetails.deposit_amount) || 5000,
+          rules: pgDetails.rules || '',
+          near_malls: pgDetails.near_malls || null,
+          near_parks: pgDetails.near_parks || null,
+          near_pubs: pgDetails.near_pubs || null,
+          near_transit: pgDetails.near_transit || null,
+          status: 'pending', // Re-submit for review
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', pgId)
+
+      if (pgUpdateErr) throw pgUpdateErr
+
+      // 4. Setup Sharing Types & Rooms & Beds
+      // Delete any existing room configurations to rebuild clean
+      await supabaseUntyped.from('rooms').delete().eq('pg_id', pgId)
+      await supabaseUntyped.from('beds').delete().eq('pg_id', pgId)
+
+      for (const room of rooms) {
+        // A. Find or insert sharing type
+        const { data: sharingType, error: stErr } = await supabaseUntyped
+          .from('sharing_types')
+          .upsert({
+            pg_id: pgId,
+            type: room.sharing_type,
+            price_monthly: room.beds[0]?.monthly_rent || 10000,
+            total_beds: room.beds.length,
+            occupied_beds: room.beds.filter((b: any) => b.status === 'occupied').length,
+          }, { onConflict: 'pg_id,type' })
+          .select('id')
+          .single()
+
+        if (stErr) throw stErr
+
+        // B. Create room
+        const { data: rm, error: rmErr } = await supabaseUntyped
+          .from('rooms')
+          .insert({
+            pg_id: pgId,
+            sharing_type_id: sharingType.id,
+            room_label: room.room_label,
+            floor: room.floor,
+            door_facing: room.door_facing,
+            has_window: room.has_window,
+            window_facing: room.window_facing || null,
+            window_count: room.window_count || null,
+            room_size_sqft: room.room_size_sqft || null,
+            room_notes: room.room_notes || null,
+          })
+          .select('id')
+          .single()
+
+        if (rmErr) throw rmErr
+
+        // C. Create beds
+        const sharingTypeLabel = room.sharing_type === 1 ? 'single' : room.sharing_type === 2 ? 'double' : room.sharing_type === 3 ? 'triple' : 'dormitory'
+        const bedInserts = room.beds.map((bed: any) => ({
+          pg_id: pgId,
+          room_id: rm.id,
+          room_number: room.room_label, // Legacy compatibility
+          bed_label: bed.bed_label,
+          sharing_type: sharingTypeLabel, // Legacy compatibility
+          monthly_rent: bed.monthly_rent,
+          status: bed.status,
+          floor_number: room.floor, // Legacy compatibility
+          has_ac: standardAmenities.ac || false, // Legacy compatibility
+          has_attached_bath: false, // Legacy compatibility
+          bed_type: bed.bed_type,
+        }))
+
+        const { error: bedErr } = await supabaseUntyped.from('beds').insert(bedInserts)
+        if (bedErr) throw bedErr
       }
+
+      // 5. Update Standard Amenities
+      await supabaseUntyped.from('amenities').delete().eq('pg_id', pgId)
+      const amenityInserts = Object.keys(standardAmenities)
+        .filter(key => standardAmenities[key])
+        .map(key => ({
+          pg_id: pgId,
+          key,
+          is_available: true
+        }))
+
+      if (amenityInserts.length > 0) {
+        const { error: amErr } = await supabaseUntyped.from('amenities').insert(amenityInserts)
+        if (amErr) throw amErr
+      }
+
+      // 6. Insert Custom Amenities
+      await supabaseUntyped.from('custom_amenities').delete().eq('pg_id', pgId)
+      if (customAmenities.length > 0) {
+        const customInserts = customAmenities.map((label: string) => ({
+          pg_id: pgId,
+          label,
+          created_by: user.id
+        }))
+        const { error: custErr } = await supabaseUntyped.from('custom_amenities').insert(customInserts)
+        if (custErr) throw custErr
+      }
+
+      // 7. Re-sync files
+      // Clear legacy documents
+      await supabaseUntyped.from('owner_documents').delete().eq('owner_id', user.id)
+
+      // Create new mock KYC document entries for review
+      const docInserts = [
+        { owner_id: user.id, doc_type: 'id_proof', url: 'https://images.unsplash.com/photo-1554995207-c18c203602cb?auto=format&fit=crop&w=500&q=80', verified: false },
+        { owner_id: user.id, doc_type: 'address_proof', url: 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=500&q=80', verified: false },
+        { owner_id: user.id, doc_type: 'ownership_proof', url: 'https://images.unsplash.com/photo-1598928506311-c55ded91a20c?auto=format&fit=crop&w=500&q=80', verified: false }
+      ]
+      const { error: docErr } = await supabaseUntyped.from('owner_documents').insert(docInserts)
+      if (docErr) throw docErr
+
+      // 8. Update KYC details table
+      const { error: kycErr } = await supabaseUntyped
+        .from('owner_kyc')
+        .upsert({
+          owner_id: user.id,
+          pan_number: kycDetails.pan_number,
+          aadhaar_number: kycDetails.aadhaar_number,
+          bank_account: kycDetails.bank_account,
+          bank_ifsc: kycDetails.bank_ifsc,
+          bank_name: kycDetails.bank_name,
+          status: 'pending',
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'owner_id' })
+
+      if (kycErr) throw kycErr
+
+      // 9. Update PG Photos list
+      if (commonPhotos && commonPhotos.length > 0) {
+        await supabaseUntyped.from('pg_photos').delete().eq('pg_id', pgId)
+        const photoInserts = commonPhotos.map((url: string, index: number) => ({
+          pg_id: pgId,
+          url,
+          is_primary: index === 0,
+          sort_order: index,
+          type: 'common'
+        }))
+        const { error: photoErr } = await supabaseUntyped.from('pg_photos').insert(photoInserts)
+        if (photoErr) throw photoErr
+      }
+
+      toast.success('Onboarding and KYC details submitted successfully!')
+      
+      // 10. Refresh profile and exit editing mode
+      setIsEditing(false)
+      await refreshProfile()
     } catch (err: any) {
-      setSubmitting(false)
       toast.error(err.message || 'Onboarding submission failed')
+    } finally {
+      setSubmitting(false)
     }
   }
 
