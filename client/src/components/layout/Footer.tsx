@@ -45,7 +45,7 @@ export function Footer({ compact = false }: FooterProps) {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
   const pathname = window.location.pathname
   const role = (
     pathname.startsWith('/admin') ? 'admin' :
@@ -351,10 +351,10 @@ export function Footer({ compact = false }: FooterProps) {
                       <Building2 className="h-5 w-5" />
                       <span className="text-sm font-bold text-white uppercase tracking-wider">Owner Support</span>
                     </div>
-                    {kyc?.status === 'approved' ? (
+                    {(profile?.kyc_status === 'submitted' || profile?.kyc_status === 'approved' || kyc?.status === 'approved') ? (
                       <>
                         <p className="text-xs text-slate-400 leading-relaxed">
-                          Your account is verified. For support with listings or payouts, contact our priority helpdesk:
+                          For support with listings, payouts, or verification progress, contact our priority helpdesk:
                         </p>
                         <div className="space-y-2 text-xs text-slate-300 border-t border-slate-800 pt-3">
                           <div className="flex items-center justify-between">
