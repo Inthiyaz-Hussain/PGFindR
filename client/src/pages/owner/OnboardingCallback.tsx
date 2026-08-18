@@ -37,12 +37,18 @@ export function OnboardingCallback() {
         const data = JSON.parse(storedStr)
         setStatus('writing')
 
-        // 3. Update profiles table to set onboarding_verified = true
+        // 3. Update profiles table to set onboarding_verified = true and submit KYC
         const { error: profileErr } = await supabaseUntyped
           .from('profiles')
           .update({
             onboarding_verified: true,
-            onboarding_verified_at: new Date().toISOString()
+            onboarding_verified_at: new Date().toISOString(),
+            kyc_status: 'submitted',
+            kyc_submitted_at: new Date().toISOString(),
+            bank_account_number: data.kycDetails.bank_account,
+            bank_ifsc: data.kycDetails.bank_ifsc,
+            bank_holder_name: data.kycDetails.bank_name,
+            updated_at: new Date().toISOString()
           })
           .eq('id', session.user.id)
 
@@ -208,7 +214,7 @@ export function OnboardingCallback() {
         toast.success('Onboarding details submitted successfully!')
         
         setTimeout(() => {
-          navigate('/owner/dashboard')
+          navigate('/owner/onboarding')
         }, 3000)
       } catch (err: any) {
         console.error('Onboarding callback error:', err)

@@ -67,18 +67,39 @@ describe('LoginPage', () => {
     expect(mockNavigate).not.toHaveBeenCalled()
   })
 
-  it('navigates to /owner on successful owner login', async () => {
+  it('navigates to /owner/onboarding on successful owner login when not approved', async () => {
     const user = userEvent.setup()
     const { toast } = await import('sonner')
 
     mockAuthContext.login.mockResolvedValue({
       error: null,
-      profile: { ...mockAuthContext.profile, role: 'owner' as const },
+      profile: { ...mockAuthContext.profile, role: 'owner' as const, onboarding_verified: false, kyc_status: 'pending' },
     })
 
     renderWithProviders(<LoginPage />)
 
     await user.type(screen.getByLabelText(/email address/i), 'owner@test.com')
+    await user.type(screen.getByLabelText(/^password$/i), 'pass123')
+    await user.click(screen.getByRole('button', { name: /^sign in$/i }))
+
+    await waitFor(() => {
+      expect(toast.success).toHaveBeenCalledWith('Welcome back!')
+      expect(mockNavigate).toHaveBeenCalledWith('/owner/onboarding', { replace: true })
+    })
+  })
+
+  it('navigates to /owner on successful owner login when fully approved', async () => {
+    const user = userEvent.setup()
+    const { toast } = await import('sonner')
+
+    mockAuthContext.login.mockResolvedValue({
+      error: null,
+      profile: { ...mockAuthContext.profile, role: 'owner' as const, onboarding_verified: true, kyc_status: 'approved' },
+    })
+
+    renderWithProviders(<LoginPage />)
+
+    await user.type(screen.getByLabelText(/email address/i), 'approvedowner@test.com')
     await user.type(screen.getByLabelText(/^password$/i), 'pass123')
     await user.click(screen.getByRole('button', { name: /^sign in$/i }))
 

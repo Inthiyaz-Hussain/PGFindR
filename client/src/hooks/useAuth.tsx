@@ -81,11 +81,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .single()
       const p = data as any
       if (p && p.role === 'owner' && !p.onboarding_verified) {
-        // Self-heal: If they have existing PG listings, they should be onboarding verified
+        // Self-heal: If they have existing active/onboarded PG listings, they should be onboarding verified
         const { data: listings } = await supabaseUntyped
           .from('pg_listings')
           .select('id')
           .eq('owner_id', userId)
+          .neq('locality', 'Pending Onboarding')
           .limit(1)
         if (listings && listings.length > 0) {
           await supabaseUntyped

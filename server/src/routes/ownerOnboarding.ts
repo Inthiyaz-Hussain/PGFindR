@@ -545,7 +545,7 @@ router.post('/api/owner/set-password', async (req: any, res) => {
         full_name: inquiry.full_name,
         email: inquiry.email,
         phone: inquiry.mobile,
-        onboarding_verified: true, // Bypass legacy flow gates
+        onboarding_verified: false, // Must complete onboarding wizard
         kyc_status: 'pending',
         listing_status: 'hidden'
       })

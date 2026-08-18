@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
-import { Loader2, ArrowLeft, ArrowRight, CheckCircle2, Plus, Trash2, Shield, Upload, Info } from 'lucide-react'
+import { Loader2, ArrowLeft, ArrowRight, CheckCircle2, Plus, Trash2, Shield, Upload, Info, Clock, AlertTriangle, LogOut } from 'lucide-react'
 import { toast } from 'sonner'
+import { useAuth } from '@/hooks/useAuth'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -24,6 +25,8 @@ const COMPASS_DIRECTIONS = [
 ]
 
 export function OnboardingPage() {
+  const { user, profile, signOut } = useAuth()
+  const [isEditing, setIsEditing] = useState(false)
   const [step, setStep] = useState(1)
   const [submitting, setSubmitting] = useState(false)
 
@@ -244,6 +247,129 @@ export function OnboardingPage() {
     } catch (err: any) {
       setSubmitting(false)
       toast.error(err.message || 'Onboarding submission failed')
+    }
+  }
+
+  // If user has completed onboarding but is not approved yet:
+  if (profile?.onboarding_verified && !isEditing) {
+    const isPending = profile.kyc_status === 'submitted' || profile.kyc_status === 'pending' || !profile.kyc_status
+    const isRejected = profile.kyc_status === 'rejected' || profile.kyc_status === 'resubmission_requested'
+
+    if (isPending) {
+      return (
+        <div className="min-h-[80vh] flex flex-col items-center justify-center p-4 md:p-6 max-w-2xl mx-auto text-center space-y-6">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 shadow-md">
+            <Clock className="h-8 w-8 animate-pulse" />
+          </div>
+          <div className="space-y-2">
+            <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent">
+              Onboarding Completed!
+            </h1>
+            <p className="text-slate-500 max-w-lg mx-auto text-sm md:text-base leading-relaxed">
+              Your property details and KYC information are currently being reviewed by the SwiftPG administration team.
+            </p>
+          </div>
+
+          <Card className="w-full border-slate-200/80 dark:border-slate-800/80 shadow-lg p-6 bg-slate-50/50 dark:bg-slate-900/50">
+            <CardContent className="space-y-4 pt-4 text-left text-sm">
+              <div className="flex justify-between border-b pb-2">
+                <span className="text-slate-500 font-semibold">Verification Status</span>
+                <span className="font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 px-3 py-1 rounded-full text-xs">
+                  Pending Admin Approval
+                </span>
+              </div>
+              <div className="flex justify-between border-b pb-2">
+                <span className="text-slate-500 font-semibold">Owner Name</span>
+                <span className="font-medium">{profile.full_name}</span>
+              </div>
+              <div className="flex justify-between border-b pb-2">
+                <span className="text-slate-500 font-semibold">Registered Email</span>
+                <span className="font-medium">{user?.email || 'N/A'}</span>
+              </div>
+              <div className="flex justify-between pb-2">
+                <span className="text-slate-500 font-semibold">Contact Phone</span>
+                <span className="font-medium">{profile.phone || 'N/A'}</span>
+              </div>
+            </CardContent>
+          </Card>
+
+          <div className="bg-indigo-50 border border-indigo-100 dark:bg-indigo-950/20 dark:border-indigo-900/50 text-indigo-800 dark:text-indigo-300 p-4 rounded-xl text-xs text-left flex gap-3 max-w-lg">
+            <Info className="size-5 text-indigo-600 dark:text-indigo-400 shrink-0" />
+            <p>
+              Once approved, your PG listing will go live and you will receive full access to your owner dashboard. This review typically takes up to 48 hours.
+            </p>
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-3 justify-center w-full max-w-xs">
+            <Button
+              variant="outline"
+              onClick={signOut}
+              className="w-full flex items-center justify-center gap-2 border-slate-300 dark:border-slate-850 hover:bg-slate-100/80 dark:hover:bg-slate-800/80"
+            >
+              <LogOut className="size-4" /> Sign Out
+            </Button>
+          </div>
+        </div>
+      )
+    }
+
+    if (isRejected) {
+      return (
+        <div className="min-h-[80vh] flex flex-col items-center justify-center p-4 md:p-6 max-w-2xl mx-auto text-center space-y-6">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 shadow-md">
+            <AlertTriangle className="h-8 w-8" />
+          </div>
+          <div className="space-y-2">
+            <h1 className="text-3xl font-extrabold tracking-tight text-red-600 dark:text-red-400">
+              KYC Resubmission Required
+            </h1>
+            <p className="text-slate-500 max-w-lg mx-auto text-sm md:text-base">
+              The administrator has reviewed your details and requested some changes before giving approval.
+            </p>
+          </div>
+
+          <Card className="w-full border-red-200 dark:border-red-900/30 shadow-lg p-6 bg-red-50/10 dark:bg-red-950/5">
+            <CardContent className="space-y-4 pt-4 text-left text-sm">
+              <div>
+                <span className="text-xs font-bold text-red-600 dark:text-red-400 uppercase tracking-wider block mb-1">
+                  Administrator Review Feedback:
+                </span>
+                <div className="p-4 bg-white dark:bg-slate-900 border border-red-100 dark:border-red-900/40 rounded-lg text-slate-700 dark:text-slate-350 italic">
+                  "{profile.kyc_notes || 'Please verify and correct your KYC documentation/bank details.'}"
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <div className="flex flex-col sm:flex-row gap-3 justify-center w-full max-w-md pt-2">
+            <Button
+              onClick={() => {
+                // Populate wizard state with profile info if they want to edit
+                if (profile.bank_account_number) {
+                  setKycDetails(prev => ({
+                    ...prev,
+                    bank_account: profile.bank_account_number || '',
+                    bank_ifsc: profile.bank_ifsc || '',
+                    bank_name: profile.bank_holder_name || ''
+                  }))
+                }
+                setIsEditing(true)
+                setStep(5) // Start directly at KYC details step
+              }}
+              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium shadow-md transition-all duration-200"
+            >
+              Update KYC & Bank Details
+            </Button>
+            <Button
+              variant="outline"
+              onClick={signOut}
+              className="w-full flex items-center justify-center gap-2 border-slate-300 dark:border-slate-850 hover:bg-slate-100/80 dark:hover:bg-slate-800/80"
+            >
+              <LogOut className="size-4" /> Sign Out
+            </Button>
+          </div>
+        </div>
+      )
     }
   }
 
@@ -826,7 +952,9 @@ export function OnboardingPage() {
                       const fieldParent = inputElement.closest('[role="group"]') || inputElement.parentElement
                       if (fieldParent) {
                         fieldParent.setAttribute('data-invalid', 'true')
-                        fieldParent.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                        if (typeof fieldParent.scrollIntoView === 'function') {
+                          fieldParent.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                        }
                         setTimeout(() => {
                           fieldParent.removeAttribute('data-invalid')
                         }, 3600)

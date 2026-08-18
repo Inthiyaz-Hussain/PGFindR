@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react'
+import { screen, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { OnboardingPage } from '../pages/owner/OnboardingPage'
@@ -33,12 +33,21 @@ describe('OnboardingPage Component', () => {
     vi.clearAllMocks()
   })
 
+  const fillStep1 = () => {
+    fireEvent.change(screen.getByPlaceholderText(/e.g. Royal Living PG/i), { target: { value: 'Royal PG' } })
+    fireEvent.change(screen.getByPlaceholderText(/Door No, Street/i), { target: { value: '123 Koramangala Rd' } })
+    fireEvent.change(screen.getByPlaceholderText(/e.g. Koramangala 4th Block/i), { target: { value: 'Koramangala' } })
+  }
+
   it('renders Step 1 basic info and steps forward to step 2', async () => {
     const user = userEvent.setup()
     renderWithProviders(<OnboardingPage />)
 
     // Verify first step header
     expect(screen.getByText('Step 1 — PG Basic Information')).toBeInTheDocument()
+
+    // Fill step 1 so validation passes
+    fillStep1()
 
     // Click Next to go to Step 2
     const nextBtn = screen.getByRole('button', { name: /next/i })
@@ -51,6 +60,9 @@ describe('OnboardingPage Component', () => {
   it('toggles window controls in Room & Bed Configuration correctly', async () => {
     const user = userEvent.setup()
     renderWithProviders(<OnboardingPage />)
+
+    // Fill step 1 so validation passes
+    fillStep1()
 
     // Navigate to Step 2
     await user.click(screen.getByRole('button', { name: /next/i }))
@@ -69,6 +81,9 @@ describe('OnboardingPage Component', () => {
   it('adds custom amenities and respects max character limit and list constraints', async () => {
     const user = userEvent.setup()
     renderWithProviders(<OnboardingPage />)
+
+    // Fill step 1 so validation passes
+    fillStep1()
 
     // Go to Step 3 (Amenities)
     await user.click(screen.getByRole('button', { name: /next/i }))

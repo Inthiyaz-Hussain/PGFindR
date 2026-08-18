@@ -29,5 +29,17 @@ export function ProtectedRoute({ requiredRole }: ProtectedRouteProps) {
     return <Navigate to={redirectUrl} replace />
   }
 
+  if (profile.role === 'owner') {
+    const isApproved = !!profile.onboarding_verified && profile.kyc_status === 'approved'
+    const isOnboardingPath = location.pathname === '/owner/onboarding' || location.pathname === '/owner/onboarding-callback'
+
+    if (!isApproved && !isOnboardingPath) {
+      return <Navigate to="/owner/onboarding" replace />
+    }
+    if (isApproved && isOnboardingPath) {
+      return <Navigate to="/owner" replace />
+    }
+  }
+
   return <Outlet />
 }

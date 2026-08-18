@@ -64,6 +64,13 @@ export function LoginPage() {
       // Only auto-redirect if the current user's role matches the target role.
       // Otherwise, keep the login page open so they can switch accounts.
       if (role === targetRole) {
+        if (role === 'owner') {
+          const isApproved = !!profile.onboarding_verified && profile.kyc_status === 'approved'
+          if (!isApproved) {
+            navigate('/owner/onboarding', { replace: true })
+            return
+          }
+        }
         navigate(getRedirectPath(role, from), { replace: true })
       }
     }
@@ -95,6 +102,13 @@ export function LoginPage() {
     }
     toast.success('Welcome back!')
     if (profile) {
+      if (profile.role === 'owner') {
+        const isApproved = !!profile.onboarding_verified && profile.kyc_status === 'approved'
+        if (!isApproved) {
+          navigate('/owner/onboarding', { replace: true })
+          return
+        }
+      }
       navigate(getRedirectPath(profile.role, from), { replace: true })
     }
   }
