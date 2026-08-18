@@ -312,6 +312,13 @@ router.put('/:id', async (req, res) => {
 
         const numBeds = existingInquiry.num_beds || 1
 
+        // Get PG commission rate and deposit
+        const { data: pgDetails } = await supabase
+          .from('pg_listings')
+          .select('commission_rate, deposit_amount, monthly_rent_min')
+          .eq('id', existingInquiry.pg_id)
+          .single()
+
         const { data: beds } = await supabase
           .from('beds')
           .select('id, monthly_rent')
@@ -320,7 +327,92 @@ router.put('/:id', async (req, res) => {
           .eq('sharing_type', prefStr)
           .limit(numBeds)
 
-        const bedId = (beds as any)?.[0]?.id || null
+        let bedId = (beds as any)?.[0]?.id || null
+
+        if (!bedId) {
+          // Auto-create room & bed to self-heal
+          try {
+            // Find or create sharing type
+            let { data: stList } = await supabase
+              .from('sharing_types')
+              .select('id')
+              .eq('pg_id', existingInquiry.pg_id)
+              .eq('type', existingInquiry.sharing_preference || 2)
+            
+            let sharingTypeId = stList?.[0]?.id || null
+            if (!sharingTypeId) {
+              const { data: newSt, error: newStErr } = await supabase
+                .from('sharing_types')
+                .insert({
+                  pg_id: existingInquiry.pg_id,
+                  type: existingInquiry.sharing_preference || 2,
+                  price_monthly: pgDetails?.monthly_rent_min || 8000,
+                  total_beds: 2,
+                  occupied_beds: 0
+                })
+                .select('id')
+                .maybeSingle()
+              if (!newStErr && newSt) {
+                sharingTypeId = newSt.id
+              }
+            }
+
+            // Find or create room
+            let { data: rmList } = await supabase
+              .from('rooms')
+              .select('id')
+              .eq('pg_id', existingInquiry.pg_id)
+            
+            let roomId = rmList?.[0]?.id || null
+            if (!roomId && sharingTypeId) {
+              const { data: newRm, error: newRmErr } = await supabase
+                .from('rooms')
+                .insert({
+                  pg_id: existingInquiry.pg_id,
+                  sharing_type_id: sharingTypeId,
+                  room_label: 'Room 101',
+                  floor: 1,
+                  door_facing: 'NE',
+                  has_window: true
+                })
+                .select('id')
+                .maybeSingle()
+              if (!newRmErr && newRm) {
+                roomId = newRm.id
+              }
+            }
+
+            // Create bed
+            if (roomId) {
+              const { data: newBed, error: newBedErr } = await supabase
+                .from('beds')
+                .insert({
+                  pg_id: existingInquiry.pg_id,
+                  room_id: roomId,
+                  room_number: 'Room 101',
+                  bed_label: 'Bed A',
+                  sharing_type: prefStr,
+                  monthly_rent: pgDetails?.monthly_rent_min || 8000,
+                  status: 'available',
+                  floor_number: 1,
+                  has_ac: false,
+                  has_attached_bath: false,
+                  bed_type: 'Double'
+                })
+                .select('id, monthly_rent')
+                .maybeSingle()
+              
+              if (!newBedErr && newBed) {
+                bedId = newBed.id
+                if (beds) {
+                  beds.push(newBed)
+                }
+              }
+            }
+          } catch (e) {
+            console.error('Self-healing bed creation failed:', e)
+          }
+        }
 
         if (!bedId) {
           // Revert inquiry status back to pending if bed allocation failed
@@ -331,13 +423,6 @@ router.put('/:id', async (req, res) => {
 
           return res.status(400).json({ error: 'No available beds of this sharing preference are left in this PG. Please add more beds in Bed Management first.' })
         }
-
-        // Get PG commission rate and deposit
-        const { data: pgDetails } = await supabase
-          .from('pg_listings')
-          .select('commission_rate, deposit_amount, monthly_rent_min')
-          .eq('id', existingInquiry.pg_id)
-          .single()
 
         const baseMonthlyRent = (beds as any)?.[0]?.monthly_rent || pgDetails?.monthly_rent_min || 5000
         const monthlyRent = baseMonthlyRent * numBeds

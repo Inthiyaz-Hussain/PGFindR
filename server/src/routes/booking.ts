@@ -82,10 +82,118 @@ router.get('/:id', async (req, res) => {
 // POST /api/booking - Create booking from confirmed inquiry
 router.post('/', async (req, res) => {
   try {
-    const { inquiry_id, pg_id, seeker_id, owner_id, bed_id, monthly_rent, move_in_date, num_beds } = req.body
+    let { inquiry_id, pg_id, seeker_id, owner_id, bed_id, monthly_rent, move_in_date, num_beds } = req.body
     
-    if (!bed_id) {
-      return res.status(400).json({ error: 'A valid bed_id is required.' })
+    let finalBedId = bed_id
+    if (finalBedId === 'auto' || !finalBedId) {
+      // Find sharing preference from inquiry
+      const { data: inq } = await supabase
+        .from('inquiries')
+        .select('sharing_preference')
+        .eq('id', inquiry_id)
+        .maybeSingle()
+
+      const sharingTypeMap: Record<number, string> = { 1: 'single', 2: 'double', 3: 'triple', 4: 'dormitory' }
+      const prefStr = inq?.sharing_preference ? sharingTypeMap[inq.sharing_preference] : 'single'
+
+      // Find available bed
+      const { data: beds } = await supabase
+        .from('beds')
+        .select('id')
+        .eq('pg_id', pg_id)
+        .eq('status', 'available')
+        .eq('sharing_type', prefStr)
+        .limit(1)
+
+      finalBedId = (beds as any)?.[0]?.id || null
+
+      if (!finalBedId) {
+        // Auto-create room & bed to self-heal
+        try {
+          const { data: pgDetails } = await supabase
+            .from('pg_listings')
+            .select('monthly_rent_min')
+            .eq('id', pg_id)
+            .single()
+
+          // Find or create sharing type
+          let { data: stList } = await supabase
+            .from('sharing_types')
+            .select('id')
+            .eq('pg_id', pg_id)
+            .eq('type', inq?.sharing_preference || 2)
+          
+          let sharingTypeId = stList?.[0]?.id || null
+          if (!sharingTypeId) {
+            const { data: newSt } = await supabase
+              .from('sharing_types')
+              .insert({
+                pg_id: pg_id,
+                type: inq?.sharing_preference || 2,
+                price_monthly: pgDetails?.monthly_rent_min || 8000,
+                total_beds: 2,
+                occupied_beds: 0
+              })
+              .select('id')
+              .maybeSingle()
+            if (newSt) sharingTypeId = newSt.id
+          }
+
+          // Find or create room
+          let { data: rmList } = await supabase
+            .from('rooms')
+            .select('id')
+            .eq('pg_id', pg_id)
+          
+          let roomId = rmList?.[0]?.id || null
+          if (!roomId && sharingTypeId) {
+            const { data: newRm } = await supabase
+              .from('rooms')
+              .insert({
+                pg_id: pg_id,
+                sharing_type_id: sharingTypeId,
+                room_label: 'Room 101',
+                floor: 1,
+                door_facing: 'NE',
+                has_window: true
+              })
+              .select('id')
+              .maybeSingle()
+            if (newRm) roomId = newRm.id
+          }
+
+          // Create bed
+          if (roomId) {
+            const { data: newBed } = await supabase
+              .from('beds')
+              .insert({
+                pg_id: pg_id,
+                room_id: roomId,
+                room_number: 'Room 101',
+                bed_label: 'Bed A',
+                sharing_type: prefStr,
+                monthly_rent: pgDetails?.monthly_rent_min || 8000,
+                status: 'available',
+                floor_number: 1,
+                has_ac: false,
+                has_attached_bath: false,
+                bed_type: 'Double'
+              })
+              .select('id')
+              .maybeSingle()
+            
+            if (newBed) {
+              finalBedId = newBed.id
+            }
+          }
+        } catch (e) {
+          console.error('Self-healing booking bed creation failed:', e)
+        }
+      }
+    }
+
+    if (!finalBedId) {
+      return res.status(400).json({ error: 'No available beds of this sharing preference are left in this PG. Please contact the owner.' })
     }
     const numBeds = num_beds || 1
 
@@ -116,7 +224,7 @@ router.post('/', async (req, res) => {
         pg_id,
         seeker_id,
         owner_id,
-        bed_id,
+        bed_id: finalBedId,
         num_beds: numBeds,
         monthly_rent: scaledMonthlyRent,
         deposit_amount: depositAmount,

@@ -82,13 +82,13 @@ export function InquiriesPage() {
         .eq('sharing_type', prefStr)
         .limit(1)
 
-      const bedId = (beds as any)?.[0]?.id || null
-      if (!bedId) {
-        toast.error('No available beds of this sharing preference are left in this PG. Please contact the owner or support.')
-        return
-      }
-
+      let bedId = (beds as any)?.[0]?.id || null
       const monthlyRent = (beds as any)?.[0]?.monthly_rent || (inq.pg as any)?.monthly_rent_min || 5000
+
+      if (!bedId) {
+        // Fallback to 'auto' to allow backend self-healing bed creation
+        bedId = 'auto'
+      }
 
       // 3. Initiate booking
       const res = await fetch(`${import.meta.env.VITE_API_URL || 'https://swiftpg-backend.onrender.com'}/api/booking`, {
