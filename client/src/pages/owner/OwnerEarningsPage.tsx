@@ -34,7 +34,7 @@ export function OwnerEarningsPage() {
           status,
           payment_type,
           created_at,
-          booking:bookings(
+          booking:bookings!payments_booking_id_fkey(
             id,
             monthly_rent,
             move_in_date,

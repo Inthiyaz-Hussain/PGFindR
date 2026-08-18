@@ -71,7 +71,7 @@ export function AdminTransactionsPage() {
           cashfree_payment_id,
           platform_fee,
           service_charge,
-          booking:bookings(
+          booking:bookings!payments_booking_id_fkey(
             pg:pg_listings(name),
             seeker:profiles!bookings_seeker_id_fkey(full_name),
             owner:profiles!bookings_owner_id_fkey(full_name)
@@ -145,7 +145,7 @@ export function AdminTransactionsPage() {
           cashfree_payment_id,
           platform_fee,
           service_charge,
-          booking:bookings(
+          booking:bookings!payments_booking_id_fkey(
             pg:pg_listings(name),
             seeker:profiles!bookings_seeker_id_fkey(full_name),
             owner:profiles!bookings_owner_id_fkey(full_name)

@@ -53,7 +53,7 @@ export function OwnerDashboard() {
       if (bookingIds.length === 0) return []
       const { data } = await supabaseUntyped
         .from('payments')
-        .select('*, booking:bookings!inner(id)')
+        .select('*, booking:bookings!payments_booking_id_fkey!inner(id)')
         .in('booking_id', bookingIds)
         .eq('status', 'completed')
       return (data || []) as { owner_payout?: number; created_at?: string }[]

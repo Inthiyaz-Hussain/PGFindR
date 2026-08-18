@@ -13,7 +13,7 @@ export function EarningsPage() {
     queryFn: async () => {
       const { data: payments } = await supabase
         .from('payments')
-        .select('*, booking:bookings(*, pg:pg_listings(name, city), bed:beds(room_number))')
+        .select('*, booking:bookings!payments_booking_id_fkey(*, pg:pg_listings(name, city), bed:beds(room_number))')
         .order('created_at', { ascending: false })
       return (payments || []) as any[]
     },
