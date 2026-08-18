@@ -9,10 +9,16 @@ vi.mock('@/hooks/useAuth', () => ({
   useAuth: () => ({
     user: { id: 'owner-123', email: 'owner@example.com' },
     profile: { id: 'owner-123', full_name: 'Owner Tester', role: 'owner', onboarding_verified: false },
+    session: { access_token: 'mock-access-token' },
     loading: false,
     refreshProfile: vi.fn(),
   }),
 }))
+
+globalThis.fetch = vi.fn().mockResolvedValue({
+  ok: true,
+  json: async () => ({ success: true }),
+})
 
 // Mock Supabase
 vi.mock('@/lib/supabase', () => {

@@ -49,7 +49,7 @@ export function AdminKYCPage() {
   const sessionData = session
 
   // Fetch KYC queue
-  const { data: kycQueue, isLoading, refetch } = useQuery({
+  const { data: kycQueue, isLoading, error, refetch } = useQuery({
     queryKey: ['admin-kyc-queue', sessionData?.access_token],
     queryFn: async () => {
       if (!sessionData?.access_token) return []
@@ -159,6 +159,17 @@ export function AdminKYCPage() {
           <RefreshCw className="h-4 w-4 mr-2" /> Refresh
         </Button>
       </div>
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-800 p-4 rounded-xl text-sm flex items-center justify-between gap-4">
+          <div>
+            <span className="font-bold">Error loading reviews:</span> {(error as Error).message || 'Failed to fetch queue'}
+          </div>
+          <Button variant="outline" size="sm" onClick={() => refetch()} className="bg-white border-red-350 hover:bg-red-50 text-red-850 shrink-0">
+            Retry
+          </Button>
+        </div>
+      )}
 
       {/* Main Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

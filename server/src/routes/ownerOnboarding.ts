@@ -902,4 +902,207 @@ router.put('/api/admin/kyc/:owner_id/request-resubmit', authenticateToken, requi
   }
 })
 
+// 14.5. POST /api/owner/onboard - Complete onboarding & KYC direct submission
+router.post('/api/owner/onboard', authenticateToken, requireRole('owner'), async (req: any, res) => {
+  try {
+    const {
+      pgDetails,
+      rooms,
+      standardAmenities,
+      customAmenities,
+      commonPhotos,
+      kycDetails,
+      documents
+    } = req.body
+
+    const userId = req.user.id
+
+    // A. Update profiles table to set onboarding_verified = true and submit KYC
+    const { error: profileErr } = await supabase
+      .from('profiles')
+      .update({
+        onboarding_verified: true,
+        onboarding_verified_at: new Date().toISOString(),
+        kyc_status: 'submitted',
+        kyc_submitted_at: new Date().toISOString(),
+        bank_account_number: kycDetails.bank_account,
+        bank_ifsc: kycDetails.bank_ifsc,
+        bank_holder_name: kycDetails.bank_name,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', userId)
+
+    if (profileErr) throw profileErr
+
+    // B. Get the blank PG listing created during registration
+    const { data: pg, error: pgFetchErr } = await supabase
+      .from('pg_listings')
+      .select('id')
+      .eq('owner_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single()
+
+    if (pgFetchErr) throw pgFetchErr
+    const pgId = pg.id
+
+    // C. Update PG listing with full basic details
+    const { error: pgUpdateErr } = await supabase
+      .from('pg_listings')
+      .update({
+        name: pgDetails.name,
+        description: pgDetails.description,
+        address: pgDetails.address,
+        city: pgDetails.city,
+        locality: pgDetails.locality,
+        pincode: pgDetails.pincode || null,
+        pg_type: pgDetails.pg_type,
+        deposit_amount: Number(pgDetails.deposit_amount) || 5000,
+        rules: pgDetails.rules || '',
+        near_malls: pgDetails.near_malls || null,
+        near_parks: pgDetails.near_parks || null,
+        near_pubs: pgDetails.near_pubs || null,
+        near_transit: pgDetails.near_transit || null,
+        status: 'pending', // Re-submit for review
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', pgId)
+
+    if (pgUpdateErr) throw pgUpdateErr
+
+    // D. Setup Sharing Types & Rooms & Beds
+    // Delete any existing room configurations to rebuild clean
+    await supabase.from('rooms').delete().eq('pg_id', pgId)
+    await supabase.from('beds').delete().eq('pg_id', pgId)
+
+    for (const room of rooms) {
+      // Find or insert sharing type
+      const { data: sharingType, error: stErr } = await supabase
+        .from('sharing_types')
+        .upsert({
+          pg_id: pgId,
+          type: room.sharing_type,
+          price_monthly: room.beds[0]?.monthly_rent || 10000,
+          total_beds: room.beds.length,
+          occupied_beds: room.beds.filter((b: any) => b.status === 'occupied').length,
+        }, { onConflict: 'pg_id,type' })
+        .select('id')
+        .single()
+
+      if (stErr) throw stErr
+
+      // Create room
+      const { data: rm, error: rmErr } = await supabase
+        .from('rooms')
+        .insert({
+          pg_id: pgId,
+          sharing_type_id: sharingType.id,
+          room_label: room.room_label,
+          floor: room.floor,
+          door_facing: room.door_facing,
+          has_window: room.has_window,
+          window_facing: room.window_facing || null,
+          window_count: room.window_count || null,
+          room_size_sqft: room.room_size_sqft || null,
+          room_notes: room.room_notes || null,
+          photos: []
+        })
+        .select('id')
+        .single()
+
+      if (rmErr) throw rmErr
+
+      // Create beds
+      const sharingTypeLabel = room.sharing_type === 1 ? 'single' : room.sharing_type === 2 ? 'double' : room.sharing_type === 3 ? 'triple' : 'dormitory'
+      const bedInserts = room.beds.map((bed: any) => ({
+        pg_id: pgId,
+        room_id: rm.id,
+        room_number: room.room_label, // Legacy compatibility
+        bed_label: bed.bed_label,
+        sharing_type: sharingTypeLabel, // Legacy compatibility
+        monthly_rent: bed.monthly_rent,
+        status: bed.status,
+        floor_number: room.floor, // Legacy compatibility
+        has_ac: standardAmenities.ac || false, // Legacy compatibility
+        has_attached_bath: false, // Legacy compatibility
+        bed_type: bed.bed_type,
+      }))
+
+      const { error: bedErr } = await supabase.from('beds').insert(bedInserts)
+      if (bedErr) throw bedErr
+    }
+
+    // E. Update Standard Amenities
+    await supabase.from('amenities').delete().eq('pg_id', pgId)
+    const amenityInserts = Object.keys(standardAmenities)
+      .filter(key => standardAmenities[key])
+      .map(key => ({
+        pg_id: pgId,
+        key,
+        is_available: true
+      }))
+
+    if (amenityInserts.length > 0) {
+      const { error: amErr } = await supabase.from('amenities').insert(amenityInserts)
+      if (amErr) throw amErr
+    }
+
+    // F. Insert Custom Amenities
+    await supabase.from('custom_amenities').delete().eq('pg_id', pgId)
+    if (customAmenities.length > 0) {
+      const customInserts = customAmenities.map((label: string) => ({
+        pg_id: pgId,
+        label,
+        created_by: userId
+      }))
+      const { error: custErr } = await supabase.from('custom_amenities').insert(customInserts)
+      if (custErr) throw custErr
+    }
+
+    // G. Re-sync files & insert KYC documents
+    await supabase.from('owner_documents').delete().eq('owner_id', userId)
+
+    const docInserts = [
+      { owner_id: userId, doc_type: 'id_proof', url: documents?.id_proof || 'https://images.unsplash.com/photo-1554995207-c18c203602cb?auto=format&fit=crop&w=500&q=80', verified: false },
+      { owner_id: userId, doc_type: 'address_proof', url: documents?.address_proof || 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=500&q=80', verified: false },
+      { owner_id: userId, doc_type: 'ownership_proof', url: documents?.ownership_proof || 'https://images.unsplash.com/photo-1598928506311-c55ded91a20c?auto=format&fit=crop&w=500&q=80', verified: false }
+    ]
+    const { error: docErr } = await supabase.from('owner_documents').insert(docInserts)
+    if (docErr) throw docErr
+
+    // H. Update KYC details table
+    await supabase
+      .from('owner_kyc')
+      .upsert({
+        owner_id: userId,
+        pan_number: kycDetails.pan_number,
+        aadhaar_number: kycDetails.aadhaar_number,
+        bank_account: kycDetails.bank_account,
+        bank_ifsc: kycDetails.bank_ifsc,
+        bank_name: kycDetails.bank_name,
+        status: 'pending',
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'owner_id' })
+
+    // I. Update PG Photos list
+    if (commonPhotos && commonPhotos.length > 0) {
+      await supabase.from('pg_photos').delete().eq('pg_id', pgId)
+      const photoInserts = commonPhotos.map((url: string, index: number) => ({
+        pg_id: pgId,
+        url,
+        is_primary: index === 0,
+        sort_order: index,
+        type: 'common'
+      }))
+      const { error: photoErr } = await supabase.from('pg_photos').insert(photoInserts)
+      if (photoErr) throw photoErr
+    }
+
+    return res.json({ success: true, message: 'Onboarding completed successfully' })
+  } catch (err: any) {
+    console.error('Server onboard submit error:', err)
+    return res.status(500).json({ error: err.message || 'Internal server error' })
+  }
+})
+
 export default router

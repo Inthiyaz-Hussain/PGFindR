@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import { Loader2, ArrowLeft, ArrowRight, CheckCircle2, Shield, Upload, Info, Clock, AlertTriangle, LogOut } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAuth } from '@/hooks/useAuth'
-import { supabaseUntyped } from '@/lib/supabase'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -25,7 +24,7 @@ const COMPASS_DIRECTIONS = [
 ]
 
 export function OnboardingPage() {
-  const { user, profile, signOut, refreshProfile } = useAuth()
+  const { user, profile, signOut, refreshProfile, session } = useAuth()
   const [isEditing, setIsEditing] = useState(false)
   const [step, setStep] = useState(1)
   const [submitting, setSubmitting] = useState(false)
@@ -169,6 +168,12 @@ export function OnboardingPage() {
     bank_name: '',
   })
 
+  const [kycDocuments] = useState({
+    id_proof: 'https://images.unsplash.com/photo-1554995207-c18c203602cb?auto=format&fit=crop&w=500&q=80',
+    address_proof: 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=500&q=80',
+    ownership_proof: 'https://images.unsplash.com/photo-1598928506311-c55ded91a20c?auto=format&fit=crop&w=500&q=80'
+  })
+
 
 
   // Custom Amenity addition
@@ -217,199 +222,38 @@ export function OnboardingPage() {
         return
       }
 
-      if (!user?.id) {
+      if (!session?.access_token) {
         toast.error('No active session found. Please log in again.')
         setSubmitting(false)
         return
       }
 
-      // 1. Update profiles table to set onboarding_verified = true and submit KYC
-      const { error: profileErr } = await supabaseUntyped
-        .from('profiles')
-        .update({
-          onboarding_verified: true,
-          onboarding_verified_at: new Date().toISOString(),
-          kyc_status: 'submitted',
-          kyc_submitted_at: new Date().toISOString(),
-          bank_account_number: kycDetails.bank_account,
-          bank_ifsc: kycDetails.bank_ifsc,
-          bank_holder_name: kycDetails.bank_name,
-          updated_at: new Date().toISOString()
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+      const response = await fetch(`${apiUrl}/api/owner/onboard`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({
+          pgDetails,
+          rooms,
+          standardAmenities,
+          customAmenities,
+          commonPhotos,
+          kycDetails,
+          documents: kycDocuments
         })
-        .eq('id', user.id)
+      })
 
-      if (profileErr) throw profileErr
-
-      // 2. Get the blank PG listing created during registration
-      const { data: pg, error: pgFetchErr } = await supabaseUntyped
-        .from('pg_listings')
-        .select('id')
-        .eq('owner_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single()
-
-      if (pgFetchErr) throw pgFetchErr
-      const pgId = pg.id
-
-      // 3. Update PG listing with full basic details
-      const { error: pgUpdateErr } = await supabaseUntyped
-        .from('pg_listings')
-        .update({
-          name: pgDetails.name,
-          description: pgDetails.description,
-          address: pgDetails.address,
-          city: pgDetails.city,
-          locality: pgDetails.locality,
-          pincode: pgDetails.pincode || null,
-          pg_type: pgDetails.pg_type,
-          deposit_amount: Number(pgDetails.deposit_amount) || 5000,
-          rules: pgDetails.rules || '',
-          near_malls: pgDetails.near_malls || null,
-          near_parks: pgDetails.near_parks || null,
-          near_pubs: pgDetails.near_pubs || null,
-          near_transit: pgDetails.near_transit || null,
-          status: 'pending', // Re-submit for review
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', pgId)
-
-      if (pgUpdateErr) throw pgUpdateErr
-
-      // 4. Setup Sharing Types & Rooms & Beds
-      // Delete any existing room configurations to rebuild clean
-      await supabaseUntyped.from('rooms').delete().eq('pg_id', pgId)
-      await supabaseUntyped.from('beds').delete().eq('pg_id', pgId)
-
-      for (const room of rooms) {
-        // A. Find or insert sharing type
-        const { data: sharingType, error: stErr } = await supabaseUntyped
-          .from('sharing_types')
-          .upsert({
-            pg_id: pgId,
-            type: room.sharing_type,
-            price_monthly: room.beds[0]?.monthly_rent || 10000,
-            total_beds: room.beds.length,
-            occupied_beds: room.beds.filter((b: any) => b.status === 'occupied').length,
-          }, { onConflict: 'pg_id,type' })
-          .select('id')
-          .single()
-
-        if (stErr) throw stErr
-
-        // B. Create room
-        const { data: rm, error: rmErr } = await supabaseUntyped
-          .from('rooms')
-          .insert({
-            pg_id: pgId,
-            sharing_type_id: sharingType.id,
-            room_label: room.room_label,
-            floor: room.floor,
-            door_facing: room.door_facing,
-            has_window: room.has_window,
-            window_facing: room.window_facing || null,
-            window_count: room.window_count || null,
-            room_size_sqft: room.room_size_sqft || null,
-            room_notes: room.room_notes || null,
-          })
-          .select('id')
-          .single()
-
-        if (rmErr) throw rmErr
-
-        // C. Create beds
-        const sharingTypeLabel = room.sharing_type === 1 ? 'single' : room.sharing_type === 2 ? 'double' : room.sharing_type === 3 ? 'triple' : 'dormitory'
-        const bedInserts = room.beds.map((bed: any) => ({
-          pg_id: pgId,
-          room_id: rm.id,
-          room_number: room.room_label, // Legacy compatibility
-          bed_label: bed.bed_label,
-          sharing_type: sharingTypeLabel, // Legacy compatibility
-          monthly_rent: bed.monthly_rent,
-          status: bed.status,
-          floor_number: room.floor, // Legacy compatibility
-          has_ac: standardAmenities.ac || false, // Legacy compatibility
-          has_attached_bath: false, // Legacy compatibility
-          bed_type: bed.bed_type,
-        }))
-
-        const { error: bedErr } = await supabaseUntyped.from('beds').insert(bedInserts)
-        if (bedErr) throw bedErr
-      }
-
-      // 5. Update Standard Amenities
-      await supabaseUntyped.from('amenities').delete().eq('pg_id', pgId)
-      const amenityInserts = Object.keys(standardAmenities)
-        .filter(key => standardAmenities[key])
-        .map(key => ({
-          pg_id: pgId,
-          key,
-          is_available: true
-        }))
-
-      if (amenityInserts.length > 0) {
-        const { error: amErr } = await supabaseUntyped.from('amenities').insert(amenityInserts)
-        if (amErr) throw amErr
-      }
-
-      // 6. Insert Custom Amenities
-      await supabaseUntyped.from('custom_amenities').delete().eq('pg_id', pgId)
-      if (customAmenities.length > 0) {
-        const customInserts = customAmenities.map((label: string) => ({
-          pg_id: pgId,
-          label,
-          created_by: user.id
-        }))
-        const { error: custErr } = await supabaseUntyped.from('custom_amenities').insert(customInserts)
-        if (custErr) throw custErr
-      }
-
-      // 7. Re-sync files
-      // Clear legacy documents
-      await supabaseUntyped.from('owner_documents').delete().eq('owner_id', user.id)
-
-      // Create new mock KYC document entries for review
-      const docInserts = [
-        { owner_id: user.id, doc_type: 'id_proof', url: 'https://images.unsplash.com/photo-1554995207-c18c203602cb?auto=format&fit=crop&w=500&q=80', verified: false },
-        { owner_id: user.id, doc_type: 'address_proof', url: 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=500&q=80', verified: false },
-        { owner_id: user.id, doc_type: 'ownership_proof', url: 'https://images.unsplash.com/photo-1598928506311-c55ded91a20c?auto=format&fit=crop&w=500&q=80', verified: false }
-      ]
-      const { error: docErr } = await supabaseUntyped.from('owner_documents').insert(docInserts)
-      if (docErr) throw docErr
-
-      // 8. Update KYC details table
-      const { error: kycErr } = await supabaseUntyped
-        .from('owner_kyc')
-        .upsert({
-          owner_id: user.id,
-          pan_number: kycDetails.pan_number,
-          aadhaar_number: kycDetails.aadhaar_number,
-          bank_account: kycDetails.bank_account,
-          bank_ifsc: kycDetails.bank_ifsc,
-          bank_name: kycDetails.bank_name,
-          status: 'pending',
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'owner_id' })
-
-      if (kycErr) throw kycErr
-
-      // 9. Update PG Photos list
-      if (commonPhotos && commonPhotos.length > 0) {
-        await supabaseUntyped.from('pg_photos').delete().eq('pg_id', pgId)
-        const photoInserts = commonPhotos.map((url: string, index: number) => ({
-          pg_id: pgId,
-          url,
-          is_primary: index === 0,
-          sort_order: index,
-          type: 'common'
-        }))
-        const { error: photoErr } = await supabaseUntyped.from('pg_photos').insert(photoInserts)
-        if (photoErr) throw photoErr
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}))
+        throw new Error(errData.error || 'Failed to submit onboarding')
       }
 
       toast.success('Onboarding and KYC details submitted successfully!')
       
-      // 10. Refresh profile and exit editing mode
+      // Refresh profile and exit editing mode
       setIsEditing(false)
       await refreshProfile()
     } catch (err: any) {
@@ -1009,6 +853,69 @@ export function OnboardingPage() {
                   maxLength={11}
                 />
               </Field>
+            </div>
+
+            <div className="border-t pt-4 space-y-4">
+              <h4 className="text-sm font-semibold text-slate-800 dark:text-slate-200">KYC Verification Documents</h4>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* ID Proof Card */}
+                <div className="border rounded-xl p-4 bg-slate-50/50 dark:bg-slate-900/50 relative">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Shield className="size-4 text-indigo-600" />
+                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300">Aadhaar Card (ID Proof)</span>
+                  </div>
+                  <div className="border border-dashed border-slate-200 dark:border-slate-800 rounded-lg p-3 text-center cursor-pointer bg-white dark:bg-slate-900">
+                    <Upload className="mx-auto size-5 text-muted-foreground mb-1" />
+                    <span className="text-[10px] font-semibold text-slate-600 block">Upload Aadhaar PDF</span>
+                    <span className="text-[9px] text-muted-foreground">Click to browse (Max 5MB)</span>
+                  </div>
+                  {kycDocuments.id_proof && (
+                    <div className="mt-2 text-[10px] text-emerald-600 font-semibold flex items-center gap-1">
+                      <span className="inline-block size-1.5 rounded-full bg-emerald-500"></span>
+                      Document Attached
+                    </div>
+                  )}
+                </div>
+
+                {/* Address Proof Card */}
+                <div className="border rounded-xl p-4 bg-slate-50/50 dark:bg-slate-900/50 relative">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Shield className="size-4 text-indigo-600" />
+                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300">PAN Card (Address Proof)</span>
+                  </div>
+                  <div className="border border-dashed border-slate-200 dark:border-slate-800 rounded-lg p-3 text-center cursor-pointer bg-white dark:bg-slate-900">
+                    <Upload className="mx-auto size-5 text-muted-foreground mb-1" />
+                    <span className="text-[10px] font-semibold text-slate-600 block">Upload PAN PDF</span>
+                    <span className="text-[9px] text-muted-foreground">Click to browse (Max 5MB)</span>
+                  </div>
+                  {kycDocuments.address_proof && (
+                    <div className="mt-2 text-[10px] text-emerald-600 font-semibold flex items-center gap-1">
+                      <span className="inline-block size-1.5 rounded-full bg-emerald-500"></span>
+                      Document Attached
+                    </div>
+                  )}
+                </div>
+
+                {/* Ownership Proof Card */}
+                <div className="border rounded-xl p-4 bg-slate-50/50 dark:bg-slate-900/50 relative">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Shield className="size-4 text-indigo-600" />
+                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300">Property Ownership Proof</span>
+                  </div>
+                  <div className="border border-dashed border-slate-200 dark:border-slate-800 rounded-lg p-3 text-center cursor-pointer bg-white dark:bg-slate-900">
+                    <Upload className="mx-auto size-5 text-muted-foreground mb-1" />
+                    <span className="text-[10px] font-semibold text-slate-600 block">Upload Deed/Tax PDF</span>
+                    <span className="text-[9px] text-muted-foreground">Click to browse (Max 5MB)</span>
+                  </div>
+                  {kycDocuments.ownership_proof && (
+                    <div className="mt-2 text-[10px] text-emerald-600 font-semibold flex items-center gap-1">
+                      <span className="inline-block size-1.5 rounded-full bg-emerald-500"></span>
+                      Document Attached
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
 
             {/* Admin safety note */}
