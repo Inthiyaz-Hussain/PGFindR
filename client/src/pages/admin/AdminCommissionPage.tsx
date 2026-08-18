@@ -12,6 +12,7 @@ import { Separator } from '@/components/ui/separator'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabaseUntyped } from '@/lib/supabase'
 import { toast } from 'sonner'
+import { useAuth } from '@/hooks/useAuth'
 
 interface CommissionHistory {
   id: string
@@ -23,6 +24,7 @@ interface CommissionHistory {
 }
 
 export function AdminCommissionPage() {
+  const { user } = useAuth()
   const queryClient = useQueryClient()
   const [newRate, setNewRate] = useState('')
   const [reason, setReason] = useState('')
@@ -55,8 +57,6 @@ export function AdminCommissionPage() {
     mutationFn: async ({ rate, reasonText }: { rate: number; reasonText: string }) => {
       const currentRate = parseFloat(settings?.value || '10')
 
-      // Get current user
-      const { data: { user } } = await supabaseUntyped.auth.getUser()
       if (!user) throw new Error('Not authenticated')
 
       // Update settings
