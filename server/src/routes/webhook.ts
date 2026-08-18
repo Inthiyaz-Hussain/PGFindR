@@ -228,7 +228,7 @@ router.post('/cashfree', async (req: any, res) => {
     // Get the booking
     const { data: booking, error: bookingErr } = await supabase
       .from('bookings')
-      .select('id, bed_id, pg_id, seeker_id, owner_id, num_beds')
+      .select('*, pg:pg_listings(name, owner_id), seeker:profiles!bookings_seeker_id_fkey(full_name)')
       .eq('id', payment.booking_id)
       .single()
 
@@ -275,21 +275,40 @@ router.post('/cashfree', async (req: any, res) => {
           }
         }
 
+        // Generate Invoice
+        const invoiceNumber = `INV-PAY-${Date.now()}`
+        await supabase
+          .from('invoices')
+          .insert({
+            booking_id: booking.id,
+            seeker_id: booking.seeker_id,
+            owner_id: booking.owner_id,
+            invoice_number: invoiceNumber,
+            amount: payment.amount,
+            status: 'paid',
+            due_date: new Date().toISOString().split('T')[0],
+            billing_period_start: new Date().toISOString().split('T')[0],
+            billing_period_end: new Date().toISOString().split('T')[0]
+          })
+
+        const seekerName = (booking as any)?.seeker?.full_name || 'Seeker'
+        const pgName = (booking as any)?.pg?.name || 'PG'
+
         // Send notifications
         await supabase.from('notifications').insert([
           {
             user_id: booking.seeker_id,
             type: 'payment_success',
-            title: 'Payment Successful',
-            body: `Your payment of ₹${payment.amount} has been received. The owner will confirm your move-in shortly.`,
-            data: { booking_id: booking.id, payment_id: payment.id },
+            title: 'Payment Successful & Invoice Generated',
+            body: `Hello ${seekerName}, your payment of ₹${payment.amount} for ${pgName} is successful. Status: Completed. Invoice #${invoiceNumber} has been generated.`,
+            data: { booking_id: booking.id, payment_id: payment.id, invoice_number: invoiceNumber },
           },
           {
             user_id: booking.owner_id,
             type: 'new_booking',
-            title: 'Payment Received',
-            body: `A payment has been received for a booking. Confirm move-in to trigger payout.`,
-            data: { booking_id: booking.id, payment_id: payment.id },
+            title: 'Payment Received & Invoice Generated',
+            body: `Dear Owner, seeker ${seekerName} has successfully paid ₹${payment.amount} for ${pgName}. Status: Completed. Invoice #${invoiceNumber} has been generated.`,
+            data: { booking_id: booking.id, payment_id: payment.id, invoice_number: invoiceNumber },
           },
         ])
         break
