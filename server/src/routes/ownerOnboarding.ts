@@ -902,6 +902,46 @@ router.put('/api/admin/kyc/:owner_id/request-resubmit', authenticateToken, requi
   }
 })
 
+// 14.2. POST /api/admin/kyc/send-reminders - Send KYC reminding notifications to all owners who have not submitted yet
+router.post('/api/admin/kyc/send-reminders', authenticateToken, requireRole('admin'), async (req: any, res) => {
+  try {
+    // Fetch all owners
+    const { data: owners, error: fetchError } = await supabase
+      .from('profiles')
+      .select('id, full_name, email, kyc_status')
+      .eq('role', 'owner')
+
+    if (fetchError) throw fetchError
+
+    // Filter to those with pending or null KYC status
+    const pendingOwners = (owners || []).filter(o => !o.kyc_status || o.kyc_status === 'pending')
+
+    if (pendingOwners.length === 0) {
+      return res.json({ success: true, count: 0, message: 'No owners found with pending KYC documents.' })
+    }
+
+    const notifications = pendingOwners.map((owner: any) => ({
+      user_id: owner.id,
+      type: 'general',
+      title: 'KYC Submission Mandatory - Urgent Action Required',
+      body: `Dear ${owner.full_name || 'Owner'}, KYC verification and document submission are strictly mandatory. Please log into your owner portal and upload your ID proof, address proof, and property ownership documents within the next 48 hours to prevent listing suspension.`,
+      data: { action: 'kyc_submission_required' },
+      read: false
+    }))
+
+    const { error: insertError } = await supabase
+      .from('notifications')
+      .insert(notifications)
+
+    if (insertError) throw insertError
+
+    return res.json({ success: true, count: pendingOwners.length, message: `KYC reminders successfully sent to ${pendingOwners.length} owners.` })
+  } catch (err: any) {
+    console.error('Send KYC reminders error:', err)
+    return res.status(500).json({ error: err.message || 'Internal server error' })
+  }
+})
+
 // 14.5. POST /api/owner/onboard - Complete onboarding & KYC direct submission
 router.post('/api/owner/onboard', authenticateToken, requireRole('owner'), async (req: any, res) => {
   try {

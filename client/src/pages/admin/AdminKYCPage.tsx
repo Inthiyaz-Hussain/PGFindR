@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { CheckCircle, XCircle, Loader2, Eye, FileText, ShieldCheck, RefreshCw } from 'lucide-react'
+import { CheckCircle, XCircle, Loader2, Eye, FileText, ShieldCheck, RefreshCw, Bell } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
@@ -121,6 +121,29 @@ export function AdminKYCPage() {
     }
   })
 
+  // Send KYC reminders mutation
+  const triggerRemindersMutation = useMutation({
+    mutationFn: async () => {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+      const response = await fetch(`${apiUrl}/api/admin/kyc/send-reminders`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${sessionData?.access_token}`,
+          'Content-Type': 'application/json'
+        }
+      })
+      const resData = await response.json()
+      if (!response.ok) throw new Error(resData.error || 'Failed to send reminders')
+      return resData
+    },
+    onSuccess: (data) => {
+      toast.success(data.message || `KYC reminders sent to owners successfully.`)
+    },
+    onError: (err: any) => {
+      toast.error(err.message || 'Failed to send KYC reminders')
+    }
+  })
+
   const handleResubmitSubmit = () => {
     if (!selectedKyc) return
     const selectedTypes = Object.entries(resubmitDocs)
@@ -155,9 +178,21 @@ export function AdminKYCPage() {
           </h1>
           <p className="text-muted-foreground mt-1">Verify owner identity proofs and bank accounts before allowing listings to go live.</p>
         </div>
-        <Button variant="outline" size="sm" onClick={() => refetch()} className="shrink-0">
-          <RefreshCw className="h-4 w-4 mr-2" /> Refresh
-        </Button>
+        <div className="flex items-center gap-2 shrink-0">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => triggerRemindersMutation.mutate()}
+            disabled={triggerRemindersMutation.isPending}
+            className="bg-amber-50 hover:bg-amber-100 text-amber-800 border-amber-200"
+          >
+            {triggerRemindersMutation.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Bell className="h-4 w-4 mr-2" />}
+            Send KYC Reminders
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => refetch()}>
+            <RefreshCw className="h-4 w-4 mr-2" /> Refresh
+          </Button>
+        </div>
       </div>
 
       {error && (
