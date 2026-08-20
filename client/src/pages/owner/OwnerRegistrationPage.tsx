@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Loader2, ArrowRight, ClipboardList, Info } from 'lucide-react'
+import { Loader2, ClipboardList, Info } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
@@ -17,7 +17,7 @@ import { supabase } from '@/lib/supabase'
 const registerOwnerSchema = z.object({
   fullName: z.string().min(2, 'Name must be at least 2 characters').max(80, 'Name is too long'),
   email: z.string().email('Enter a valid email address'),
-  mobile: z.string().regex(/^\+?[0-9]{10,15}$/, 'Enter a valid 10-to-15 digit mobile number'),
+  mobile: z.string().regex(/^\+?[0-9\s-]{10,20}$/, 'Enter a valid mobile number'),
   pgName: z.string().min(3, 'PG Name must be at least 3 characters'),
   pgCity: z.string().min(2, 'Please select or enter the city'),
   pgAddress: z.string().min(5, 'Complete PG Address is required'),
@@ -70,8 +70,13 @@ export function OwnerRegistrationPage() {
   async function onSubmit(values: RegisterOwnerValues) {
     try {
       setLoading(true)
+      // Clean mobile number (strip spaces and hyphens)
+      const cleanedValues = {
+        ...values,
+        mobile: values.mobile.replace(/[\s-]/g, '')
+      }
       // 1. Store form values in localStorage
-      localStorage.setItem('owner_register_form', JSON.stringify(values))
+      localStorage.setItem('owner_register_form', JSON.stringify(cleanedValues))
 
       // 2. Initiate Google OAuth
       const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth < 768
@@ -362,13 +367,6 @@ export function OwnerRegistrationPage() {
                 {loading ? 'Initiating Verification…' : 'Verify with Google & Submit Inquiry'}
               </Button>
             </form>
-
-            <div className="text-center border-t border-slate-100 dark:border-slate-800 pt-4">
-              <span className="text-sm text-muted-foreground mr-1.5">Already registered?</span>
-              <Link to="/owner/login" className="text-sm font-semibold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 inline-flex items-center gap-1">
-                Sign in to Dashboard <ArrowRight className="h-3.5 w-3.5" />
-              </Link>
-            </div>
           </CardContent>
         </Card>
       </div>

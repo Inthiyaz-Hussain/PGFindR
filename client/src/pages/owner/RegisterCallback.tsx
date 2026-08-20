@@ -64,6 +64,7 @@ export function RegisterCallback() {
             pgName: savedForm.pgName,
             pgCity: savedForm.pgCity,
             pgAddress: savedForm.pgAddress,
+            pgWhatsappNumber: savedForm.mobile,
             roomCount: Number(savedForm.roomCount),
             bedCount: Number(savedForm.bedCount),
             referralSource: savedForm.referralSource || undefined

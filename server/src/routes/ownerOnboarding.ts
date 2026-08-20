@@ -46,7 +46,9 @@ router.post('/api/owner/inquiry', authenticateToken, async (req: any, res) => {
       referralSource
     } = req.body
 
-    if (!fullName || !mobile || !email || !pgName || !pgCity || !pgAddress || !pgWhatsappNumber || roomCount === undefined || bedCount === undefined) {
+    const finalWhatsappNumber = pgWhatsappNumber || mobile
+
+    if (!fullName || !mobile || !email || !pgName || !pgCity || !pgAddress || !finalWhatsappNumber || roomCount === undefined || bedCount === undefined) {
       return res.status(400).json({ error: 'All fields are required' })
     }
 
@@ -90,7 +92,7 @@ router.post('/api/owner/inquiry', authenticateToken, async (req: any, res) => {
         pg_name: pgName,
         pg_city: pgCity,
         pg_address: pgAddress,
-        pg_whatsapp_number: pgWhatsappNumber,
+        pg_whatsapp_number: finalWhatsappNumber,
         room_count: Number(roomCount),
         bed_count: Number(bedCount),
         referral_source: referralSource || null,
