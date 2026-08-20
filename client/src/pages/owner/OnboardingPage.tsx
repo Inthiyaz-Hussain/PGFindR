@@ -168,30 +168,39 @@ export function OnboardingPage() {
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return
-    const file = e.target.files[0]
+    const files = Array.from(e.target.files)
     
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error('File size exceeds the 5MB limit.')
-      return
+    // Check sizes
+    for (const file of files) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error(`File ${file.name} exceeds the 5MB limit.`)
+        return
+      }
     }
 
     setUploadingPhotos(true)
     try {
-      const fileExt = file.name.split('.').pop()
-      const fileName = `${user?.id || 'anon'}-common-${Date.now()}.${fileExt}`
+      const uploadedUrls: string[] = []
       
-      const { error: uploadError } = await supabaseUntyped.storage
-        .from('pg-images')
-        .upload(fileName, file, { cacheControl: '3600', upsert: false })
+      for (const file of files) {
+        const fileExt = file.name.split('.').pop()
+        const fileName = `${user?.id || 'anon'}-common-${Date.now()}-${Math.random().toString(36).slice(2)}.${fileExt}`
+        
+        const { error: uploadError } = await supabaseUntyped.storage
+          .from('pg-images')
+          .upload(fileName, file, { cacheControl: '3600', upsert: false })
 
-      if (uploadError) throw uploadError
+        if (uploadError) throw uploadError
 
-      const { data: { publicUrl } } = supabaseUntyped.storage
-        .from('pg-images')
-        .getPublicUrl(fileName)
+        const { data: { publicUrl } } = supabaseUntyped.storage
+          .from('pg-images')
+          .getPublicUrl(fileName)
 
-      setCommonPhotos(prev => [...prev, publicUrl])
-      toast.success('Photo uploaded successfully!')
+        uploadedUrls.push(publicUrl)
+      }
+
+      setCommonPhotos(prev => [...prev, ...uploadedUrls])
+      toast.success('Photos uploaded successfully!')
     } catch (err: any) {
       console.error('Upload failed:', err)
       toast.error(err.message || 'Failed to upload photo')
@@ -1042,6 +1051,7 @@ export function OnboardingPage() {
               <input 
                 type="file" 
                 accept="image/jpeg, image/png, image/webp" 
+                multiple
                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" 
                 onChange={handlePhotoUpload} 
                 disabled={uploadingPhotos}
