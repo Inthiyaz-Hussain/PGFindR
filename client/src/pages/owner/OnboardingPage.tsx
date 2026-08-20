@@ -86,65 +86,70 @@ export function OnboardingPage() {
     }
   ])
 
-  // Step 2 bulk configuration state
-  const [bulkConfig, setBulkConfig] = useState({
+  // Step 2 room configurations state
+  const [roomConfigs, setRoomConfigs] = useState([{
+    id: 'config-1',
     num_rooms: 10,
     sharing_type: 2 as 1 | 2 | 3 | 4,
     monthly_rent: 8000,
     occupied_beds: 0,
     door_facing: 'NE',
     has_balcony: false
-  })
+  }])
 
-  // Synchronize bulk configuration changes to rooms array dynamically
+  // Synchronize room configurations changes to rooms array dynamically
   useEffect(() => {
-    const R = Number(bulkConfig.num_rooms) || 1
-    const S = Number(bulkConfig.sharing_type) || 2
-    const O = Number(bulkConfig.occupied_beds) || 0
-    const M = Number(bulkConfig.monthly_rent) || 8000
-    const F = bulkConfig.door_facing
-    const B = bulkConfig.has_balcony
+    let globalRoomIndex = 1
+    const generatedRooms: any[] = []
 
-    const totalBeds = R * S
-    const safeOccupied = Math.min(O, totalBeds)
+    roomConfigs.forEach(config => {
+      const R = Number(config.num_rooms) || 1
+      const S = Number(config.sharing_type) || 2
+      const O = Number(config.occupied_beds) || 0
+      const M = Number(config.monthly_rent) || 8000
+      const F = config.door_facing
+      const B = config.has_balcony
 
-    let remainingOccupiedBeds = safeOccupied
-    const generatedRooms = []
+      const totalBeds = R * S
+      const safeOccupied = Math.min(O, totalBeds)
+      let remainingOccupiedBeds = safeOccupied
 
-    for (let i = 1; i <= R; i++) {
-      const roomId = `room-${i}`
-      const beds = []
-      for (let j = 1; j <= S; j++) {
-        const bedId = `bed-${i}-${j}`
-        const isOccupied = remainingOccupiedBeds > 0
-        if (isOccupied) {
-          remainingOccupiedBeds--
+      for (let i = 1; i <= R; i++) {
+        const roomId = `room-${globalRoomIndex}`
+        const beds = []
+        for (let j = 1; j <= S; j++) {
+          const bedId = `bed-${globalRoomIndex}-${j}`
+          const isOccupied = remainingOccupiedBeds > 0
+          if (isOccupied) {
+            remainingOccupiedBeds--
+          }
+          beds.push({
+            id: bedId,
+            bed_label: `Bed ${String.fromCharCode(65 + j - 1)}`,
+            bed_type: S === 1 ? 'Single' as const : 'Double' as const,
+            status: isOccupied ? 'occupied' as const : 'available' as const,
+            monthly_rent: M
+          })
         }
-        beds.push({
-          id: bedId,
-          bed_label: `Bed ${String.fromCharCode(65 + j - 1)}`,
-          bed_type: S === 1 ? 'Single' as const : 'Double' as const,
-          status: isOccupied ? 'occupied' as const : 'available' as const,
-          monthly_rent: M
-        })
-      }
 
-      generatedRooms.push({
-        id: roomId,
-        room_label: `Room ${100 + i}`,
-        floor: 1,
-        sharing_type: S as 1 | 2 | 3 | 4,
-        door_facing: F,
-        has_window: true,
-        window_facing: F,
-        room_notes: B ? 'Includes balcony' : '',
-        photos: [],
-        beds
-      })
-    }
+        generatedRooms.push({
+          id: roomId,
+          room_label: `Room ${100 + globalRoomIndex}`,
+          floor: 1,
+          sharing_type: S as 1 | 2 | 3 | 4,
+          door_facing: F,
+          has_window: true,
+          window_facing: F,
+          room_notes: B ? 'Includes balcony' : '',
+          photos: [],
+          beds
+        })
+        globalRoomIndex++
+      }
+    })
 
     setRooms(generatedRooms)
-  }, [bulkConfig])
+  }, [roomConfigs])
 
   // Step 3: Amenities
   const [standardAmenities, setStandardAmenities] = useState<Record<string, boolean>>({
@@ -275,18 +280,35 @@ export function OnboardingPage() {
           })
           setRooms(mappedRooms)
 
-          // Pre-populate bulkConfig if rooms exist
-          const firstRoom = roomsList[0]
-          const sharingTypeVal = firstRoom.beds?.length || 2
-          const monthlyRentVal = firstRoom.beds?.[0]?.monthly_rent || 8000
-          setBulkConfig({
-            num_rooms: roomsList.length,
-            sharing_type: (sharingTypeVal >= 1 && sharingTypeVal <= 4 ? sharingTypeVal : 2) as 1 | 2 | 3 | 4,
-            monthly_rent: monthlyRentVal,
-            occupied_beds: roomsList.reduce((sum: number, r: any) => sum + (r.beds || []).filter((b: any) => b.status === 'occupied').length, 0),
-            door_facing: firstRoom.door_facing || 'NE',
-            has_balcony: firstRoom.room_notes?.toLowerCase().includes('balcony') || false
+          // Pre-populate roomConfigs if rooms exist
+          // Group by sharing_type, rent, door_facing, has_balcony
+          const groupedConfigs: Record<string, any> = {}
+          
+          roomsList.forEach((rm: any) => {
+            const sharingTypeVal = rm.beds?.length || 2
+            const monthlyRentVal = rm.beds?.[0]?.monthly_rent || 8000
+            const doorFacingVal = rm.door_facing || 'NE'
+            const hasBalconyVal = rm.room_notes?.toLowerCase().includes('balcony') || false
+            
+            const key = `${sharingTypeVal}-${monthlyRentVal}-${doorFacingVal}-${hasBalconyVal}`
+            if (!groupedConfigs[key]) {
+              groupedConfigs[key] = {
+                id: `config-${Object.keys(groupedConfigs).length + 1}`,
+                num_rooms: 0,
+                sharing_type: (sharingTypeVal >= 1 && sharingTypeVal <= 4 ? sharingTypeVal : 2) as 1 | 2 | 3 | 4,
+                monthly_rent: monthlyRentVal,
+                occupied_beds: 0,
+                door_facing: doorFacingVal,
+                has_balcony: hasBalconyVal
+              }
+            }
+            groupedConfigs[key].num_rooms += 1
+            groupedConfigs[key].occupied_beds += (rm.beds || []).filter((b: any) => b.status === 'occupied').length
           })
+
+          if (Object.keys(groupedConfigs).length > 0) {
+            setRoomConfigs(Object.values(groupedConfigs))
+          }
         }
 
         // Fetch amenities
@@ -717,110 +739,159 @@ export function OnboardingPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="pt-6 space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <Field>
-                  <Label className="text-sm font-semibold">Number of Rooms</Label>
-                  <Input
-                    type="number"
-                    min="1"
-                    max="100"
-                    value={bulkConfig.num_rooms}
-                    onChange={e => {
-                      const val = Math.max(1, Number(e.target.value) || 1)
-                      setBulkConfig({ ...bulkConfig, num_rooms: val })
-                    }}
-                    placeholder="e.g. 10"
-                  />
-                  <span className="text-[10px] text-muted-foreground">Total rooms to generate in this PG</span>
-                </Field>
+              {roomConfigs.map((config, index) => (
+                <div key={config.id} className="p-5 border rounded-xl bg-slate-50/50 dark:bg-slate-900/30 space-y-6 relative">
+                  {index > 0 && (
+                    <Button 
+                      variant="destructive" 
+                      size="sm" 
+                      className="absolute top-4 right-4 h-8"
+                      onClick={() => setRoomConfigs(roomConfigs.filter((_, i) => i !== index))}
+                    >
+                      Remove
+                    </Button>
+                  )}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pr-16">
+                    <Field>
+                      <Label className="text-sm font-semibold">Number of Rooms</Label>
+                      <Input
+                        type="number"
+                        min="1"
+                        max="100"
+                        value={config.num_rooms}
+                        onChange={e => {
+                          const val = Math.max(1, Number(e.target.value) || 1)
+                          const newConfigs = [...roomConfigs]
+                          newConfigs[index] = { ...config, num_rooms: val }
+                          setRoomConfigs(newConfigs)
+                        }}
+                        placeholder="e.g. 10"
+                      />
+                      <span className="text-[10px] text-muted-foreground">Total rooms to generate</span>
+                    </Field>
 
-                <Field>
-                  <Label className="text-sm font-semibold">Sharing Type</Label>
-                  <Select
-                    value={String(bulkConfig.sharing_type)}
-                    onValueChange={v => {
-                      const val = Number(v) as 1 | 2 | 3 | 4
-                      setBulkConfig(prev => {
-                        const totalBeds = prev.num_rooms * val
-                        const occupied = Math.min(prev.occupied_beds, totalBeds)
-                        return { ...prev, sharing_type: val, occupied_beds: occupied }
-                      })
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="1">1-Share (Single)</SelectItem>
-                      <SelectItem value="2">2-Share (Double)</SelectItem>
-                      <SelectItem value="3">3-Share (Triple)</SelectItem>
-                      <SelectItem value="4">4-Share (Quadruple)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <span className="text-[10px] text-muted-foreground">Beds count per standard room</span>
-                </Field>
+                    <Field>
+                      <Label className="text-sm font-semibold">Sharing Type</Label>
+                      <Select
+                        value={String(config.sharing_type)}
+                        onValueChange={v => {
+                          const val = Number(v) as 1 | 2 | 3 | 4
+                          const newConfigs = [...roomConfigs]
+                          const totalBeds = config.num_rooms * val
+                          const occupied = Math.min(config.occupied_beds, totalBeds)
+                          newConfigs[index] = { ...config, sharing_type: val, occupied_beds: occupied }
+                          setRoomConfigs(newConfigs)
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="1">1-Share (Single)</SelectItem>
+                          <SelectItem value="2">2-Share (Double)</SelectItem>
+                          <SelectItem value="3">3-Share (Triple)</SelectItem>
+                          <SelectItem value="4">4-Share (Quadruple)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <span className="text-[10px] text-muted-foreground">Beds count per standard room</span>
+                    </Field>
 
-                <Field>
-                  <Label className="text-sm font-semibold">Monthly Rent per Bed (₹)</Label>
-                  <Input
-                    type="number"
-                    min="100"
-                    value={bulkConfig.monthly_rent}
-                    onChange={e => setBulkConfig({ ...bulkConfig, monthly_rent: Math.max(0, Number(e.target.value) || 0) })}
-                    placeholder="e.g. 8000"
-                  />
-                  <span className="text-[10px] text-muted-foreground">Base rent per bed per month</span>
-                </Field>
-              </div>
+                    <Field>
+                      <Label className="text-sm font-semibold">Monthly Rent per Bed (₹)</Label>
+                      <Input
+                        type="number"
+                        min="100"
+                        value={config.monthly_rent}
+                        onChange={e => {
+                          const newConfigs = [...roomConfigs]
+                          newConfigs[index] = { ...config, monthly_rent: Math.max(0, Number(e.target.value) || 0) }
+                          setRoomConfigs(newConfigs)
+                        }}
+                        placeholder="e.g. 8000"
+                      />
+                      <span className="text-[10px] text-muted-foreground">Base rent per bed per month</span>
+                    </Field>
+                  </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
-                <Field>
-                  <Label className="text-sm font-semibold">Occupied (Filled) Beds</Label>
-                  <Input
-                    type="number"
-                    min="0"
-                    max={bulkConfig.num_rooms * bulkConfig.sharing_type}
-                    value={bulkConfig.occupied_beds}
-                    onChange={e => {
-                      const totalBeds = bulkConfig.num_rooms * bulkConfig.sharing_type
-                      const val = Math.max(0, Math.min(totalBeds, Number(e.target.value) || 0))
-                      setBulkConfig({ ...bulkConfig, occupied_beds: val })
-                    }}
-                    placeholder="e.g. 4"
-                  />
-                  <span className="text-[10px] text-muted-foreground">Beds currently occupied by tenants</span>
-                </Field>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
+                    <Field>
+                      <Label className="text-sm font-semibold">Occupied (Filled) Beds</Label>
+                      <Input
+                        type="number"
+                        min="0"
+                        max={config.num_rooms * config.sharing_type}
+                        value={config.occupied_beds}
+                        onChange={e => {
+                          const totalBeds = config.num_rooms * config.sharing_type
+                          const val = Math.max(0, Math.min(totalBeds, Number(e.target.value) || 0))
+                          const newConfigs = [...roomConfigs]
+                          newConfigs[index] = { ...config, occupied_beds: val }
+                          setRoomConfigs(newConfigs)
+                        }}
+                        placeholder="e.g. 4"
+                      />
+                      <span className="text-[10px] text-muted-foreground">Beds currently occupied</span>
+                    </Field>
 
-                <Field>
-                  <Label className="text-sm font-semibold">Room Facing Direction</Label>
-                  <Select
-                    value={bulkConfig.door_facing}
-                    onValueChange={v => setBulkConfig({ ...bulkConfig, door_facing: v })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {COMPASS_DIRECTIONS.map(dir => (
-                        <SelectItem key={dir.value} value={dir.value}>{dir.value} - {dir.label.split(' (')[0]}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <span className="text-[10px] text-muted-foreground">Main door facing direction of rooms</span>
-                </Field>
+                    <Field>
+                      <Label className="text-sm font-semibold">Room Facing Direction</Label>
+                      <Select
+                        value={config.door_facing}
+                        onValueChange={v => {
+                          const newConfigs = [...roomConfigs]
+                          newConfigs[index] = { ...config, door_facing: v }
+                          setRoomConfigs(newConfigs)
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {COMPASS_DIRECTIONS.map(dir => (
+                            <SelectItem key={dir.value} value={dir.value}>{dir.value} - {dir.label.split(' (')[0]}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <span className="text-[10px] text-muted-foreground">Main door facing direction</span>
+                    </Field>
 
-                <div className="flex flex-col justify-center space-y-1.5 border border-slate-100 dark:border-slate-800 p-3 rounded-lg bg-slate-50/30 dark:bg-slate-900/30">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="text-sm font-semibold">Includes Balcony?</div>
-                      <div className="text-[10px] text-muted-foreground">Whether rooms have balcony access</div>
+                    <div className="flex flex-col justify-center space-y-1.5 border border-slate-100 dark:border-slate-800 p-3 rounded-lg bg-slate-50/30 dark:bg-slate-900/30">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="text-sm font-semibold">Includes Balcony?</div>
+                          <div className="text-[10px] text-muted-foreground">Whether rooms have balcony</div>
+                        </div>
+                        <Switch
+                          checked={config.has_balcony}
+                          onCheckedChange={checked => {
+                            const newConfigs = [...roomConfigs]
+                            newConfigs[index] = { ...config, has_balcony: checked }
+                            setRoomConfigs(newConfigs)
+                          }}
+                        />
+                      </div>
                     </div>
-                    <Switch
-                      checked={bulkConfig.has_balcony}
-                      onCheckedChange={checked => setBulkConfig({ ...bulkConfig, has_balcony: checked })}
-                    />
                   </div>
                 </div>
+              ))}
+
+              <div className="flex justify-center mt-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="border-dashed border-2 border-indigo-200 text-indigo-700 hover:bg-indigo-50 hover:text-indigo-800 w-full md:w-auto"
+                  onClick={() => setRoomConfigs([...roomConfigs, {
+                    id: `config-${Date.now()}`,
+                    num_rooms: 1,
+                    sharing_type: 2,
+                    monthly_rent: 8000,
+                    occupied_beds: 0,
+                    door_facing: 'NE',
+                    has_balcony: false
+                  }])}
+                >
+                  + Add Another Room Configuration
+                </Button>
               </div>
 
               {/* Real-time Summary Card */}
@@ -831,29 +902,26 @@ export function OnboardingPage() {
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
                   <div className="bg-white dark:bg-slate-900 border p-3 rounded-lg">
                     <span className="text-muted-foreground block mb-0.5">Total Rooms</span>
-                    <span className="text-lg font-bold text-slate-800 dark:text-slate-200">{bulkConfig.num_rooms} Rooms</span>
+                    <span className="text-lg font-bold text-slate-800 dark:text-slate-200">
+                      {roomConfigs.reduce((sum, c) => sum + c.num_rooms, 0)} Rooms
+                    </span>
                   </div>
                   <div className="bg-white dark:bg-slate-900 border p-3 rounded-lg">
-                    <span className="text-muted-foreground block mb-0.5">Sharing Mode</span>
-                    <span className="text-lg font-bold text-slate-800 dark:text-slate-200">{bulkConfig.sharing_type}-Share</span>
+                    <span className="text-muted-foreground block mb-0.5">Configs</span>
+                    <span className="text-lg font-bold text-slate-800 dark:text-slate-200">{roomConfigs.length} Types</span>
                   </div>
                   <div className="bg-white dark:bg-slate-900 border p-3 rounded-lg">
                     <span className="text-muted-foreground block mb-0.5">Occupied (Filled) Beds</span>
-                    <span className="text-lg font-bold text-slate-500">{bulkConfig.occupied_beds} Beds</span>
+                    <span className="text-lg font-bold text-slate-500">
+                      {roomConfigs.reduce((sum, c) => sum + c.occupied_beds, 0)} Beds
+                    </span>
                   </div>
                   <div className="bg-white dark:bg-slate-900 border p-3 rounded-lg border-emerald-200 dark:border-emerald-900/30 bg-emerald-50/10">
                     <span className="text-muted-foreground block mb-0.5">Available (Empty) Beds</span>
                     <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
-                      {Math.max(0, bulkConfig.num_rooms * bulkConfig.sharing_type - bulkConfig.occupied_beds)} Beds
+                      {Math.max(0, roomConfigs.reduce((sum, c) => sum + (c.num_rooms * c.sharing_type) - c.occupied_beds, 0))} Beds
                     </span>
                   </div>
-                </div>
-                <div className="text-xs text-slate-500 flex flex-wrap gap-x-4 gap-y-1">
-                  <span>Room Facing: <strong>{bulkConfig.door_facing}</strong></span>
-                  <span>•</span>
-                  <span>Balcony Access: <strong>{bulkConfig.has_balcony ? 'Yes' : 'No'}</strong></span>
-                  <span>•</span>
-                  <span>Calculated Total Beds: <strong>{bulkConfig.num_rooms * bulkConfig.sharing_type}</strong></span>
                 </div>
               </div>
             </CardContent>
