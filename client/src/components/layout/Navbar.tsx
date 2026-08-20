@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, NavLink, useNavigate } from 'react-router-dom'
 import {
   Building2,
   ChevronDown,
@@ -138,91 +138,94 @@ export function Navbar({
           <div className="hidden md:flex items-center gap-4 shrink-0">
             {user && profile?.role === 'owner' ? (
               <>
-                <Link
+                <NavLink
                   to="/owner"
-                  className="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors px-2 py-1.5 rounded-lg hover:bg-slate-100/60 dark:hover:bg-slate-800/60"
+                  end
+                  className={({ isActive }) => `text-sm font-medium transition-colors px-2 py-1.5 rounded-lg ${isActive ? 'bg-indigo-50/80 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300' : 'text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100/60 dark:hover:bg-slate-800/60'}`}
                 >
                   Dashboard
-                </Link>
-                <Link
+                </NavLink>
+                <NavLink
                   to="/owner/pgs"
-                  className="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors px-2 py-1.5 rounded-lg hover:bg-slate-100/60 dark:hover:bg-slate-800/60"
+                  className={({ isActive }) => `text-sm font-medium transition-colors px-2 py-1.5 rounded-lg ${isActive ? 'bg-indigo-50/80 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300' : 'text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100/60 dark:hover:bg-slate-800/60'}`}
                 >
                   My PGs
-                </Link>
-                <Link
+                </NavLink>
+                <NavLink
                   to="/owner/inquiries"
-                  className="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors px-2 py-1.5 rounded-lg hover:bg-slate-100/60 dark:hover:bg-slate-800/60"
+                  className={({ isActive }) => `text-sm font-medium transition-colors px-2 py-1.5 rounded-lg ${isActive ? 'bg-indigo-50/80 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300' : 'text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100/60 dark:hover:bg-slate-800/60'}`}
                 >
                   Inquiries
-                </Link>
-                <Link
+                </NavLink>
+                <NavLink
                   to="/owner/earnings"
-                  className="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors px-2 py-1.5 rounded-lg hover:bg-slate-100/60 dark:hover:bg-slate-800/60"
+                  className={({ isActive }) => `text-sm font-medium transition-colors px-2 py-1.5 rounded-lg ${isActive ? 'bg-indigo-50/80 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300' : 'text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100/60 dark:hover:bg-slate-800/60'}`}
                 >
                   Earnings
-                </Link>
-                <Link
+                </NavLink>
+                <NavLink
                   to="/owner/about"
-                  className="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors px-2 py-1.5 rounded-lg hover:bg-slate-100/60 dark:hover:bg-slate-800/60"
+                  className={({ isActive }) => `text-sm font-medium transition-colors px-2 py-1.5 rounded-lg ${isActive ? 'bg-indigo-50/80 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300' : 'text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100/60 dark:hover:bg-slate-800/60'}`}
                 >
                   About
-                </Link>
+                </NavLink>
               </>
             ) : user && profile?.role === 'admin' ? (
               <>
-                <Link
+                <NavLink
                   to="/admin"
-                  className="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors px-2 py-1.5 rounded-lg hover:bg-slate-100/60 dark:hover:bg-slate-800/60"
+                  end
+                  className={({ isActive }) => `text-sm font-medium transition-colors px-2 py-1.5 rounded-lg ${isActive ? 'bg-purple-50/80 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300' : 'text-slate-600 dark:text-slate-300 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-slate-100/60 dark:hover:bg-slate-800/60'}`}
                 >
                   Dashboard
-                </Link>
-                <Link
+                </NavLink>
+                <NavLink
                   to="/admin/pgs"
-                  className="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors px-2 py-1.5 rounded-lg hover:bg-slate-100/60 dark:hover:bg-slate-800/60"
+                  className={({ isActive }) => `text-sm font-medium transition-colors px-2 py-1.5 rounded-lg ${isActive ? 'bg-purple-50/80 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300' : 'text-slate-600 dark:text-slate-300 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-slate-100/60 dark:hover:bg-slate-800/60'}`}
                 >
                   Listings
-                </Link>
-                <Link
+                </NavLink>
+                <NavLink
                   to="/admin/owners"
-                  className="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors px-2 py-1.5 rounded-lg hover:bg-slate-100/60 dark:hover:bg-slate-800/60"
+                  className={({ isActive }) => `text-sm font-medium transition-colors px-2 py-1.5 rounded-lg ${isActive ? 'bg-purple-50/80 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300' : 'text-slate-600 dark:text-slate-300 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-slate-100/60 dark:hover:bg-slate-800/60'}`}
                 >
                   Owners
-                </Link>
-                <Link
+                </NavLink>
+                <NavLink
                   to="/admin/transactions"
-                  className="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors px-2 py-1.5 rounded-lg hover:bg-slate-100/60 dark:hover:bg-slate-800/60"
+                  className={({ isActive }) => `text-sm font-medium transition-colors px-2 py-1.5 rounded-lg ${isActive ? 'bg-purple-50/80 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300' : 'text-slate-600 dark:text-slate-300 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-slate-100/60 dark:hover:bg-slate-800/60'}`}
                 >
                   Transactions
-                </Link>
+                </NavLink>
               </>
             ) : user && profile?.role === 'seeker' ? (
               <>
-                <Link
+                <NavLink
                   to="/seeker"
-                  className="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors px-2 py-1.5 rounded-lg hover:bg-slate-100/60 dark:hover:bg-slate-800/60"
+                  end
+                  className={({ isActive }) => `text-sm font-medium transition-colors px-2 py-1.5 rounded-lg ${isActive ? 'bg-indigo-50/80 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300' : 'text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100/60 dark:hover:bg-slate-800/60'}`}
                 >
                   Dashboard
-                </Link>
-                <Link
+                </NavLink>
+                <NavLink
                   to="/search"
-                  className="flex items-center gap-1.5 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors px-2 py-1.5 rounded-lg hover:bg-slate-100/60 dark:hover:bg-slate-800/60"
+                  className={({ isActive }) => `flex items-center gap-1.5 text-sm font-medium transition-colors px-2 py-1.5 rounded-lg ${isActive ? 'bg-indigo-50/80 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300' : 'text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100/60 dark:hover:bg-slate-800/60'}`}
                 >
                   <Compass className="h-4 w-4 text-amber-500 dark:text-amber-400" />
                   <span>Explore</span>
-                </Link>
-                <Link
+                </NavLink>
+                <NavLink
                   to="/seeker/inquiries"
-                  className="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors px-2 py-1.5 rounded-lg hover:bg-slate-100/60 dark:hover:bg-slate-800/60"
+                  className={({ isActive }) => `text-sm font-medium transition-colors px-2 py-1.5 rounded-lg ${isActive ? 'bg-indigo-50/80 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300' : 'text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100/60 dark:hover:bg-slate-800/60'}`}
                 >
                   Inquiries
-                </Link>
-                <Link
+                </NavLink>
+                <NavLink
                   to="/seeker/about"
-                  className="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors px-2 py-1.5 rounded-lg hover:bg-slate-100/60 dark:hover:bg-slate-800/60"
+                  className={({ isActive }) => `text-sm font-medium transition-colors px-2 py-1.5 rounded-lg ${isActive ? 'bg-indigo-50/80 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300' : 'text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100/60 dark:hover:bg-slate-800/60'}`}
                 >
                   About
-                </Link>
+                </NavLink>
                 <button
                   onClick={() => navigate('/seeker/profile?tab=saved')}
                   className="relative p-2 rounded-full text-slate-600 dark:text-slate-300 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50/80 dark:hover:bg-rose-950/40 transition-colors cursor-pointer group"
