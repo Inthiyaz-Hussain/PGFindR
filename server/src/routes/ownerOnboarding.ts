@@ -1114,8 +1114,7 @@ router.post('/api/owner/onboard', authenticateToken, requireRole('owner'), async
           window_facing: room.window_facing || null,
           window_count: room.window_count || null,
           room_size_sqft: room.room_size_sqft || null,
-          room_notes: room.room_notes || null,
-          photos: []
+          room_notes: room.room_notes || null
         })
         .select('id')
         .single()
