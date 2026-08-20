@@ -47,7 +47,7 @@ export function OwnerInquiriesPage() {
       
       const { data, error } = await supabaseUntyped
         .from('inquiries')
-        .select('*, pg:pg_listings(name, city), seeker:profiles!inquiries_seeker_id_fkey(full_name, phone)')
+        .select('*, pg:pg_listings(name, city), seeker:profiles!inquiries_seeker_id_fkey(full_name, phone), room:rooms(room_label, door_facing)')
         .in('pg_id', pgIds)
         .order('created_at', { ascending: false })
         
@@ -122,6 +122,7 @@ export function OwnerInquiriesPage() {
             const cfg = STATUS_CONFIG[inq.status]
             const pg = inq.pg as { name?: string; city?: string } | null
             const seeker = inq.seeker as { full_name?: string; phone?: string | null } | null
+            const room = inq.room as { room_label?: string; door_facing?: string | null } | null
 
             return (
               <Card key={inq.id}>
@@ -178,6 +179,23 @@ export function OwnerInquiriesPage() {
                     )}
                     {inq.duration_value && inq.duration_unit && (
                       <Badge variant="secondary" className="text-xs">Duration: {inq.duration_value} {inq.duration_unit}</Badge>
+                    )}
+                    {inq.num_beds && (
+                      <div className="flex items-center gap-2 text-muted-foreground col-span-2 sm:col-span-4 mt-1 p-2 bg-indigo-50/50 dark:bg-indigo-950/20 rounded-md border border-indigo-100 dark:border-indigo-900">
+                        <BedSingle className="size-4 text-indigo-600 dark:text-indigo-400" />
+                        <span className="font-medium text-indigo-900 dark:text-indigo-200">
+                          Requested: {inq.num_beds} {inq.num_beds === 1 ? 'Bed' : 'Beds'}
+                        </span>
+                        {room ? (
+                          <span className="text-xs ml-2 px-2 py-0.5 bg-indigo-100 dark:bg-indigo-900/50 rounded-full text-indigo-800 dark:text-indigo-300">
+                            in {room.room_label || 'Specific Room'} ({room.door_facing || 'Standard'} facing)
+                          </span>
+                        ) : (
+                          <span className="text-xs ml-2 px-2 py-0.5 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-600 dark:text-slate-400">
+                            Any Room (Auto assign)
+                          </span>
+                        )}
+                      </div>
                     )}
                   </div>
 

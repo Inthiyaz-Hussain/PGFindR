@@ -89,20 +89,21 @@ router.get('/:id', async (req, res) => {
 // POST /api/inquiry - Create new inquiry (authenticated seekers only)
 router.post('/', authenticateToken, async (req, res) => {
   try {
-    const {
-      pg_id,
-      seeker_id,
-      full_name,
-      mobile,
-      age,
-      move_in_date,
-      sharing_preference,
+    const { 
+      pg_id, 
+      seeker_id, 
+      full_name, 
+      mobile, 
+      age, 
+      move_in_date, 
+      sharing_preference, 
       num_beds,
+      room_id,
       occupation,
       city_of_origin,
       duration_value,
       duration_unit,
-      message,
+      message 
     } = req.body
 
     // Validation
@@ -212,6 +213,7 @@ router.post('/', authenticateToken, async (req, res) => {
         move_in_date,
         sharing_preference: Number(sharing_preference),
         num_beds: numBedsVal,
+        room_id: room_id || null,
         occupation,
         city_of_origin: city_of_origin.trim(),
         duration_value: Number(duration_value),

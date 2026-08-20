@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -35,8 +35,10 @@ const inquirySchema = z.object({
   occupation: z.enum(['Student', 'Working Professional', 'Other']),
   city_of_origin: z.string().min(2, 'City of origin is required'),
   duration_value: z.number().min(1, 'Duration must be at least 1'),
+  duration_value: z.number().min(1, 'Duration must be at least 1'),
   duration_unit: z.enum(['days', 'months']),
   message: z.string().optional(),
+  room_id: z.string().optional(),
 })
 
 type InquiryFormData = z.infer<typeof inquirySchema>
@@ -104,6 +106,7 @@ export function InquiryModal({
       move_in_date: '',
       sharing_preference: selectedSharingType || sharingTypes[0]?.type || 1,
       num_beds: 1,
+      room_id: '',
       occupation: 'Student',
       city_of_origin: '',
       duration_value: 1,
@@ -114,9 +117,43 @@ export function InquiryModal({
   })
 
   const selectedPref = watch('sharing_preference')
+  const selectedRoomId = watch('room_id')
   const sharingPrefLabel = selectedPref ? SHARING_LABELS[selectedPref] : ''
 
-  const maxBedsAllowed = 10
+  const [rooms, setRooms] = useState<any[]>([])
+
+  useEffect(() => {
+    if (open && pgId) {
+      supabase.from('rooms')
+        .select('*, beds(id, status)')
+        .eq('pg_id', pgId)
+        .then(({ data }) => {
+          if (data) setRooms(data)
+        })
+    }
+  }, [open, pgId])
+
+  const getEmptyBeds = (room: any) => {
+    return room.beds ? room.beds.filter((b: any) => b.status === 'Available').length : 0
+  }
+
+  const availableRooms = useMemo(() => {
+    const matchingSharingTypeId = sharingTypes.find(st => st.type === selectedPref)?.id
+    return rooms
+      .filter(r => r.sharing_type_id === matchingSharingTypeId)
+      .filter(r => getEmptyBeds(r) > 0)
+  }, [rooms, sharingTypes, selectedPref])
+
+  const maxBedsAllowed = useMemo(() => {
+    if (selectedRoomId) {
+      const selectedRoom = rooms.find(r => r.id === selectedRoomId)
+      if (selectedRoom) return Math.max(1, getEmptyBeds(selectedRoom))
+    }
+    // If no room selected, allow up to sharing preference max or 10
+    const st = sharingTypes.find(s => s.type === selectedPref)
+    return st ? Math.max(1, st.total_beds - st.occupied_beds) : 10
+  }, [selectedRoomId, rooms, sharingTypes, selectedPref])
+
 
   // Pre-fill from profile when available
   useEffect(() => {
@@ -137,6 +174,7 @@ export function InquiryModal({
         move_in_date: '',
         sharing_preference: selectedSharingType || sharingTypes[0]?.type || 1,
         num_beds: 1,
+        room_id: '',
         occupation: 'Student',
         city_of_origin: '',
         duration_value: 1,
@@ -148,6 +186,12 @@ export function InquiryModal({
   }, [open, profile, sharingTypes, reset, user])
 
   const availableSharing = sharingTypes.filter((s) => s.total_beds - s.occupied_beds > 0)
+
+  // Auto-reset room selection if switching sharing preference
+  useEffect(() => {
+    setValue('room_id', '')
+    setValue('num_beds', 1)
+  }, [selectedPref, setValue])
 
   async function onSubmit(data: InquiryFormData) {
     let activeUser = user
@@ -298,43 +342,93 @@ export function InquiryModal({
           control={control}
           render={({ field }) => (
             <RadioGroup
-              value={String(field.value)}
-              onValueChange={(v) => field.onChange(Number(v))}
+              onValueChange={(val) => field.onChange(parseInt(val, 10))}
+              value={field.value?.toString()}
               className="grid grid-cols-2 gap-2"
             >
-              {availableSharing.map((s) => (
-                <div key={s.type}>
-                  <RadioGroupItem value={String(s.type)} id={`share-${s.type}`} className="peer sr-only" />
-                  <Label
-                    htmlFor={`share-${s.type}`}
-                    className="flex flex-col items-center justify-center rounded-lg border-2 border-muted bg-popover p-3 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5 cursor-pointer transition-all"
-                  >
-                    <span className="text-sm font-medium">{SHARING_LABELS[s.type]}</span>
-                    <span className="text-xs text-muted-foreground">₹{s.price_monthly.toLocaleString('en-IN')}/mo</span>
-                  </Label>
-                </div>
-              ))}
+              {sharingTypes.map((st) => {
+                const isFull = st.total_beds - st.occupied_beds <= 0
+                return (
+                  <div key={st.id} className="relative">
+                    <RadioGroupItem
+                      value={st.type.toString()}
+                      id={`share-${st.id}`}
+                      className="peer sr-only"
+                      disabled={isFull}
+                    />
+                    <Label
+                      htmlFor={`share-${st.id}`}
+                      className={`flex flex-col items-center justify-between rounded-lg border-2 border-muted bg-transparent p-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 peer-data-[state=checked]:border-indigo-600 dark:peer-data-[state=checked]:border-indigo-400 peer-data-[state=checked]:bg-indigo-50/50 dark:peer-data-[state=checked]:bg-indigo-950/20 cursor-pointer transition-all ${isFull ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    >
+                      <div className="font-semibold text-sm">{SHARING_LABELS[st.type]}</div>
+                      <div className="text-[10px] text-muted-foreground mt-0.5">
+                        {isFull ? 'Sold Out' : `${st.total_beds - st.occupied_beds} beds left`}
+                      </div>
+                    </Label>
+                  </div>
+                )
+              })}
             </RadioGroup>
           )}
         />
         {errors.sharing_preference && <p className="text-xs text-destructive">{errors.sharing_preference.message}</p>}
       </div>
 
-      {/* Number of Beds Selection */}
+      {/* Room Selection */}
       <div className="space-y-1.5">
-        <Label htmlFor="num_beds" className="flex items-center gap-1.5">
-          <BedSingle className="size-3.5" /> Number of Beds
+        <Label htmlFor="room_id" className="flex items-center gap-1.5">
+          <BedSingle className="size-3.5" /> Specific Room (Optional)
         </Label>
-        <Input
-          id="num_beds"
-          type="number"
-          placeholder={`Enter number of beds (1-${maxBedsAllowed})`}
-          min={1}
-          max={maxBedsAllowed}
-          {...register('num_beds', { valueAsNumber: true })}
+        <Controller
+          name="room_id"
+          control={control}
+          render={({ field }) => (
+            <Select onValueChange={field.onChange} value={field.value || ''}>
+              <SelectTrigger>
+                <SelectValue placeholder="Any Room (Auto assign)" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Any Room (Auto assign)</SelectItem>
+                {availableRooms.map(room => (
+                  <SelectItem key={room.id} value={room.id}>
+                    {room.room_label || `Room ${room.id.slice(0,4)}`} - {room.door_facing ? `${room.door_facing}` : 'Standard'} ({getEmptyBeds(room)} beds empty)
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         />
-        {errors.num_beds && <p className="text-xs text-destructive">{errors.num_beds.message}</p>}
       </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        {/* Number of Beds */}
+        <div className="space-y-1.5">
+          <Label htmlFor="num_beds" className="flex items-center gap-1.5">
+            <BedSingle className="size-3.5" /> Number of Beds
+          </Label>
+          <Controller
+            name="num_beds"
+            control={control}
+            render={({ field }) => (
+              <Select
+                onValueChange={(val) => field.onChange(parseInt(val, 10))}
+                value={field.value?.toString()}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Array.from({ length: maxBedsAllowed }, (_, i) => i + 1).map((n) => (
+                    <SelectItem key={n} value={n.toString()}>
+                      {n} {n === 1 ? 'Bed' : 'Beds'}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
+          {errors.num_beds && <p className="text-xs text-destructive">{errors.num_beds.message}</p>}
+        </div>  </div>
 
       {/* Occupation */}
       <div className="space-y-1.5">
