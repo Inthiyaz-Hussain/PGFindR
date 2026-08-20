@@ -254,7 +254,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
-    // 3. Listen to auth state changes to drive initial load and session changes
+    // 3. Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!mounted.current) return
+      if (session) {
+        setSession(session)
+        setUser(session.user)
+        setProfileLoading(true)
+        syncProfileWithAuthSession(session)
+          .then(() => {
+            if (mounted.current) {
+              setProfileLoading(false)
+              setLoading(false)
+            }
+          })
+          .catch(err => {
+            console.error('Error syncing initial profile:', err)
+            if (mounted.current) {
+              setProfileLoading(false)
+              setLoading(false)
+            }
+          })
+      } else {
+        setLoading(false)
+      }
+    })
+
+    // 4. Listen to auth state changes to drive session changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mounted.current) return
       
