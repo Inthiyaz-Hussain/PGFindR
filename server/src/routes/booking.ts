@@ -21,20 +21,8 @@ async function getPlatformSettings() {
   }, {})
 }
 
-function calculateCommissionRate(monthlyRent: number, settings: Record<string, string>): number {
-  const tier1Max = parseInt(settings['commission_tier_1_max_rent'] || '5000', 10)
-  const tier1Rate = parseFloat(settings['commission_tier_1_rate'] || '8.00')
-  const tier2Max = parseInt(settings['commission_tier_2_max_rent'] || '10000', 10)
-  const tier2Rate = parseFloat(settings['commission_tier_2_rate'] || '10.00')
-  const tier3Rate = parseFloat(settings['commission_tier_3_rate'] || '12.00')
-
-  if (monthlyRent <= tier1Max) {
-    return tier1Rate
-  } else if (monthlyRent <= tier2Max) {
-    return tier2Rate
-  } else {
-    return tier3Rate
-  }
+function calculateCommissionRate(settings: Record<string, string>): number {
+  return parseFloat(settings['commission_rate'] || '1.00')
 }
 
 // GET /api/booking - List bookings (filtered by user role)
@@ -211,7 +199,7 @@ router.post('/', async (req, res) => {
     const baseMonthlyRent = monthly_rent || 5000
     const scaledMonthlyRent = baseMonthlyRent * numBeds
 
-    const commissionRate = calculateCommissionRate(baseMonthlyRent, settings)
+    const commissionRate = calculateCommissionRate(settings)
     const depositAmount = (pg?.deposit_amount || 0) * numBeds
     const commissionAmount = Math.round(depositAmount * (commissionRate / 100))
     const ownerPayout = depositAmount - commissionAmount

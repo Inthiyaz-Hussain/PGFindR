@@ -24,19 +24,14 @@ export function AdminPlatformSettingsPage() {
   const isDemo = user?.id === '00000000-0000-0000-0000-000000000003'
 
   const [form, setForm] = useState({
-    commissionRate: '10.00',
+    commissionRate: '1.00',
     depositMonths: '2',
     supportPhone: '+91 6302854691',
     supportEmail: 'inthiyazhussain69@gmail.com',
     manualApproval: true,
     maintenanceMode: false,
-    platformFee: '200.00',
-    serviceCharge: '100.00',
-    tier1MaxRent: '5000',
-    tier1Rate: '8.00',
-    tier2MaxRent: '10000',
-    tier2Rate: '10.00',
-    tier3Rate: '12.00',
+    platformFee: '300.00',
+    serviceCharge: '0.00',
   })
 
   // Query Settings
@@ -64,19 +59,14 @@ export function AdminPlatformSettingsPage() {
       }, {})
 
       const initialForm = {
-        commissionRate: settingsMap['default_commission_rate'] || '10.00',
+        commissionRate: settingsMap['commission_rate'] || '1.00',
         depositMonths: settingsMap['default_safety_deposit_multiplier'] || '2',
         supportPhone: settingsMap['help_desk_phone'] || '+91 6302854691',
         supportEmail: settingsMap['help_desk_email'] || 'inthiyazhussain69@gmail.com',
         manualApproval: settingsMap['manual_pg_approval'] === 'true',
         maintenanceMode: settingsMap['platform_maintenance_mode'] === 'true',
-        platformFee: settingsMap['platform_fee'] || '200.00',
-        serviceCharge: settingsMap['service_charge'] || '100.00',
-        tier1MaxRent: settingsMap['commission_tier_1_max_rent'] || '5000',
-        tier1Rate: settingsMap['commission_tier_1_rate'] || '8.00',
-        tier2MaxRent: settingsMap['commission_tier_2_max_rent'] || '10000',
-        tier2Rate: settingsMap['commission_tier_2_rate'] || '10.00',
-        tier3Rate: settingsMap['commission_tier_3_rate'] || '12.00',
+        platformFee: settingsMap['platform_fee'] || '300.00',
+        serviceCharge: settingsMap['service_charge'] || '0.00',
       }
 
       setForm(initialForm)
@@ -103,7 +93,7 @@ export function AdminPlatformSettingsPage() {
       }
 
       const updates = [
-        { key: 'default_commission_rate', value: form.commissionRate, description: 'Default platform commission percentage' },
+        { key: 'commission_rate', value: form.commissionRate, description: 'Default platform commission percentage' },
         { key: 'default_safety_deposit_multiplier', value: form.depositMonths, description: 'Standard security deposit months' },
         { key: 'help_desk_phone', value: form.supportPhone, description: 'Customer support hotline phone number' },
         { key: 'help_desk_email', value: form.supportEmail, description: 'Customer support contact email address' },
@@ -111,11 +101,6 @@ export function AdminPlatformSettingsPage() {
         { key: 'platform_maintenance_mode', value: form.maintenanceMode.toString(), description: 'Toggle to lock platform for upgrades' },
         { key: 'platform_fee', value: form.platformFee, description: 'Flat platform fee charged to seekers' },
         { key: 'service_charge', value: form.serviceCharge, description: 'Flat service charge charged to seekers' },
-        { key: 'commission_tier_1_max_rent', value: form.tier1MaxRent, description: 'Maximum rent for Tier 1 commission' },
-        { key: 'commission_tier_1_rate', value: form.tier1Rate, description: 'Commission rate for Tier 1' },
-        { key: 'commission_tier_2_max_rent', value: form.tier2MaxRent, description: 'Maximum rent for Tier 2 commission' },
-        { key: 'commission_tier_2_rate', value: form.tier2Rate, description: 'Commission rate for Tier 2' },
-        { key: 'commission_tier_3_rate', value: form.tier3Rate, description: 'Commission rate for Tier 3' }
       ]
 
       for (const item of updates) {
@@ -210,73 +195,6 @@ export function AdminPlatformSettingsPage() {
                       className="pl-7"
                       value={form.serviceCharge}
                       onChange={(e) => setForm((p) => ({ ...p, serviceCharge: e.target.value }))}
-                      required
-                    />
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-slate-100 dark:border-slate-800 shadow-sm rounded-2xl">
-            <CardHeader>
-              <CardTitle className="text-base font-bold">Owner Commission Tiers</CardTitle>
-              <CardDescription>Configure dynamic commission rates applied based on PG monthly rent.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <Label>Tier 1 Max Rent (₹)</Label>
-                    <Input
-                      type="number"
-                      value={form.tier1MaxRent}
-                      onChange={(e) => setForm((p) => ({ ...p, tier1MaxRent: e.target.value }))}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label>Tier 1 Commission Rate (%)</Label>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      value={form.tier1Rate}
-                      onChange={(e) => setForm((p) => ({ ...p, tier1Rate: e.target.value }))}
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <Label>Tier 2 Max Rent (₹)</Label>
-                    <Input
-                      type="number"
-                      value={form.tier2MaxRent}
-                      onChange={(e) => setForm((p) => ({ ...p, tier2MaxRent: e.target.value }))}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label>Tier 2 Commission Rate (%)</Label>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      value={form.tier2Rate}
-                      onChange={(e) => setForm((p) => ({ ...p, tier2Rate: e.target.value }))}
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <Label>Tier 3 Commission Rate (%) (Above Tier 2 Max)</Label>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      value={form.tier3Rate}
-                      onChange={(e) => setForm((p) => ({ ...p, tier3Rate: e.target.value }))}
                       required
                     />
                   </div>

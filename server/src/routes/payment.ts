@@ -19,13 +19,34 @@ const verifyPaymentSchema = z.object({
   })
 })
 
-// Helper to determine Cashfree environment details
 const getCashfreeConfig = () => {
   const env = process.env.CASHFREE_ENV === 'PRODUCTION' ? 'production' : 'sandbox'
   const baseUrl = env === 'production' 
     ? 'https://api.cashfree.com/pg/orders' 
     : 'https://sandbox.cashfree.com/pg/orders'
-  return { env, baseUrl }
+  
+  return {
+    env,
+    baseUrl,
+    appId: process.env.CASHFREE_CLIENT_ID || '',
+    secretKey: process.env.CASHFREE_SECRET_KEY || ''
+  }
+}
+
+async function getPlatformSettings(): Promise<Record<string, string>> {
+  const { data, error } = await supabase.from('platform_settings').select('key, value')
+  if (error) {
+    console.error('Error fetching platform settings:', error)
+    return {}
+  }
+  return (data || []).reduce((acc: Record<string, string>, curr) => {
+    acc[curr.key] = curr.value
+    return acc
+  }, {})
+}
+
+function calculateCommissionRate(settings: Record<string, string>): number {
+  return parseFloat(settings['commission_rate'] || '1.00')
 }
 
 // POST /api/payment/initiate — Create Cashfree order for a booking
@@ -54,11 +75,13 @@ router.post('/initiate', paymentRateLimiter, validateRequest(initiatePaymentSche
       return res.status(400).json({ error: 'Booking already paid' })
     }
 
-    const platformFee = booking.platform_fee || 0
-    const serviceCharge = booking.service_charge || 0
+    const settings = await getPlatformSettings()
+    const numBeds = booking.num_beds || 1
+    const platformFee = parseInt(settings['platform_fee'] || '300', 10) * numBeds
+    const serviceCharge = parseInt(settings['service_charge'] || '0', 10) * numBeds
     const depositAmount = booking.deposit_amount || 0
     const monthlyRent = booking.monthly_rent || 0
-    const commissionRate = booking.commission_pct || 10
+    const commissionRate = calculateCommissionRate(settings)
 
     const paidRent = include_rent === true
     const totalAmount = depositAmount + (paidRent ? monthlyRent : 0) + platformFee + serviceCharge
@@ -186,11 +209,13 @@ router.post('/demo-confirm', paymentRateLimiter, validateRequest(initiatePayment
       return res.status(400).json({ error: 'Booking is already paid' })
     }
 
-    const platformFee = booking.platform_fee || 0
-    const serviceCharge = booking.service_charge || 0
+    const settings = await getPlatformSettings()
+    const numBeds = booking.num_beds || 1
+    const platformFee = parseInt(settings['platform_fee'] || '300', 10) * numBeds
+    const serviceCharge = parseInt(settings['service_charge'] || '0', 10) * numBeds
     const depositAmount = booking.deposit_amount || 0
     const monthlyRent = booking.monthly_rent || 0
-    const commissionRate = booking.commission_pct || 10
+    const commissionRate = calculateCommissionRate(settings)
 
     const paidRent = include_rent === true
     const totalAmount = depositAmount + (paidRent ? monthlyRent : 0) + platformFee + serviceCharge
