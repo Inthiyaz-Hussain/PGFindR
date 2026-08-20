@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import crypto from 'crypto'
 import { supabase } from '../index.js'
+// Using global fetch (native in Node 18+)
 import { authenticateToken, requireRole } from '../middleware/auth.js'
 import { sendMail } from '../utils/mailer.js'
 
@@ -10,6 +11,7 @@ const router = Router()
 import { createClient } from '@supabase/supabase-js'
 const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || ''
 const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || ''
+const n8nWebhookUrl = process.env.N8N_WHATSAPP_WEBHOOK_URL || ''
 console.log('SUPABASE URL & KEY FOR ANON CLIENT:', supabaseUrl, supabaseAnonKey ? supabaseAnonKey.slice(0, 15) + '...' : 'UNDEFINED')
 const supabaseAnon = createClient(supabaseUrl, supabaseAnonKey)
 
@@ -20,7 +22,7 @@ function validatePasswordStrength(password: string): string | null {
   if (!/[a-z]/.test(password)) return 'Password must contain at least one lowercase letter (a-z).'
   if (!/[0-9]/.test(password)) return 'Password must contain at least one number (0-9).'
   if (!/[!@#$%^&*]/.test(password)) return 'Password must contain at least one special character (!@#$%^&*).'
-  
+
   const commonPasswords = ['password123', 'password1', '12345678', 'qwerty123', 'admin123'];
   if (commonPasswords.includes(password.toLowerCase())) {
     return 'Password is too common or easy to guess.';
@@ -38,12 +40,13 @@ router.post('/api/owner/inquiry', authenticateToken, async (req: any, res) => {
       pgName,
       pgCity,
       pgAddress,
+      pgWhatsappNumber,
       roomCount,
       bedCount,
       referralSource
     } = req.body
 
-    if (!fullName || !mobile || !email || !pgName || !pgCity || !pgAddress || roomCount === undefined || bedCount === undefined) {
+    if (!fullName || !mobile || !email || !pgName || !pgCity || !pgAddress || !pgWhatsappNumber || roomCount === undefined || bedCount === undefined) {
       return res.status(400).json({ error: 'All fields are required' })
     }
 
@@ -87,6 +90,7 @@ router.post('/api/owner/inquiry', authenticateToken, async (req: any, res) => {
         pg_name: pgName,
         pg_city: pgCity,
         pg_address: pgAddress,
+        pg_whatsapp_number: pgWhatsappNumber,
         room_count: Number(roomCount),
         bed_count: Number(bedCount),
         referral_source: referralSource || null,
@@ -218,7 +222,7 @@ router.put('/api/admin/owner-inquiries/:id/approve', authenticateToken, requireR
     if (!clientUrl && req.headers.referer) {
       try {
         clientUrl = new URL(req.headers.referer).origin
-      } catch (e) {}
+      } catch (e) { }
     }
     // Safe fallbacks to prevent localhost leaking in production email templates
     const isLocalhostRequest = !!(req.headers.host?.includes('localhost') || req.headers.host?.includes('127.0.0.1'))
@@ -231,7 +235,7 @@ router.put('/api/admin/owner-inquiries/:id/approve', authenticateToken, requireR
     }
 
     const setPasswordLink = `${clientUrl}/owner/set-password?token=${token}`
-    
+
     const emailSubject = `SwiftPG - Your Owner Account Has Been Approved - Set Your Password`
     const emailHtml = `
       <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
@@ -266,6 +270,31 @@ router.put('/api/admin/owner-inquiries/:id/approve', authenticateToken, requireR
     sendMail(inquiry.email, emailSubject, emailHtml).catch((err) => {
       console.error(`❌ Background email dispatch failed for ${inquiry.email}:`, err)
     })
+
+    // Trigger n8n WhatsApp webhook
+    if (n8nWebhookUrl && inquiry.pg_whatsapp_number) {
+      const sanitizedPhoneNumber = inquiry.pg_whatsapp_number.replace(/[\s+]/g, '');
+      const webhookPayload = {
+        ownerName: inquiry.full_name,
+        pgName: inquiry.pg_name,
+        phoneNumber: sanitizedPhoneNumber,
+        setPasswordUrl: setPasswordLink
+      };
+
+      console.log('SIMULATING N8N WHATSAPP WEBHOOK DISPATCH:', webhookPayload);
+
+      fetch(n8nWebhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' } as any,
+        body: JSON.stringify(webhookPayload)
+      })
+        .then((response: any) => {
+          if (!response.ok) {
+            console.error(`❌ n8n WhatsApp webhook failed for ${inquiry.email} with status: ${response.status}`);
+          }
+        })
+        .catch((err: any) => console.error(`❌ n8n WhatsApp webhook dispatch failed for ${inquiry.email}:`, err));
+    }
 
     return res.json({
       message: 'Inquiry approved and Set Password email triggered.',
@@ -346,7 +375,7 @@ router.put('/api/admin/owner-inquiries/:id/resend-email', authenticateToken, req
     if (!clientUrl && req.headers.referer) {
       try {
         clientUrl = new URL(req.headers.referer).origin
-      } catch (e) {}
+      } catch (e) { }
     }
     // Safe fallbacks to prevent localhost leaking in production email templates
     const isLocalhostRequest = !!(req.headers.host?.includes('localhost') || req.headers.host?.includes('127.0.0.1'))

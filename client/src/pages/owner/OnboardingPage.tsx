@@ -169,11 +169,28 @@ export function OnboardingPage() {
     bank_name: '',
   })
 
-  const [kycDocuments] = useState({
+  const [kycDocuments, setKycDocuments] = useState({
     id_proof: 'https://images.unsplash.com/photo-1554995207-c18c203602cb?auto=format&fit=crop&w=500&q=80',
     address_proof: 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=500&q=80',
     ownership_proof: 'https://images.unsplash.com/photo-1598928506311-c55ded91a20c?auto=format&fit=crop&w=500&q=80'
   })
+
+  const handleKycUpload = (type: 'id_proof' | 'address_proof' | 'ownership_proof', file: File) => {
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('File size exceeds the 5MB limit.')
+      return
+    }
+    const reader = new FileReader()
+    reader.onload = () => {
+      const dataUrl = reader.result as string
+      setKycDocuments(prev => ({
+        ...prev,
+        [type]: dataUrl
+      }))
+      toast.success(`${file.name} attached successfully!`)
+    }
+    reader.readAsDataURL(file)
+  }
 
 
 
@@ -1010,7 +1027,17 @@ export function OnboardingPage() {
                     <Shield className="size-4 text-indigo-600" />
                     <span className="text-xs font-bold text-slate-700 dark:text-slate-300">Aadhaar Card (ID Proof)</span>
                   </div>
-                  <div className="border border-dashed border-slate-200 dark:border-slate-800 rounded-lg p-3 text-center cursor-pointer bg-white dark:bg-slate-900">
+                  <input
+                    type="file"
+                    id="onboarding-id-proof"
+                    className="hidden"
+                    accept="image/*,application/pdf"
+                    onChange={e => e.target.files?.[0] && handleKycUpload('id_proof', e.target.files[0])}
+                  />
+                  <div 
+                    onClick={() => document.getElementById('onboarding-id-proof')?.click()}
+                    className="border border-dashed border-slate-200 dark:border-slate-800 rounded-lg p-3 text-center cursor-pointer bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                  >
                     <Upload className="mx-auto size-5 text-muted-foreground mb-1" />
                     <span className="text-[10px] font-semibold text-slate-600 block">Upload Aadhaar PDF</span>
                     <span className="text-[9px] text-muted-foreground">Click to browse (Max 5MB)</span>
@@ -1029,7 +1056,17 @@ export function OnboardingPage() {
                     <Shield className="size-4 text-indigo-600" />
                     <span className="text-xs font-bold text-slate-700 dark:text-slate-300">PAN Card (Address Proof)</span>
                   </div>
-                  <div className="border border-dashed border-slate-200 dark:border-slate-800 rounded-lg p-3 text-center cursor-pointer bg-white dark:bg-slate-900">
+                  <input
+                    type="file"
+                    id="onboarding-address-proof"
+                    className="hidden"
+                    accept="image/*,application/pdf"
+                    onChange={e => e.target.files?.[0] && handleKycUpload('address_proof', e.target.files[0])}
+                  />
+                  <div 
+                    onClick={() => document.getElementById('onboarding-address-proof')?.click()}
+                    className="border border-dashed border-slate-200 dark:border-slate-800 rounded-lg p-3 text-center cursor-pointer bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                  >
                     <Upload className="mx-auto size-5 text-muted-foreground mb-1" />
                     <span className="text-[10px] font-semibold text-slate-600 block">Upload PAN PDF</span>
                     <span className="text-[9px] text-muted-foreground">Click to browse (Max 5MB)</span>
@@ -1048,7 +1085,17 @@ export function OnboardingPage() {
                     <Shield className="size-4 text-indigo-600" />
                     <span className="text-xs font-bold text-slate-700 dark:text-slate-300">Property Ownership Proof</span>
                   </div>
-                  <div className="border border-dashed border-slate-200 dark:border-slate-800 rounded-lg p-3 text-center cursor-pointer bg-white dark:bg-slate-900">
+                  <input
+                    type="file"
+                    id="onboarding-ownership-proof"
+                    className="hidden"
+                    accept="image/*,application/pdf"
+                    onChange={e => e.target.files?.[0] && handleKycUpload('ownership_proof', e.target.files[0])}
+                  />
+                  <div 
+                    onClick={() => document.getElementById('onboarding-ownership-proof')?.click()}
+                    className="border border-dashed border-slate-200 dark:border-slate-800 rounded-lg p-3 text-center cursor-pointer bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                  >
                     <Upload className="mx-auto size-5 text-muted-foreground mb-1" />
                     <span className="text-[10px] font-semibold text-slate-600 block">Upload Deed/Tax PDF</span>
                     <span className="text-[9px] text-muted-foreground">Click to browse (Max 5MB)</span>

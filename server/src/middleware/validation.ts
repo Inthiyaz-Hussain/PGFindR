@@ -12,12 +12,20 @@ export const validateRequest = (schema: z.ZodTypeAny) => {
       next()
     } catch (error) {
       if (error instanceof ZodError) {
-        res.status(400).json({
-          error: 'Validation failed',
-          details: error.issues.map((err) => ({
+        const issues = error.issues.map((err) => {
+          let message = err.message
+          if (message.includes('received undefined')) {
+            message = 'required'
+          }
+          return {
             field: err.path.slice(1).join('.'),
-            message: err.message
-          }))
+            message
+          }
+        })
+        const firstMessage = issues[0]?.message || 'Validation failed'
+        res.status(400).json({
+          error: firstMessage,
+          details: issues
         })
         return
       }

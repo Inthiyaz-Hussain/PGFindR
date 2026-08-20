@@ -13,6 +13,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { useAuth } from '@/hooks/useAuth'
 import { cn } from '@/lib/utils'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { KycReviewCard } from '@/components/KycReviewCard'
+import type { TenantKycRecord } from '@/components/KycReviewCard'
 
 interface KYCSubmission {
   owner_id: string
@@ -61,6 +64,23 @@ export function AdminKYCPage() {
       })
       if (!response.ok) throw new Error('Failed to fetch KYC queue')
       return response.json() as Promise<KYCSubmission[]>
+    },
+    enabled: !!sessionData?.access_token
+  })
+
+  // Fetch Tenant KYC queue
+  const { data: tenantQueue, isLoading: tenantLoading, error: tenantError, refetch: refetchTenant } = useQuery({
+    queryKey: ['admin-tenant-kyc-queue', sessionData?.access_token],
+    queryFn: async () => {
+      if (!sessionData?.access_token) return []
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+      const response = await fetch(`${apiUrl}/api/kyc/queue`, {
+        headers: {
+          'Authorization': `Bearer ${sessionData.access_token}`
+        }
+      })
+      if (!response.ok) throw new Error('Failed to fetch Tenant KYC queue')
+      return response.json() as Promise<TenantKycRecord[]>
     },
     enabled: !!sessionData?.access_token
   })
@@ -206,161 +226,206 @@ export function AdminKYCPage() {
         </div>
       )}
 
-      {/* Main Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Submissions Queue Table/List */}
-        <div className="lg:col-span-2 space-y-4">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Pending Reviews ({kycList.length})</CardTitle>
-              <CardDescription>Click any row to open the KYC detail inspection panel.</CardDescription>
-            </CardHeader>
-            <CardContent className="p-0">
-              {isLoading ? (
-                <div className="p-6 space-y-4">
-                  {[1, 2, 3].map((i) => <Skeleton key={i} className="h-16 w-full rounded-lg" />)}
-                </div>
-              ) : kycList.length === 0 ? (
-                <Empty className="py-12 border-none">
-                  <EmptyMedia variant="icon"><CheckCircle className="h-10 w-10 text-green-500" /></EmptyMedia>
-                  <EmptyTitle>All Caught Up!</EmptyTitle>
-                  <EmptyDescription>There are no pending KYC reviews in the queue.</EmptyDescription>
-                </Empty>
-              ) : (
-                <div className="divide-y divide-slate-100 dark:divide-slate-850">
-                  {kycList.map((k) => (
-                    <div
-                      key={k.owner_id}
-                      onClick={() => setSelectedKyc(k)}
-                      className={cn(
-                        'p-4 flex items-center justify-between gap-4 cursor-pointer hover:bg-slate-50/50 dark:hover:bg-slate-850 transition-colors',
-                        selectedKyc?.owner_id === k.owner_id ? 'bg-indigo-50/20 dark:bg-slate-800' : ''
-                      )}
-                    >
+      <Tabs defaultValue="owner" className="space-y-6">
+        <TabsList className="bg-slate-100 dark:bg-slate-900 p-1 rounded-xl border dark:border-slate-800">
+          <TabsTrigger value="owner" className="px-4 py-2 font-semibold">Owner KYC Reviews</TabsTrigger>
+          <TabsTrigger value="tenant" className="px-4 py-2 font-semibold">Tenant KYC Reviews</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="owner" className="space-y-6">
+          {/* Main Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Submissions Queue Table/List */}
+            <div className="lg:col-span-2 space-y-4">
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base">Pending Reviews ({kycList.length})</CardTitle>
+                  <CardDescription>Click any row to open the KYC detail inspection panel.</CardDescription>
+                </CardHeader>
+                <CardContent className="p-0">
+                  {isLoading ? (
+                    <div className="p-6 space-y-4">
+                      {[1, 2, 3].map((i) => <Skeleton key={i} className="h-16 w-full rounded-lg" />)}
+                    </div>
+                  ) : kycList.length === 0 ? (
+                    <Empty className="py-12 border-none">
+                      <EmptyMedia variant="icon"><CheckCircle className="h-10 w-10 text-green-500" /></EmptyMedia>
+                      <EmptyTitle>All Caught Up!</EmptyTitle>
+                      <EmptyDescription>There are no pending KYC reviews in the queue.</EmptyDescription>
+                    </Empty>
+                  ) : (
+                    <div className="divide-y divide-slate-100 dark:divide-slate-850">
+                      {kycList.map((k) => (
+                        <div
+                          key={k.owner_id}
+                          onClick={() => setSelectedKyc(k)}
+                          className={cn(
+                            'p-4 flex items-center justify-between gap-4 cursor-pointer hover:bg-slate-50/50 dark:hover:bg-slate-850 transition-colors',
+                            selectedKyc?.owner_id === k.owner_id ? 'bg-indigo-50/20 dark:bg-slate-800' : ''
+                          )}
+                        >
+                          <div className="space-y-1">
+                            <div className="font-bold text-slate-900 dark:text-slate-100">{k.full_name}</div>
+                            <div className="text-xs text-muted-foreground flex items-center gap-2">
+                              <span>Listing: <span className="font-medium text-slate-700 dark:text-slate-300">{k.pg_name}</span></span>
+                              <span>•</span>
+                              <span>Submitted: <span className="font-medium">{new Date(k.kyc_submitted_at).toLocaleDateString('en-IN')}</span></span>
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-center gap-3 shrink-0">
+                            <Badge variant="outline" className="text-xs border-0 bg-blue-50 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
+                              {k.document_count} Files Proof
+                            </Badge>
+                            <Badge variant="outline" className="text-xs border-0 bg-yellow-50 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400">
+                              Reviewing
+                            </Badge>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Detailed Inspection Drawer Panel */}
+            <div className="lg:col-span-1">
+              {selectedKyc ? (
+                <Card className="border-indigo-100 dark:border-indigo-900/30 shadow-lg sticky top-6">
+                  <CardHeader className="pb-4 border-b">
+                    <CardTitle className="text-lg font-bold">{selectedKyc.full_name}</CardTitle>
+                    <CardDescription>KYC Documents & Payout Bank Verification</CardDescription>
+                  </CardHeader>
+                  <CardContent className="pt-5 space-y-6 text-sm">
+                    {/* Contact */}
+                    <div>
+                      <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider block mb-1">Owner Contact</span>
                       <div className="space-y-1">
-                        <div className="font-bold text-slate-900 dark:text-slate-100">{k.full_name}</div>
-                        <div className="text-xs text-muted-foreground flex items-center gap-2">
-                          <span>Listing: <span className="font-medium text-slate-700 dark:text-slate-300">{k.pg_name}</span></span>
-                          <span>•</span>
-                          <span>Submitted: <span className="font-medium">{new Date(k.kyc_submitted_at).toLocaleDateString('en-IN')}</span></span>
+                        <div className="font-medium">{selectedKyc.email}</div>
+                        <div className="text-slate-500">{selectedKyc.mobile}</div>
+                      </div>
+                    </div>
+
+                    {/* Bank payout Details */}
+                    <div className="bg-muted/30 border border-slate-100 dark:border-slate-800 p-4 rounded-xl space-y-3">
+                      <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider block">Linked Bank Account</span>
+                      <div className="grid grid-cols-2 gap-y-2 text-xs">
+                        <div>
+                          <span className="text-muted-foreground block">Holder Name</span>
+                          <span className="font-semibold text-slate-800 dark:text-slate-200">{selectedKyc.bank.bank_holder_name}</span>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground block">IFSC Code</span>
+                          <span className="font-semibold text-slate-800 dark:text-slate-200">{selectedKyc.bank.bank_ifsc}</span>
+                        </div>
+                        <div className="col-span-2 border-t pt-2 mt-1">
+                          <span className="text-muted-foreground block">Account Number</span>
+                          <code className="text-sm font-bold text-slate-900 dark:text-slate-100">{selectedKyc.bank.bank_account_number}</code>
                         </div>
                       </div>
+                    </div>
+
+                    {/* Documents Links */}
+                    <div className="space-y-3">
+                      <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider block">Document Proofs ({selectedKyc.document_count})</span>
+                      <div className="space-y-2">
+                        {selectedKyc.documents.map((doc) => (
+                          <div key={doc.id} className="flex items-center justify-between p-2.5 rounded-lg border border-slate-100 dark:border-slate-800 hover:bg-muted/10">
+                            <div className="flex items-center gap-2">
+                              <FileText className="size-4 text-indigo-500 shrink-0" />
+                              <span className="text-xs font-semibold capitalize">{doc.doc_type.replace(/_/g, ' ')}</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="flex h-7 w-7 items-center justify-center rounded bg-slate-100 hover:bg-slate-200 text-slate-600 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                                onClick={() => setPreviewDoc({ doc_type: doc.doc_type, url: doc.url })}
+                                title="Preview File"
+                              >
+                                <Eye className="size-3.5" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex flex-col gap-2 pt-4 border-t">
+                      <Button
+                        onClick={() => approveMutation.mutate(selectedKyc.owner_id)}
+                        disabled={approveMutation.isPending || resubmitMutation.isPending}
+                        className="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-5"
+                      >
+                        {approveMutation.isPending ? <Loader2 className="size-4 animate-spin mr-2" /> : <CheckCircle className="size-4 mr-2" />}
+                        Approve KYC & Activate Owner
+                      </Button>
                       
-                      <div className="flex items-center gap-3 shrink-0">
-                        <Badge variant="outline" className="text-xs border-0 bg-blue-50 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
-                          {k.document_count} Files Proof
-                        </Badge>
-                        <Badge variant="outline" className="text-xs border-0 bg-yellow-50 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400">
-                          Reviewing
-                        </Badge>
-                      </div>
+                      <Button
+                        variant="outline"
+                        onClick={() => setShowResubmitDialog(true)}
+                        disabled={resubmitMutation.isPending || approveMutation.isPending}
+                        className="w-full text-destructive hover:text-destructive hover:bg-red-50 py-5"
+                      >
+                        <XCircle className="size-4 mr-2" />
+                        Request Resubmission
+                      </Button>
                     </div>
-                  ))}
-                </div>
+                  </CardContent>
+                </Card>
+              ) : (
+                <Card className="text-center p-6 border-dashed bg-muted/10 sticky top-6">
+                  <CardContent className="pt-6 space-y-3">
+                    <ShieldCheck className="h-10 w-10 text-indigo-400 mx-auto animate-pulse" />
+                    <div className="font-semibold text-sm">No Owner Selected</div>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      Select a pending owner submission from the queue on the left to verify their KYC.
+                    </p>
+                  </CardContent>
+                </Card>
               )}
-            </CardContent>
-          </Card>
-        </div>
+            </div>
+          </div>
+        </TabsContent>
 
-        {/* Detailed Inspection Drawer Panel */}
-        <div className="lg:col-span-1">
-          {selectedKyc ? (
-            <Card className="border-indigo-100 dark:border-indigo-900/30 shadow-lg sticky top-6">
-              <CardHeader className="pb-4 border-b">
-                <CardTitle className="text-lg font-bold">{selectedKyc.full_name}</CardTitle>
-                <CardDescription>KYC Documents & Payout Bank Verification</CardDescription>
-              </CardHeader>
-              <CardContent className="pt-5 space-y-6 text-sm">
-                {/* Contact */}
-                <div>
-                  <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider block mb-1">Owner Contact</span>
-                  <div className="space-y-1">
-                    <div className="font-medium">{selectedKyc.email}</div>
-                    <div className="text-slate-500">{selectedKyc.mobile}</div>
-                  </div>
-                </div>
-
-                {/* Bank payout Details */}
-                <div className="bg-muted/30 border border-slate-100 dark:border-slate-800 p-4 rounded-xl space-y-3">
-                  <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider block">Linked Bank Account</span>
-                  <div className="grid grid-cols-2 gap-y-2 text-xs">
-                    <div>
-                      <span className="text-muted-foreground block">Holder Name</span>
-                      <span className="font-semibold text-slate-800 dark:text-slate-200">{selectedKyc.bank.bank_holder_name}</span>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground block">IFSC Code</span>
-                      <span className="font-semibold text-slate-800 dark:text-slate-200">{selectedKyc.bank.bank_ifsc}</span>
-                    </div>
-                    <div className="col-span-2 border-t pt-2 mt-1">
-                      <span className="text-muted-foreground block">Account Number</span>
-                      <code className="text-sm font-bold text-slate-900 dark:text-slate-100">{selectedKyc.bank.bank_account_number}</code>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Documents Links */}
-                <div className="space-y-3">
-                  <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider block">Document Proofs ({selectedKyc.document_count})</span>
-                  <div className="space-y-2">
-                    {selectedKyc.documents.map((doc) => (
-                      <div key={doc.id} className="flex items-center justify-between p-2.5 rounded-lg border border-slate-100 dark:border-slate-800 hover:bg-muted/10">
-                        <div className="flex items-center gap-2">
-                          <FileText className="size-4 text-indigo-500 shrink-0" />
-                          <span className="text-xs font-semibold capitalize">{doc.doc_type.replace(/_/g, ' ')}</span>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="flex h-7 w-7 items-center justify-center rounded bg-slate-100 hover:bg-slate-200 text-slate-600 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700 transition-colors cursor-pointer"
-                            onClick={() => setPreviewDoc({ doc_type: doc.doc_type, url: doc.url })}
-                            title="Preview File"
-                          >
-                            <Eye className="size-3.5" />
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Action Buttons */}
-                <div className="flex flex-col gap-2 pt-4 border-t">
-                  <Button
-                    onClick={() => approveMutation.mutate(selectedKyc.owner_id)}
-                    disabled={approveMutation.isPending || resubmitMutation.isPending}
-                    className="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-5"
-                  >
-                    {approveMutation.isPending ? <Loader2 className="size-4 animate-spin mr-2" /> : <CheckCircle className="size-4 mr-2" />}
-                    Approve KYC & Activate Owner
-                  </Button>
-                  
-                  <Button
-                    variant="outline"
-                    onClick={() => setShowResubmitDialog(true)}
-                    disabled={resubmitMutation.isPending || approveMutation.isPending}
-                    className="w-full text-destructive hover:text-destructive hover:bg-red-50 py-5"
-                  >
-                    <XCircle className="size-4 mr-2" />
-                    Request Resubmission
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ) : (
-            <Card className="text-center p-6 border-dashed bg-muted/10 sticky top-6">
-              <CardContent className="pt-6 space-y-3">
-                <ShieldCheck className="h-10 w-10 text-indigo-400 mx-auto animate-pulse" />
-                <div className="font-semibold text-sm">No Owner Selected</div>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  Select a pending owner submission from the queue on the left to verify their KYC.
-                </p>
-              </CardContent>
-            </Card>
+        <TabsContent value="tenant" className="space-y-6">
+          {tenantError && (
+            <div className="bg-red-50 border border-red-200 text-red-800 p-4 rounded-xl text-sm flex items-center justify-between gap-4">
+              <div>
+                <span className="font-bold">Error loading tenant reviews:</span> {(tenantError as Error).message || 'Failed to fetch queue'}
+              </div>
+              <Button variant="outline" size="sm" onClick={() => refetchTenant()} className="bg-white border-red-300 hover:bg-red-50 text-red-800 shrink-0">
+                Retry
+              </Button>
+            </div>
           )}
-        </div>
-      </div>
+
+          {tenantLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {[1, 2, 3].map((i) => <Skeleton key={i} className="h-44 w-full rounded-xl" />)}
+            </div>
+          ) : !tenantQueue || tenantQueue.length === 0 ? (
+            <Empty className="py-12 border-none">
+              <EmptyMedia variant="icon"><CheckCircle className="h-10 w-10 text-green-500" /></EmptyMedia>
+              <EmptyTitle>All Caught Up!</EmptyTitle>
+              <EmptyDescription>There are no pending tenant KYC reviews.</EmptyDescription>
+            </Empty>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {tenantQueue.map((record) => (
+                <KycReviewCard
+                  key={record.id}
+                  record={record}
+                  token={sessionData?.access_token || ''}
+                  onStatusUpdated={refetchTenant}
+                />
+              ))}
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
 
       {/* Resubmission Request Dialog */}
       <Dialog open={showResubmitDialog} onOpenChange={setShowResubmitDialog}>

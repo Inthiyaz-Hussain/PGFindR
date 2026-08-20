@@ -9,7 +9,7 @@ const mockBookingUpdateChain = {
     eq: jest.fn().mockReturnValue({
       select: jest.fn().mockReturnValue({
         single: jest.fn().mockResolvedValue({
-          data: { bed_id: 'bed-001', seeker_id: 'seeker-001', owner_id: 'owner-001', pg_id: 'pg-001' },
+          data: { id: '12345678-1234-4234-8234-123456789012', bed_id: 'bed-001', seeker_id: 'seeker-001', owner_id: 'owner-001', pg_id: 'pg-001' },
           error: null,
         }),
       }),
@@ -45,6 +45,7 @@ const mockSupabase = {
     getUser: jest.fn(),
   },
   from: jest.fn(),
+  rpc: jest.fn().mockResolvedValue({ data: true, error: null }),
 }
 
 jest.mock('@supabase/supabase-js', () => ({
@@ -73,7 +74,7 @@ beforeAll(async () => {
   app = (await import('../index')).default
 })
 
-const BOOKING_ID = 'book-001'
+const BOOKING_ID = '12345678-1234-4234-8234-123456789012'
 
 // ── Tests ──────────────────────────────────────────────────────────────────
 
@@ -115,7 +116,10 @@ describe('POST /api/payment/verify', () => {
       if (table === 'bookings') return mockBookingUpdateChain
       if (table === 'beds') return mockBedsUpdateChain
       if (table === 'notifications') return mockNotifInsertChain
-      return { update: jest.fn().mockReturnValue({ eq: jest.fn().mockResolvedValue({ error: null }) }) }
+      return {
+        update: jest.fn().mockReturnValue({ eq: jest.fn().mockResolvedValue({ error: null }) }),
+        insert: jest.fn().mockResolvedValue({ error: null })
+      }
     })
 
     const res = await request(app)
@@ -153,7 +157,10 @@ describe('POST /api/payment/verify', () => {
           })
         }
       }
-      return { update: jest.fn().mockReturnValue({ eq: jest.fn().mockResolvedValue({ error: null }) }) }
+      return {
+        update: jest.fn().mockReturnValue({ eq: jest.fn().mockResolvedValue({ error: null }) }),
+        insert: jest.fn().mockResolvedValue({ error: null })
+      }
     })
 
     const res = await request(app)
