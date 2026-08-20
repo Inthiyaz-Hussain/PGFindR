@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { MessageSquare, Calendar, Loader2, CheckCircle, XCircle, Phone, User, MapPin, Clock, Briefcase, Users } from 'lucide-react'
+import { MessageSquare, Calendar, Loader2, CheckCircle, XCircle, Phone, User, MapPin, Clock, Briefcase, Users, BedSingle } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'

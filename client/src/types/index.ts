@@ -108,9 +108,12 @@ export interface Inquiry {
   city_of_origin: string | null
   duration_value: number | null
   duration_unit: 'days' | 'months' | null
+  num_beds?: number | null
+  room_id?: string | null
   // joined
   pg?: PGListing
   seeker?: Profile
+  room?: any
   bed?: Bed
 }
 

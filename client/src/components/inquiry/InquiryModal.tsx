@@ -35,7 +35,6 @@ const inquirySchema = z.object({
   occupation: z.enum(['Student', 'Working Professional', 'Other']),
   city_of_origin: z.string().min(2, 'City of origin is required'),
   duration_value: z.number().min(1, 'Duration must be at least 1'),
-  duration_value: z.number().min(1, 'Duration must be at least 1'),
   duration_unit: z.enum(['days', 'months']),
   message: z.string().optional(),
   room_id: z.string().optional(),
@@ -185,7 +184,7 @@ export function InquiryModal({
     }
   }, [open, profile, sharingTypes, reset, user])
 
-  const availableSharing = sharingTypes.filter((s) => s.total_beds - s.occupied_beds > 0)
+
 
   // Auto-reset room selection if switching sharing preference
   useEffect(() => {
