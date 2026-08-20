@@ -164,6 +164,42 @@ export function OnboardingPage() {
     'https://images.unsplash.com/photo-1554995207-c18c203602cb?auto=format&fit=crop&w=500&q=80',
     'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=500&q=80'
   ])
+  const [uploadingPhotos, setUploadingPhotos] = useState(false)
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return
+    const file = e.target.files[0]
+    
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('File size exceeds the 5MB limit.')
+      return
+    }
+
+    setUploadingPhotos(true)
+    try {
+      const fileExt = file.name.split('.').pop()
+      const fileName = `${user?.id || 'anon'}-common-${Date.now()}.${fileExt}`
+      
+      const { error: uploadError } = await supabaseUntyped.storage
+        .from('pg-images')
+        .upload(fileName, file, { cacheControl: '3600', upsert: false })
+
+      if (uploadError) throw uploadError
+
+      const { data: { publicUrl } } = supabaseUntyped.storage
+        .from('pg-images')
+        .getPublicUrl(fileName)
+
+      setCommonPhotos(prev => [...prev, publicUrl])
+      toast.success('Photo uploaded successfully!')
+    } catch (err: any) {
+      console.error('Upload failed:', err)
+      toast.error(err.message || 'Failed to upload photo')
+    } finally {
+      setUploadingPhotos(false)
+      e.target.value = ''
+    }
+  }
 
   // Step 5: KYC Details
   const [kycDetails, setKycDetails] = useState({
@@ -1002,10 +1038,26 @@ export function OnboardingPage() {
             <CardDescription>Upload attractive photos of your PG building exterior and common rooms.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl p-8 text-center bg-slate-50/50 dark:bg-slate-900/50 cursor-pointer">
-              <Upload className="mx-auto size-8 text-muted-foreground mb-2" />
-              <div className="text-sm font-semibold">Upload Photo Files</div>
-              <div className="text-xs text-muted-foreground mt-1">Drag and drop or click to browse JPEG/PNG (Max 5MB each)</div>
+            <div className="border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl p-8 text-center bg-slate-50/50 dark:bg-slate-900/50 relative hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors">
+              <input 
+                type="file" 
+                accept="image/jpeg, image/png, image/webp" 
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" 
+                onChange={handlePhotoUpload} 
+                disabled={uploadingPhotos}
+              />
+              {uploadingPhotos ? (
+                <>
+                  <Loader2 className="mx-auto size-8 text-indigo-500 animate-spin mb-2" />
+                  <div className="text-sm font-semibold">Uploading...</div>
+                </>
+              ) : (
+                <>
+                  <Upload className="mx-auto size-8 text-muted-foreground mb-2" />
+                  <div className="text-sm font-semibold">Upload Photo Files</div>
+                  <div className="text-xs text-muted-foreground mt-1">Drag and drop or click to browse JPEG/PNG (Max 5MB each)</div>
+                </>
+              )}
             </div>
 
             <div className="space-y-2 pt-2">
