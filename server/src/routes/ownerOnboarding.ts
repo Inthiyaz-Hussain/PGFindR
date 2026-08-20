@@ -92,10 +92,10 @@ router.post('/api/owner/inquiry', authenticateToken, async (req: any, res) => {
         pg_name: pgName,
         pg_city: pgCity,
         pg_address: pgAddress,
-        pg_whatsapp_number: finalWhatsappNumber,
         room_count: Number(roomCount),
         bed_count: Number(bedCount),
         referral_source: referralSource || null,
+        admin_notes: pgWhatsappNumber && pgWhatsappNumber !== mobile ? `WhatsApp: ${pgWhatsappNumber}` : null,
         status: 'pending_admin_review'
       })
       .select()
@@ -274,8 +274,12 @@ router.put('/api/admin/owner-inquiries/:id/approve', authenticateToken, requireR
     })
 
     // Trigger n8n WhatsApp webhook
-    if (n8nWebhookUrl && inquiry.pg_whatsapp_number) {
-      const sanitizedPhoneNumber = inquiry.pg_whatsapp_number.replace(/[\s+]/g, '');
+    const whatsappNumberToUse = (inquiry.admin_notes && inquiry.admin_notes.includes('WhatsApp: ')) 
+      ? inquiry.admin_notes.replace('WhatsApp: ', '') 
+      : inquiry.mobile;
+
+    if (n8nWebhookUrl && whatsappNumberToUse) {
+      const sanitizedPhoneNumber = whatsappNumberToUse.replace(/[\s+]/g, '');
       const webhookPayload = {
         ownerName: inquiry.full_name,
         pgName: inquiry.pg_name,
