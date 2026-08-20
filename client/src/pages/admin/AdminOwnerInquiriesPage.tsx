@@ -529,7 +529,7 @@ export function AdminOwnerInquiriesPage() {
                         disabled={approveMutation.isPending || rejectMutation.isPending}
                       >
                         {approveMutation.isPending ? <Loader2 className="size-3 animate-spin mr-1" /> : <CheckCircle className="size-3.5 mr-1" />}
-                        Approve & Send Email
+                        Approve & Send Access via WhatsApp
                       </Button>
                     </>
                   )}
@@ -541,7 +541,7 @@ export function AdminOwnerInquiriesPage() {
                       disabled={resendEmailMutation.isPending}
                     >
                       {resendEmailMutation.isPending ? <Loader2 className="size-3 animate-spin mr-1" /> : <RefreshCw className="size-3.5 mr-1" />}
-                      Resend Invitation Email
+                      Resend WhatsApp Invitation
                     </Button>
                   )}
                 </div>
