@@ -39,7 +39,7 @@ export function OwnerEarningsPage() {
             monthly_rent,
             move_in_date,
             pg:pg_listings(name, city),
-            seeker:profiles(full_name)
+            seeker:profiles!bookings_seeker_id_fkey(full_name)
           )
         `)
         .in('booking_id', bookingIds)
@@ -88,9 +88,9 @@ export function OwnerEarningsPage() {
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {[
-          { label: 'Total Earnings', value: totalEarnings, icon: IndianRupee, color: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30 dark:text-emerald-400', prefix: '¥' },
-          { label: 'This Month', value: thisMonthEarnings, icon: TrendingUp, color: 'text-blue-600 bg-blue-50 dark:bg-blue-950/30 dark:text-blue-400', prefix: '¥' },
-          { label: 'Commission Paid', value: totalCommission, icon: ArrowUpRight, color: 'text-violet-600 bg-violet-50 dark:bg-violet-950/30 dark:text-violet-400', prefix: '¥' },
+          { label: 'Total Earnings', value: totalEarnings, icon: IndianRupee, color: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30 dark:text-emerald-400', prefix: '₹' },
+          { label: 'This Month', value: thisMonthEarnings, icon: TrendingUp, color: 'text-blue-600 bg-blue-50 dark:bg-blue-950/30 dark:text-blue-400', prefix: '₹' },
+          { label: 'Commission Paid', value: totalCommission, icon: ArrowUpRight, color: 'text-violet-600 bg-violet-50 dark:bg-violet-950/30 dark:text-violet-400', prefix: '₹' },
           { label: 'Transactions', value: completedPayments.length, icon: Receipt, color: 'text-amber-600 bg-amber-50 dark:bg-amber-950/30 dark:text-amber-400' },
         ].map(({ label, value, icon: Icon, color, prefix }) => (
           <Card key={label}>

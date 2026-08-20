@@ -9,11 +9,10 @@ const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABAS
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 async function test() {
-  const { data, error } = await supabase.from('payments').select('*').limit(1);
-  if (error) {
-    console.error('Payments error:', error);
-  } else {
-    console.log('Payments schema:', Object.keys(data[0] || {}));
-  }
+  const { data: b, error: e1 } = await supabase.from('bookings').select('*');
+  console.log('Bookings:', b?.length);
+  
+  const { data: p, error: e2 } = await supabase.from('payments').select('*');
+  console.log('Payments:', p?.length);
 }
 test();

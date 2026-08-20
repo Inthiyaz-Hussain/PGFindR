@@ -91,20 +91,16 @@ export function AdminTransactionsPage() {
       }
 
       const { data, count } = await query
-      // Transform nested selects from arrays to objects (Supabase returns them as arrays for joins)
       const payments = ((data || []) as unknown[]).map((p: unknown) => {
         const row = p as Record<string, unknown>
         const booking = row.booking as unknown
         let bookingData = null
         if (booking && typeof booking === 'object' && !Array.isArray(booking)) {
-          const b = booking as Record<string, unknown>
-          const pgArr = b.pg as unknown[]
-          const seekerArr = b.seeker as unknown[]
-          const ownerArr = b.owner as unknown[]
+          const b = booking as any
           bookingData = {
-            pg: pgArr?.[0] || { name: '—' },
-            seeker: seekerArr?.[0] || { full_name: '—' },
-            owner: ownerArr?.[0] || { full_name: '—' },
+            pg: b.pg || { name: '—' },
+            seeker: b.seeker || { full_name: '—' },
+            owner: b.owner || { full_name: '—' },
           }
         }
         return { ...row, booking: bookingData } as PaymentRow
@@ -164,20 +160,16 @@ export function AdminTransactionsPage() {
       }
 
       const { data } = await query
-      // Transform nested selects from arrays to objects
       const payments = ((data || []) as unknown[]).map((p: unknown) => {
         const row = p as Record<string, unknown>
         const booking = row.booking as unknown
         let bookingData = null
         if (booking && typeof booking === 'object' && !Array.isArray(booking)) {
-          const b = booking as Record<string, unknown>
-          const pgArr = b.pg as unknown[]
-          const seekerArr = b.seeker as unknown[]
-          const ownerArr = b.owner as unknown[]
+          const b = booking as any
           bookingData = {
-            pg: pgArr?.[0] || { name: '—' },
-            seeker: seekerArr?.[0] || { full_name: '—' },
-            owner: ownerArr?.[0] || { full_name: '—' },
+            pg: b.pg || { name: '—' },
+            seeker: b.seeker || { full_name: '—' },
+            owner: b.owner || { full_name: '—' },
           }
         }
         return { ...row, booking: bookingData } as PaymentRow
