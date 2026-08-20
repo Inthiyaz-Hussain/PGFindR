@@ -87,8 +87,18 @@ export function AdminPGsPage() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabaseUntyped.from('pg_listings').delete().eq('id', id)
-      if (error) throw error
+      const token = (await supabaseUntyped.auth.getSession()).data.session?.access_token
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+      const response = await fetch(`${apiUrl}/api/pg/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}))
+        throw new Error(errData.error || 'Failed to delete PG')
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-pgs'] })
@@ -96,7 +106,7 @@ export function AdminPGsPage() {
       toast.success('PG deleted')
       setDeleteId(null)
     },
-    onError: () => toast.error('Failed to delete'),
+    onError: (err: any) => toast.error(err.message || 'Failed to delete'),
   })
 
   const totalPages = Math.ceil((pgData?.total || 0) / ITEMS_PER_PAGE)

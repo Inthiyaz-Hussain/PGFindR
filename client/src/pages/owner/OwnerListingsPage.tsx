@@ -42,15 +42,25 @@ export function OwnerListingsPage() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from('pg_listings').delete().eq('id', id)
-      if (error) throw error
+      const token = (await supabase.auth.getSession()).data.session?.access_token
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+      const response = await fetch(`${apiUrl}/api/pg/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}))
+        throw new Error(errData.error || 'Failed to delete listing')
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['owner-all-listings'] })
       toast.success('Listing deleted')
       setDeleteId(null)
     },
-    onError: () => toast.error('Failed to delete listing'),
+    onError: (err: any) => toast.error(err.message || 'Failed to delete listing'),
   })
 
   return (

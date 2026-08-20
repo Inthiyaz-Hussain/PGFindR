@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import { supabase, getSupabaseClient } from '../index.js'
+import { authenticateToken, AuthRequest } from '../middleware/auth.js'
 
 const router = Router()
 
@@ -211,17 +212,93 @@ router.put('/:id', async (req, res) => {
   }
 })
 
-// DELETE /api/pg/:id - Delete PG (owner only)
-router.delete('/:id', async (req, res) => {
+// DELETE /api/pg/:id - Delete PG (owner or admin)
+router.delete('/:id', authenticateToken, async (req: AuthRequest, res) => {
   try {
-    const { error } = await supabase
+    const { id } = req.params
+    const userId = req.user?.id
+    const userRole = req.user?.role
+
+    if (!userId) {
+      res.status(401).json({ error: 'User context not found' })
+      return
+    }
+
+    // Fetch listing details to verify ownership
+    const { data: pgListing, error: fetchErr } = await supabase
+      .from('pg_listings')
+      .select('owner_id')
+      .eq('id', id)
+      .single()
+
+    if (fetchErr || !pgListing) {
+      res.status(404).json({ error: 'PG listing not found' })
+      return
+    }
+
+    // Authorize: Owner of the listing OR Admin
+    if (pgListing.owner_id !== userId && userRole !== 'admin') {
+      res.status(403).json({ error: 'Not authorized to delete this listing' })
+      return
+    }
+
+    // 1. Fetch bookings for this PG to delete related payments & invoices & tenant documents
+    const { data: bookings } = await supabase
+      .from('bookings')
+      .select('id')
+      .eq('pg_id', id)
+
+    const bookingIds = bookings?.map(b => b.id) || []
+
+    if (bookingIds.length > 0) {
+      // Delete invoices first (foreign key to bookings)
+      await supabase.from('invoices').delete().in('booking_id', bookingIds)
+      
+      // Delete tenant documents first (foreign key to bookings)
+      await supabase.from('tenant_documents').delete().in('booking_id', bookingIds)
+
+      // Delete payments first (foreign key to bookings)
+      await supabase.from('payments').delete().in('booking_id', bookingIds)
+
+      // Delete bookings
+      await supabase.from('bookings').delete().eq('pg_id', id)
+    }
+
+    // 2. Delete inquiries
+    await supabase.from('inquiries').delete().eq('pg_id', id)
+
+    // 3. Delete beds
+    await supabase.from('beds').delete().eq('pg_id', id)
+
+    // 4. Delete rooms
+    await supabase.from('rooms').delete().eq('pg_id', id)
+
+    // 5. Delete sharing types
+    await supabase.from('sharing_types').delete().eq('pg_id', id)
+
+    // 6. Delete amenities
+    await supabase.from('amenities').delete().eq('pg_id', id)
+
+    // 7. Delete custom amenities
+    await supabase.from('custom_amenities').delete().eq('pg_id', id)
+
+    // 8. Delete photos
+    await supabase.from('pg_photos').delete().eq('pg_id', id)
+
+    // 9. Delete property media
+    await supabase.from('property_media').delete().eq('property_id', id)
+
+    // 10. Delete the pg_listings record
+    const { error: deleteErr } = await supabase
       .from('pg_listings')
       .delete()
-      .eq('id', req.params.id)
+      .eq('id', id)
 
-    if (error) throw error
+    if (deleteErr) throw deleteErr
+
     res.json({ success: true })
   } catch (err) {
+    console.error('Delete PG error:', err)
     res.status(500).json({ error: (err as Error).message })
   }
 })
