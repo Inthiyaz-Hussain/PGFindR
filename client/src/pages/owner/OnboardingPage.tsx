@@ -352,7 +352,7 @@ export function OnboardingPage() {
         .limit(1)
         .maybeSingle()
 
-      if (pg && !pgErr) {
+      if (pg && !pgErr && pg.name) {
         setPgDetails({
           name: pg.name || '',
           description: pg.description || '',
