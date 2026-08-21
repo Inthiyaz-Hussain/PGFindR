@@ -1257,9 +1257,19 @@ export function OnboardingPage() {
                     <span className="text-[9px] text-muted-foreground">Click to browse (Max 5MB)</span>
                   </div>
                   {kycDocuments.id_proof && (
-                    <div className="mt-2 text-[10px] text-emerald-600 font-semibold flex items-center gap-1">
-                      <span className="inline-block size-1.5 rounded-full bg-emerald-500"></span>
-                      Document Attached
+                    <div className="mt-3 text-center">
+                      <div className="text-[10px] text-emerald-600 font-semibold flex items-center justify-center gap-1 mb-2">
+                        <span className="inline-block size-1.5 rounded-full bg-emerald-500"></span>
+                        Document Attached
+                      </div>
+                      <a href={kycDocuments.id_proof} target="_blank" rel="noreferrer" className="block w-full aspect-[4/3] bg-slate-100 dark:bg-slate-800 rounded border border-slate-200 dark:border-slate-700 overflow-hidden hover:opacity-90 transition-opacity relative group">
+                        <object data={kycDocuments.id_proof} className="w-full h-full pointer-events-none object-cover">
+                           <div className="flex items-center justify-center w-full h-full text-xs text-indigo-600 font-medium p-4 text-center">Preview not available. Click to view.</div>
+                        </object>
+                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                          <span className="bg-white text-black text-xs font-bold px-3 py-1.5 rounded-full">Click to open full size</span>
+                        </div>
+                      </a>
                     </div>
                   )}
                 </div>
@@ -1291,9 +1301,19 @@ export function OnboardingPage() {
                     <span className="text-[9px] text-muted-foreground">Click to browse (Max 5MB)</span>
                   </div>
                   {kycDocuments.address_proof && (
-                    <div className="mt-2 text-[10px] text-emerald-600 font-semibold flex items-center gap-1">
-                      <span className="inline-block size-1.5 rounded-full bg-emerald-500"></span>
-                      Document Attached
+                    <div className="mt-3 text-center">
+                      <div className="text-[10px] text-emerald-600 font-semibold flex items-center justify-center gap-1 mb-2">
+                        <span className="inline-block size-1.5 rounded-full bg-emerald-500"></span>
+                        Document Attached
+                      </div>
+                      <a href={kycDocuments.address_proof} target="_blank" rel="noreferrer" className="block w-full aspect-[4/3] bg-slate-100 dark:bg-slate-800 rounded border border-slate-200 dark:border-slate-700 overflow-hidden hover:opacity-90 transition-opacity relative group">
+                        <object data={kycDocuments.address_proof} className="w-full h-full pointer-events-none object-cover">
+                           <div className="flex items-center justify-center w-full h-full text-xs text-indigo-600 font-medium p-4 text-center">Preview not available. Click to view.</div>
+                        </object>
+                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                          <span className="bg-white text-black text-xs font-bold px-3 py-1.5 rounded-full">Click to open full size</span>
+                        </div>
+                      </a>
                     </div>
                   )}
                 </div>
@@ -1325,9 +1345,19 @@ export function OnboardingPage() {
                     <span className="text-[9px] text-muted-foreground">Click to browse (Max 5MB)</span>
                   </div>
                   {kycDocuments.ownership_proof && (
-                    <div className="mt-2 text-[10px] text-emerald-600 font-semibold flex items-center gap-1">
-                      <span className="inline-block size-1.5 rounded-full bg-emerald-500"></span>
-                      Document Attached
+                    <div className="mt-3 text-center">
+                      <div className="text-[10px] text-emerald-600 font-semibold flex items-center justify-center gap-1 mb-2">
+                        <span className="inline-block size-1.5 rounded-full bg-emerald-500"></span>
+                        Document Attached
+                      </div>
+                      <a href={kycDocuments.ownership_proof} target="_blank" rel="noreferrer" className="block w-full aspect-[4/3] bg-slate-100 dark:bg-slate-800 rounded border border-slate-200 dark:border-slate-700 overflow-hidden hover:opacity-90 transition-opacity relative group">
+                        <object data={kycDocuments.ownership_proof} className="w-full h-full pointer-events-none object-cover">
+                           <div className="flex items-center justify-center w-full h-full text-xs text-indigo-600 font-medium p-4 text-center">Preview not available. Click to view.</div>
+                        </object>
+                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                          <span className="bg-white text-black text-xs font-bold px-3 py-1.5 rounded-full">Click to open full size</span>
+                        </div>
+                      </a>
                     </div>
                   )}
                 </div>
