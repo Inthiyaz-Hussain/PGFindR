@@ -777,8 +777,9 @@ export function OnboardingPage() {
                 <Label className="text-sm font-semibold">Pincode</Label>
                 <Input
                   value={pgDetails.pincode}
-                  onChange={e => setPgDetails({ ...pgDetails, pincode: e.target.value })}
+                  onChange={e => setPgDetails({ ...pgDetails, pincode: e.target.value.replace(/\D/g, '').slice(0, 6) })}
                   placeholder="560034"
+                  maxLength={6}
                 />
               </Field>
               <Field>
@@ -810,7 +811,7 @@ export function OnboardingPage() {
                   <Input
                     value={pgDetails.near_malls}
                     onChange={e => setPgDetails({ ...pgDetails, near_malls: e.target.value })}
-                    placeholder="e.g. Nexus Mall"
+                    placeholder="e.g. Nexus Mall (2 km)"
                   />
                 </Field>
                 <Field>
@@ -818,7 +819,7 @@ export function OnboardingPage() {
                   <Input
                     value={pgDetails.near_parks}
                     onChange={e => setPgDetails({ ...pgDetails, near_parks: e.target.value })}
-                    placeholder="e.g. Cubbon Park"
+                    placeholder="e.g. Cubbon Park (1.5 km)"
                   />
                 </Field>
                 <Field>
@@ -826,7 +827,7 @@ export function OnboardingPage() {
                   <Input
                     value={pgDetails.near_pubs}
                     onChange={e => setPgDetails({ ...pgDetails, near_pubs: e.target.value })}
-                    placeholder="e.g. Toit, Windmills"
+                    placeholder="e.g. Toit (500m)"
                   />
                 </Field>
                 <Field>
@@ -834,7 +835,7 @@ export function OnboardingPage() {
                   <Input
                     value={pgDetails.near_transit}
                     onChange={e => setPgDetails({ ...pgDetails, near_transit: e.target.value })}
-                    placeholder="e.g. Metro Station"
+                    placeholder="e.g. Metro Station (1 km)"
                   />
                 </Field>
               </div>
@@ -1182,7 +1183,7 @@ export function OnboardingPage() {
                 <Label className="text-sm font-semibold">PAN Card Number</Label>
                 <Input
                   value={kycDetails.pan_number}
-                  onChange={e => setKycDetails({ ...kycDetails, pan_number: e.target.value })}
+                  onChange={e => setKycDetails({ ...kycDetails, pan_number: e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 10) })}
                   placeholder="e.g. ABCDE1234F"
                   maxLength={10}
                 />
@@ -1191,7 +1192,7 @@ export function OnboardingPage() {
                 <Label className="text-sm font-semibold">Aadhaar Card Number</Label>
                 <Input
                   value={kycDetails.aadhaar_number}
-                  onChange={e => setKycDetails({ ...kycDetails, aadhaar_number: e.target.value })}
+                  onChange={e => setKycDetails({ ...kycDetails, aadhaar_number: e.target.value.replace(/\D/g, '').slice(0, 12) })}
                   placeholder="12-digit number"
                   maxLength={12}
                 />
@@ -1211,7 +1212,7 @@ export function OnboardingPage() {
                 <Label className="text-sm font-semibold">Account Number</Label>
                 <Input
                   value={kycDetails.bank_account}
-                  onChange={e => setKycDetails({ ...kycDetails, bank_account: e.target.value })}
+                  onChange={e => setKycDetails({ ...kycDetails, bank_account: e.target.value.replace(/\D/g, '') })}
                   placeholder="Bank Account Number"
                 />
               </Field>
@@ -1219,7 +1220,7 @@ export function OnboardingPage() {
                 <Label className="text-sm font-semibold">IFSC Code</Label>
                 <Input
                   value={kycDetails.bank_ifsc}
-                  onChange={e => setKycDetails({ ...kycDetails, bank_ifsc: e.target.value })}
+                  onChange={e => setKycDetails({ ...kycDetails, bank_ifsc: e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 11) })}
                   placeholder="e.g. HDFC0000123"
                   maxLength={11}
                 />
