@@ -44,7 +44,7 @@ export function OnboardingPage() {
   }
 
   const { user, profile, signOut, refreshProfile, session } = useAuth()
-  const [isEditing, setIsEditing] = useState(false)
+  const [isEditing, setIsEditing] = useState(() => getInitialState('isEditing', false))
   const [step, setStep] = useState(() => getInitialState('step', 1))
   const [submitting, setSubmitting] = useState(false)
 
@@ -246,7 +246,6 @@ export function OnboardingPage() {
 
   // Save state to localStorage whenever it changes
   useEffect(() => {
-    if (isEditing) return
     const stateToSave = {
       step,
       pgDetails,
@@ -255,7 +254,8 @@ export function OnboardingPage() {
       customAmenities,
       commonPhotos,
       kycDetails,
-      kycDocuments
+      kycDocuments,
+      isEditing
     }
     localStorage.setItem('pgfindr_onboarding_state', JSON.stringify(stateToSave))
   }, [step, pgDetails, roomConfigs, standardAmenities, customAmenities, commonPhotos, kycDetails, kycDocuments, isEditing])
@@ -274,6 +274,7 @@ export function OnboardingPage() {
           if (parsed.commonPhotos !== undefined) setCommonPhotos(parsed.commonPhotos)
           if (parsed.kycDetails !== undefined) setKycDetails(prev => ({ ...prev, ...parsed.kycDetails }))
           if (parsed.kycDocuments !== undefined) setKycDocuments(prev => ({ ...prev, ...parsed.kycDocuments }))
+          if (parsed.isEditing !== undefined) setIsEditing(parsed.isEditing)
         } catch (err) {}
       }
     }
@@ -494,7 +495,10 @@ export function OnboardingPage() {
   // Load existing onboarding data on mount (skip in test mode to avoid race conditions)
   useEffect(() => {
     if (user?.id && import.meta.env.MODE !== 'test') {
-      loadExistingData()
+      const saved = localStorage.getItem('pgfindr_onboarding_state')
+      if (!saved) {
+        loadExistingData()
+      }
     }
   }, [user?.id])
 
