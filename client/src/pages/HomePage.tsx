@@ -81,11 +81,24 @@ export function HomePage() {
       {/* Main Content */}
       <div className="container max-w-2xl mx-auto px-4 py-6 space-y-6">
         {/* Header */}
-        <div className="space-y-1">
-          <h1 className="text-2xl font-bold tracking-tight">Find your PG</h1>
-          <p className="text-sm text-muted-foreground">
-            Discover verified paying guests near you
-          </p>
+        <div className="space-y-4">
+          <div className="space-y-1">
+            <h1 className="text-2xl font-bold tracking-tight">Find your PG</h1>
+            <p className="text-sm text-muted-foreground">
+              Discover verified paying guests near you
+            </p>
+          </div>
+          <div className="w-full h-48 sm:h-64 rounded-3xl overflow-hidden relative shadow-xl ring-1 ring-slate-900/5">
+            <img 
+              src="/seeker-banner.jpg" 
+              alt="Premium Co-living Space" 
+              className="w-full h-full object-cover hover:scale-105 transition-transform duration-700"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-5 sm:p-6">
+              <span className="text-white font-bold text-xl sm:text-2xl">Experience Premium Living</span>
+              <span className="text-white/80 text-sm mt-1">Discover spaces designed for your comfort</span>
+            </div>
+          </div>
         </div>
 
         {/* Search Bar */}

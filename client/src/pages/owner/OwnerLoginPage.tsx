@@ -242,6 +242,19 @@ export function OwnerLoginPage() {
           <p className="text-sm text-muted-foreground">India's trusted PG discovery platform</p>
         </div>
 
+        {/* Premium Banner */}
+        <div className="w-full h-36 sm:h-44 rounded-2xl overflow-hidden relative shadow-lg ring-1 ring-slate-900/5">
+          <img 
+            src="/owner-banner.jpg" 
+            alt="Premium Property Management" 
+            className="w-full h-full object-cover hover:scale-105 transition-transform duration-700"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-4 sm:p-5">
+            <span className="text-white font-bold text-lg sm:text-xl">Grow Your PG Business</span>
+            <span className="text-white/80 text-xs sm:text-sm mt-1">Manage everything in one powerful platform</span>
+          </div>
+        </div>
+
         {/* Card */}
         <Card>
           <CardHeader className="text-center pb-4">
