@@ -26,12 +26,12 @@ const COMPASS_DIRECTIONS = [
 
 export function OnboardingPage() {
   // Lazy state initialization from local storage
-  const getInitialState = (key: string, fallback: any) => {
+  const getInitialState = <T,>(key: string, fallback: T): T => {
     try {
       const saved = localStorage.getItem('pgfindr_onboarding_state')
       if (saved) {
         const parsed = JSON.parse(saved)
-        if (parsed[key] !== undefined) return parsed[key]
+        if (parsed[key] !== undefined) return parsed[key] as T
       }
     } catch (e) {}
     return fallback
