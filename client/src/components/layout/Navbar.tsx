@@ -248,12 +248,14 @@ export function Navbar({
                   <Compass className="h-4 w-4 text-amber-500 dark:text-amber-400" />
                   <span>Explore</span>
                 </Link>
-                <Link
-                  to="/owner/login"
-                  className="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors px-2 py-1.5 rounded-lg hover:bg-slate-100/60 dark:hover:bg-slate-800/60"
-                >
-                  Sign In
-                </Link>
+                {!isSeekerPath && (
+                  <Link
+                    to="/owner/login"
+                    className="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors px-2 py-1.5 rounded-lg hover:bg-slate-100/60 dark:hover:bg-slate-800/60"
+                  >
+                    Sign In
+                  </Link>
+                )}
                 <button
                   onClick={() => {
                     if (onWishlistClick) {
