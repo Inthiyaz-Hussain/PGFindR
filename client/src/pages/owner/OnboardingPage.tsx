@@ -198,6 +198,7 @@ export function OnboardingPage() {
 
     setUploadingPhotos(true)
     try {
+      await ensureBucketExists('pg-images')
       const uploadedUrls: string[] = []
       
       for (const file of files) {
@@ -290,6 +291,7 @@ export function OnboardingPage() {
 
     setUploadingKyc(prev => ({ ...prev, [type]: true }))
     try {
+      await ensureBucketExists('owner-documents')
       const fileExt = file.name.split('.').pop()
       const fileName = `${user?.id || 'anon'}-kyc-${type}-${Date.now()}.${fileExt}`
 
@@ -1356,7 +1358,7 @@ export function OnboardingPage() {
 
         {step < 5 ? (
           <Button
-            onClick={() => {
+            onClick={async () => {
               if (step === 1) {
                 const missingFields: string[] = []
                 if (!pgDetails.name.trim()) missingFields.push('name')
@@ -1398,7 +1400,7 @@ export function OnboardingPage() {
             }}
             className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium"
           >
-            Next <ArrowRight className="size-4 ml-2" />
+            Save & Next <ArrowRight className="size-4 ml-2" />
           </Button>
         ) : (
           <Button
