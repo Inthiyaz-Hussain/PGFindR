@@ -274,9 +274,13 @@ router.put('/api/admin/owner-inquiries/:id/approve', authenticateToken, requireR
     })
 
     // Trigger n8n WhatsApp webhook
-    const whatsappNumberToUse = (inquiry.admin_notes && inquiry.admin_notes.includes('WhatsApp: ')) 
-      ? inquiry.admin_notes.replace('WhatsApp: ', '') 
-      : inquiry.mobile;
+    let whatsappNumberToUse = inquiry.mobile;
+    if (inquiry.admin_notes && inquiry.admin_notes.includes('WhatsApp:')) {
+      const match = inquiry.admin_notes.match(/WhatsApp:\s*(\+?\d+)/);
+      if (match) {
+        whatsappNumberToUse = match[1];
+      }
+    }
 
     if (n8nWebhookUrl && whatsappNumberToUse) {
       let sanitizedPhoneNumber = whatsappNumberToUse.replace(/[\D]/g, ''); // Extract only digits
@@ -437,9 +441,13 @@ router.put('/api/admin/owner-inquiries/:id/resend-email', authenticateToken, req
     })
 
     // Trigger n8n WhatsApp webhook
-    const whatsappNumberToUse = (inquiry.admin_notes && inquiry.admin_notes.includes('WhatsApp: ')) 
-      ? inquiry.admin_notes.replace('WhatsApp: ', '') 
-      : inquiry.mobile;
+    let whatsappNumberToUse = inquiry.mobile;
+    if (inquiry.admin_notes && inquiry.admin_notes.includes('WhatsApp:')) {
+      const match = inquiry.admin_notes.match(/WhatsApp:\s*(\+?\d+)/);
+      if (match) {
+        whatsappNumberToUse = match[1];
+      }
+    }
 
     if (n8nWebhookUrl && whatsappNumberToUse) {
       let sanitizedPhoneNumber = whatsappNumberToUse.replace(/[\D]/g, ''); // Extract only digits
