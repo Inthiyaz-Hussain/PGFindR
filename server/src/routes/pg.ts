@@ -267,6 +267,9 @@ router.delete('/:id', authenticateToken, async (req: AuthRequest, res) => {
     // 2. Delete inquiries
     await supabase.from('inquiries').delete().eq('pg_id', id)
 
+    // 2.5 Delete reviews
+    await supabase.from('reviews').delete().eq('pg_id', id)
+
     // 3. Delete beds
     await supabase.from('beds').delete().eq('pg_id', id)
 

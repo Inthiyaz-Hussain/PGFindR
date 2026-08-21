@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { CheckCircle, XCircle, Eye, MapPin, Building2, Search, ChevronLeft, ChevronRight, Edit } from 'lucide-react'
+import { CheckCircle, XCircle, Eye, MapPin, Building2, Search, ChevronLeft, ChevronRight, Edit, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -251,7 +251,7 @@ export function AdminPGsPage() {
                             </Button>
                           )}
                           <Button variant="ghost" size="icon-sm" className="text-destructive hover:text-destructive" onClick={() => setDeleteId(pg.id)} title="Delete">
-                            <XCircle className="size-4" />
+                            <Trash2 className="size-4" />
                           </Button>
                         </div>
                       </TableCell>
