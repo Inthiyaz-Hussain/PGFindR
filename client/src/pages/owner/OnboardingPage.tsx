@@ -626,9 +626,12 @@ export function OnboardingPage() {
           <div className="flex flex-col sm:flex-row gap-3 justify-center w-full max-w-md">
             <Button
               onClick={async () => {
-                await loadExistingData()
+                const saved = localStorage.getItem('pgfindr_onboarding_state')
+                if (!saved) {
+                  await loadExistingData()
+                  setStep(1)
+                }
                 setIsEditing(true)
-                setStep(1)
               }}
               className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium shadow-md transition-all duration-200"
             >
@@ -677,9 +680,12 @@ export function OnboardingPage() {
           <div className="flex flex-col sm:flex-row gap-3 justify-center w-full max-w-md pt-2">
             <Button
               onClick={async () => {
-                await loadExistingData()
+                const saved = localStorage.getItem('pgfindr_onboarding_state')
+                if (!saved) {
+                  await loadExistingData()
+                  setStep(5)
+                }
                 setIsEditing(true)
-                setStep(5) // Start directly at KYC details step
               }}
               className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium shadow-md transition-all duration-200"
             >
