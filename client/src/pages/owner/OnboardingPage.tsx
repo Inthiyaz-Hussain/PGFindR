@@ -25,13 +25,25 @@ const COMPASS_DIRECTIONS = [
 ]
 
 export function OnboardingPage() {
+  // Lazy state initialization from local storage
+  const getInitialState = (key: string, fallback: any) => {
+    try {
+      const saved = localStorage.getItem('pgfindr_onboarding_state')
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        if (parsed[key] !== undefined) return parsed[key]
+      }
+    } catch (e) {}
+    return fallback
+  }
+
   const { user, profile, signOut, refreshProfile, session } = useAuth()
   const [isEditing, setIsEditing] = useState(false)
-  const [step, setStep] = useState(1)
+  const [step, setStep] = useState(() => getInitialState('step', 1))
   const [submitting, setSubmitting] = useState(false)
 
   // Step 1: PG Basic Details
-  const [pgDetails, setPgDetails] = useState({
+  const [pgDetails, setPgDetails] = useState(() => getInitialState('pgDetails', {
     name: '',
     description: '',
     address: '',
@@ -45,7 +57,7 @@ export function OnboardingPage() {
     near_parks: '',
     near_pubs: '',
     near_transit: '',
-  })
+  }))
 
   // Step 2: Room & Bed Setup
   const [rooms, setRooms] = useState<Array<{
@@ -87,7 +99,7 @@ export function OnboardingPage() {
   ])
 
   // Step 2 room configurations state
-  const [roomConfigs, setRoomConfigs] = useState([{
+  const [roomConfigs, setRoomConfigs] = useState(() => getInitialState('roomConfigs', [{
     id: 'config-1',
     num_rooms: 10,
     sharing_type: 2 as 1 | 2 | 3 | 4,
@@ -95,7 +107,7 @@ export function OnboardingPage() {
     occupied_beds: 0,
     door_facing: 'NE',
     has_balcony: false
-  }])
+  }]))
 
   // Synchronize room configurations changes to rooms array dynamically
   useEffect(() => {
@@ -152,18 +164,18 @@ export function OnboardingPage() {
   }, [roomConfigs])
 
   // Step 3: Amenities
-  const [standardAmenities, setStandardAmenities] = useState<Record<string, boolean>>({
+  const [standardAmenities, setStandardAmenities] = useState<Record<string, boolean>>(() => getInitialState('standardAmenities', {
     wifi: true, ac: false, food_veg: false, food_nonveg: false,
     laundry: false, parking: false, cctv: true, generator: false
-  })
-  const [customAmenities, setCustomAmenities] = useState<string[]>([])
+  }))
+  const [customAmenities, setCustomAmenities] = useState<string[]>(() => getInitialState('customAmenities', []))
   const [newCustomAmenity, setNewCustomAmenity] = useState('')
 
   // Step 4: Photos (Overall Exterior & Common Areas)
-  const [commonPhotos, setCommonPhotos] = useState<string[]>([
+  const [commonPhotos, setCommonPhotos] = useState<string[]>(() => getInitialState('commonPhotos', [
     'https://images.unsplash.com/photo-1554995207-c18c203602cb?auto=format&fit=crop&w=500&q=80',
     'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=500&q=80'
-  ])
+  ]))
   const [uploadingPhotos, setUploadingPhotos] = useState(false)
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -211,19 +223,35 @@ export function OnboardingPage() {
   }
 
   // Step 5: KYC Details
-  const [kycDetails, setKycDetails] = useState({
+  const [kycDetails, setKycDetails] = useState(() => getInitialState('kycDetails', {
     pan_number: '',
     aadhaar_number: '',
     bank_account: '',
     bank_ifsc: '',
     bank_name: '',
-  })
+  }))
 
-  const [kycDocuments, setKycDocuments] = useState({
+  const [kycDocuments, setKycDocuments] = useState(() => getInitialState('kycDocuments', {
     id_proof: '',
     address_proof: '',
     ownership_proof: ''
-  })
+  }))
+
+  // Save state to localStorage whenever it changes
+  useEffect(() => {
+    if (isEditing) return
+    const stateToSave = {
+      step,
+      pgDetails,
+      roomConfigs,
+      standardAmenities,
+      customAmenities,
+      commonPhotos,
+      kycDetails,
+      kycDocuments
+    }
+    localStorage.setItem('pgfindr_onboarding_state', JSON.stringify(stateToSave))
+  }, [step, pgDetails, roomConfigs, standardAmenities, customAmenities, commonPhotos, kycDetails, kycDocuments, isEditing])
   
   const [uploadingKyc, setUploadingKyc] = useState<Record<string, boolean>>({})
 
@@ -498,6 +526,9 @@ export function OnboardingPage() {
       }
 
       toast.success('Onboarding and KYC details submitted successfully!')
+      
+      // Clear persistence once onboarding is submitted successfully
+      localStorage.removeItem('pgfindr_onboarding_state')
       
       // Refresh profile and exit editing mode
       setIsEditing(false)
