@@ -252,6 +252,27 @@ export function OnboardingPage() {
     }
     localStorage.setItem('pgfindr_onboarding_state', JSON.stringify(stateToSave))
   }, [step, pgDetails, roomConfigs, standardAmenities, customAmenities, commonPhotos, kycDetails, kycDocuments, isEditing])
+
+  // Sync state across multiple browser tabs
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'pgfindr_onboarding_state' && e.newValue) {
+        try {
+          const parsed = JSON.parse(e.newValue)
+          if (parsed.step !== undefined) setStep(parsed.step)
+          if (parsed.pgDetails !== undefined) setPgDetails(parsed.pgDetails)
+          if (parsed.roomConfigs !== undefined) setRoomConfigs(parsed.roomConfigs)
+          if (parsed.standardAmenities !== undefined) setStandardAmenities(parsed.standardAmenities)
+          if (parsed.customAmenities !== undefined) setCustomAmenities(parsed.customAmenities)
+          if (parsed.commonPhotos !== undefined) setCommonPhotos(parsed.commonPhotos)
+          if (parsed.kycDetails !== undefined) setKycDetails(parsed.kycDetails)
+          if (parsed.kycDocuments !== undefined) setKycDocuments(parsed.kycDocuments)
+        } catch (err) {}
+      }
+    }
+    window.addEventListener('storage', handleStorageChange)
+    return () => window.removeEventListener('storage', handleStorageChange)
+  }, [])
   
   const [uploadingKyc, setUploadingKyc] = useState<Record<string, boolean>>({})
 
