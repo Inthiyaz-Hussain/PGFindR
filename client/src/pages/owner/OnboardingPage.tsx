@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Loader2, ArrowLeft, ArrowRight, CheckCircle2, Shield, Upload, Info, Clock, AlertTriangle, LogOut, Edit } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAuth } from '@/hooks/useAuth'
-import { supabaseUntyped } from '@/lib/supabase'
+import { supabase, supabaseUntyped, ensureBucketExists } from '@/lib/supabase'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
