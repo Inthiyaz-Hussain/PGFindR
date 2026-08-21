@@ -31,7 +31,13 @@ export function OnboardingPage() {
       const saved = localStorage.getItem('pgfindr_onboarding_state')
       if (saved) {
         const parsed = JSON.parse(saved)
-        if (parsed[key] !== undefined) return parsed[key] as T
+        if (parsed[key] !== undefined) {
+          // If the value is an object (and not an array), deeply merge it with fallback
+          if (typeof parsed[key] === 'object' && parsed[key] !== null && !Array.isArray(parsed[key])) {
+            return { ...fallback, ...parsed[key] } as T
+          }
+          return parsed[key] as T
+        }
       }
     } catch (e) {}
     return fallback
@@ -260,13 +266,13 @@ export function OnboardingPage() {
         try {
           const parsed = JSON.parse(e.newValue)
           if (parsed.step !== undefined) setStep(parsed.step)
-          if (parsed.pgDetails !== undefined) setPgDetails(parsed.pgDetails)
+          if (parsed.pgDetails !== undefined) setPgDetails(prev => ({ ...prev, ...parsed.pgDetails }))
           if (parsed.roomConfigs !== undefined) setRoomConfigs(parsed.roomConfigs)
           if (parsed.standardAmenities !== undefined) setStandardAmenities(parsed.standardAmenities)
           if (parsed.customAmenities !== undefined) setCustomAmenities(parsed.customAmenities)
           if (parsed.commonPhotos !== undefined) setCommonPhotos(parsed.commonPhotos)
-          if (parsed.kycDetails !== undefined) setKycDetails(parsed.kycDetails)
-          if (parsed.kycDocuments !== undefined) setKycDocuments(parsed.kycDocuments)
+          if (parsed.kycDetails !== undefined) setKycDetails(prev => ({ ...prev, ...parsed.kycDetails }))
+          if (parsed.kycDocuments !== undefined) setKycDocuments(prev => ({ ...prev, ...parsed.kycDocuments }))
         } catch (err) {}
       }
     }
