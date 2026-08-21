@@ -430,8 +430,37 @@ router.put('/api/admin/owner-inquiries/:id/resend-email', authenticateToken, req
       console.error(`❌ Background email dispatch failed for ${inquiry.email}:`, err)
     })
 
+    // Trigger n8n WhatsApp webhook
+    const whatsappNumberToUse = (inquiry.admin_notes && inquiry.admin_notes.includes('WhatsApp: ')) 
+      ? inquiry.admin_notes.replace('WhatsApp: ', '') 
+      : inquiry.mobile;
+
+    if (n8nWebhookUrl && whatsappNumberToUse) {
+      const sanitizedPhoneNumber = whatsappNumberToUse.replace(/[\s+]/g, '');
+      const webhookPayload = {
+        ownerName: inquiry.full_name,
+        pgName: inquiry.pg_name,
+        phoneNumber: sanitizedPhoneNumber,
+        setPasswordUrl: setPasswordLink
+      };
+
+      console.log('SIMULATING N8N WHATSAPP WEBHOOK DISPATCH (RESEND):', webhookPayload);
+
+      fetch(n8nWebhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' } as any,
+        body: JSON.stringify(webhookPayload)
+      })
+        .then((response: any) => {
+          if (!response.ok) {
+            console.error(`❌ n8n WhatsApp webhook failed for ${inquiry.email} with status: ${response.status}`);
+          }
+        })
+        .catch((err: any) => console.error(`❌ n8n WhatsApp webhook dispatch failed for ${inquiry.email}:`, err));
+    }
+
     return res.json({
-      message: 'Set Password email triggered successfully.',
+      message: 'Set Password email and WhatsApp invitation triggered successfully.',
       emailSent: true,
       token,
       email: inquiry.email

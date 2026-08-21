@@ -198,7 +198,7 @@ export function AdminOwnerInquiriesPage() {
           duration: 8000,
         })
       } else {
-        toast.success('Set Password email resent successfully!')
+        toast.success('WhatsApp invitation & email resent successfully!')
       }
       if (selectedInquiry) {
         setSelectedInquiry((prev) => prev ? { ...prev, reset_token: data.token } : null)
