@@ -279,7 +279,13 @@ router.put('/api/admin/owner-inquiries/:id/approve', authenticateToken, requireR
       : inquiry.mobile;
 
     if (n8nWebhookUrl && whatsappNumberToUse) {
-      const sanitizedPhoneNumber = whatsappNumberToUse.replace(/[\s+]/g, '');
+      let sanitizedPhoneNumber = whatsappNumberToUse.replace(/[\D]/g, ''); // Extract only digits
+      if (sanitizedPhoneNumber.length === 10) {
+        sanitizedPhoneNumber = '91' + sanitizedPhoneNumber;
+      } else if (sanitizedPhoneNumber.length === 12 && sanitizedPhoneNumber.startsWith('91')) {
+         // It already has 91, which is fine
+      }
+      
       const webhookPayload = {
         ownerName: inquiry.full_name,
         pgName: inquiry.pg_name,
@@ -436,7 +442,13 @@ router.put('/api/admin/owner-inquiries/:id/resend-email', authenticateToken, req
       : inquiry.mobile;
 
     if (n8nWebhookUrl && whatsappNumberToUse) {
-      const sanitizedPhoneNumber = whatsappNumberToUse.replace(/[\s+]/g, '');
+      let sanitizedPhoneNumber = whatsappNumberToUse.replace(/[\D]/g, ''); // Extract only digits
+      if (sanitizedPhoneNumber.length === 10) {
+        sanitizedPhoneNumber = '91' + sanitizedPhoneNumber;
+      } else if (sanitizedPhoneNumber.length === 12 && sanitizedPhoneNumber.startsWith('91')) {
+         // It already has 91, which is fine
+      }
+      
       const webhookPayload = {
         ownerName: inquiry.full_name,
         pgName: inquiry.pg_name,
