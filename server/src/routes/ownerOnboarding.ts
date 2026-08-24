@@ -294,7 +294,10 @@ router.put('/api/admin/owner-inquiries/:id/approve', authenticateToken, requireR
         ownerName: inquiry.full_name,
         pgName: inquiry.pg_name,
         phoneNumber: sanitizedPhoneNumber,
-        setPasswordUrl: setPasswordLink
+        setPasswordUrl: setPasswordLink,
+        // New Meta WhatsApp template format variables: "Hi {{1}}, here is the link to access your portal: {{2}}"
+        var1: inquiry.full_name,
+        var2: setPasswordLink
       };
 
       console.log('SIMULATING N8N WHATSAPP WEBHOOK DISPATCH:', webhookPayload);
@@ -461,7 +464,10 @@ router.put('/api/admin/owner-inquiries/:id/resend-email', authenticateToken, req
         ownerName: inquiry.full_name,
         pgName: inquiry.pg_name,
         phoneNumber: sanitizedPhoneNumber,
-        setPasswordUrl: setPasswordLink
+        setPasswordUrl: setPasswordLink,
+        // New Meta WhatsApp template format variables: "Hi {{1}}, here is the link to access your portal: {{2}}"
+        var1: inquiry.full_name,
+        var2: setPasswordLink
       };
 
       console.log('SIMULATING N8N WHATSAPP WEBHOOK DISPATCH (RESEND):', webhookPayload);
