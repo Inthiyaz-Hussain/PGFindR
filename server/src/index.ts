@@ -122,7 +122,7 @@ app.use((err: Error, _req: express.Request, res: express.Response, _next: expres
 
 // 404 handler
 app.use((_req, res) => {
-  res.status(404).json({ error: 'Not found' })
+  res.status(404).json({ error: '404 Forbidden - Route not available' })
 })
 
 // Ensure storage buckets exist

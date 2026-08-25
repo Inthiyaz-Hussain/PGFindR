@@ -22,6 +22,7 @@ import { PaymentFailed } from '@/pages/payment/PaymentFailed'
 import { TermsConditionsPage } from '@/pages/public/TermsConditionsPage'
 import { PrivacyPolicyPage } from '@/pages/public/PrivacyPolicyPage'
 import { RefundPolicyPage } from '@/pages/public/RefundPolicyPage'
+import { NotFoundPage } from '@/pages/public/NotFoundPage'
 
 // Seeker
 import { SeekerLayout } from '@/pages/seeker/SeekerLayout'
@@ -156,7 +157,7 @@ export function App() {
               </Route>
 
               <Route path="/design-system" element={<DesignSystemPage />} />
-              <Route path="*" element={<Navigate to="/" replace />} />
+              <Route path="*" element={<NotFoundPage />} />
             </Routes>
           </BrowserRouter>
           <Toaster richColors position="top-right" />
