@@ -311,22 +311,24 @@ export function LoginPage() {
               </div>
             )}
 
-            <div className="mt-6">
-              <div className="relative">
-                <Separator />
-                <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-2 text-xs text-muted-foreground">
-                  New to PGFindR?
-                </span>
+            {targetRole !== 'admin' && (
+              <div className="mt-6">
+                <div className="relative">
+                  <Separator />
+                  <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-2 text-xs text-muted-foreground">
+                    New to PGFindR?
+                  </span>
+                </div>
+                <div className="mt-5 text-center">
+                  <Link
+                    to="/auth/register"
+                    className="text-sm font-medium text-primary hover:underline underline-offset-4"
+                  >
+                    Create an account
+                  </Link>
+                </div>
               </div>
-              <div className="mt-5 text-center">
-                <Link
-                  to="/auth/register"
-                  className="text-sm font-medium text-primary hover:underline underline-offset-4"
-                >
-                  Create an account
-                </Link>
-              </div>
-            </div>
+            )}
           </CardContent>
         </Card>
 

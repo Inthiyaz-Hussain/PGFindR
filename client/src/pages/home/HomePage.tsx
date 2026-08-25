@@ -3,7 +3,6 @@ import { useNavigate, Link } from 'react-router-dom'
 import { 
   Building2, 
   Compass, 
-  ShieldCheck, 
   LogIn, 
   UserPlus, 
   ArrowRight, 
@@ -593,7 +592,7 @@ export function HomePage() {
         </div>
 
         {/* Portal Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-left mt-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-left mt-8 max-w-4xl mx-auto">
           {/* Card 1: Seeker */}
           <div className="group relative flex flex-col justify-between rounded-2xl border border-slate-800 bg-slate-900/60 backdrop-blur-xl p-6 shadow-xl hover:border-indigo-500/40 hover:bg-slate-900/80 transition-all duration-300">
             <div className="space-y-4">
@@ -655,26 +654,7 @@ export function HomePage() {
             </div>
           </div>
 
-          {/* Card 3: Admin */}
-          <div className="group relative flex flex-col justify-between rounded-2xl border border-slate-800 bg-slate-900/60 backdrop-blur-xl p-6 shadow-xl hover:border-purple-500/40 hover:bg-slate-900/80 transition-all duration-300">
-            <div className="space-y-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20 group-hover:bg-purple-600 group-hover:text-white transition-colors duration-300">
-                <ShieldCheck className="h-6 w-6" />
-              </div>
-              <h2 className="text-xl font-bold text-white">System Admin</h2>
-              <p className="text-sm text-slate-400 leading-relaxed">
-                Platform administration console. Moderate property listings, review and verify owner payouts and KYC credentials, and manage global commissions.
-              </p>
-            </div>
-            <div className="mt-8">
-              <Button asChild className="w-full rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-semibold shadow-xs">
-                <Link to="/auth/login?role=admin">
-                  <LogIn className="size-4 shrink-0" />
-                  Access Admin Panel
-                </Link>
-              </Button>
-            </div>
-          </div>
+
         </div>
       </div>
 

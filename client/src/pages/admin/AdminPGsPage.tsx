@@ -43,7 +43,6 @@ export function AdminPGsPage() {
       let query = supabaseUntyped
         .from('pg_listings')
         .select('*, owner:profiles!pg_listings_owner_id_fkey!inner(full_name, phone, onboarding_verified)', { count: 'exact' })
-        .eq('owner.onboarding_verified', true)
         .order('created_at', { ascending: false })
         .range((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE - 1)
 
