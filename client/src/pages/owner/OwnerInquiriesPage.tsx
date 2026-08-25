@@ -80,11 +80,31 @@ export function OwnerInquiriesPage() {
       const { error } = await supabaseUntyped.from('inquiries').update({ status, updated_at: new Date().toISOString() }).eq('id', id)
       if (error) throw error
     },
+    onMutate: async ({ id, status }) => {
+      await queryClient.cancelQueries({ queryKey: ['owner-all-inquiries', user?.id] })
+      const previousInquiries = queryClient.getQueryData(['owner-all-inquiries', user?.id])
+
+      queryClient.setQueryData(['owner-all-inquiries', user?.id], (old: any) => {
+        if (!old) return old
+        return old.map((inq: any) => 
+          inq.id === id ? { ...inq, status } : inq
+        )
+      })
+
+      return { previousInquiries }
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['owner-all-inquiries'] })
       toast.success('Inquiry updated')
     },
-    onError: () => toast.error('Failed to update inquiry'),
+    onError: (_err: any, _variables: any, context: any) => {
+      if (context?.previousInquiries) {
+        queryClient.setQueryData(['owner-all-inquiries', user?.id], context.previousInquiries)
+      }
+      toast.error('Failed to update inquiry')
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['owner-all-inquiries', user?.id] })
+    },
   })
 
   return (

@@ -61,13 +61,32 @@ export function PGListPage() {
         throw new Error(errData.error || 'Failed to delete listing')
       }
     },
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: ['owner-pgs', user?.id] })
+      const previousPGs = queryClient.getQueryData(['owner-pgs', user?.id])
+
+      queryClient.setQueryData(['owner-pgs', user?.id], (old: any) => {
+        if (!old) return old
+        return old.filter((pg: any) => pg.id !== id)
+      })
+
+      setDeleteId(null)
+
+      return { previousPGs }
+    },
     onSuccess: () => {
+      toast.success('Listing deleted')
+    },
+    onError: (err: any, _id: any, context: any) => {
+      if (context?.previousPGs) {
+        queryClient.setQueryData(['owner-pgs', user?.id], context.previousPGs)
+      }
+      toast.error(err.message || 'Failed to delete listing')
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['owner-pgs'] })
       queryClient.invalidateQueries({ queryKey: ['owner-listings'] })
-      toast.success('Listing deleted')
-      setDeleteId(null)
     },
-    onError: (err: any) => toast.error(err.message || 'Failed to delete listing'),
   })
 
   return (

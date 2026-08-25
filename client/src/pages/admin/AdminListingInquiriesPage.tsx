@@ -98,25 +98,49 @@ export function AdminListingInquiriesPage() {
 
       return resData as { message: string; actionLink: string | null }
     },
-    onSuccess: (data, ownerId) => {
-      queryClient.invalidateQueries({ queryKey: ['admin-listing-inquiries'] })
-      queryClient.invalidateQueries({ queryKey: ['admin-owners'] })
-      queryClient.invalidateQueries({ queryKey: ['admin-stats-full'] })
+    onMutate: async (ownerId) => {
+      await queryClient.cancelQueries({ queryKey: ['admin-listing-inquiries'] })
+      const queries = queryClient.getQueriesData({ queryKey: ['admin-listing-inquiries'] })
+      const previousData = queries.map(([key, data]) => [key, data])
+      
+      let optimisticOwner: PendingOwner | null = null
 
-      const owner = inquiriesData?.inquiries.find((i) => i.id === ownerId)
-      if (owner) {
-        setSelectedOwner(owner)
+      queries.forEach(([queryKey, oldData]: any) => {
+        if (!oldData || !oldData.inquiries) return
+        if (!optimisticOwner) {
+          optimisticOwner = oldData.inquiries.find((i: any) => i.id === ownerId) || null
+        }
+        queryClient.setQueryData(queryKey, {
+          ...oldData,
+          inquiries: oldData.inquiries.filter((inq: any) => inq.id !== ownerId)
+        })
+      })
+
+      if (optimisticOwner) {
+        setSelectedOwner(optimisticOwner)
       }
-      setReviewOwner(null) // Close the review dialog
+      setReviewOwner(null)
+
+      return { previousData, optimisticOwner }
+    },
+    onSuccess: (data) => {
       if (data.actionLink) {
         setGeneratedLink(data.actionLink)
       } else {
         toast.success('Owner verified successfully!')
       }
     },
-    onError: (err: any) => {
+    onError: (err: any, _ownerId, context: any) => {
+      if (context?.previousData) {
+        context.previousData.forEach(([key, data]: [any, any]) => queryClient.setQueryData(key, data))
+      }
       toast.error(err.message || 'Failed to verify owner')
     },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-listing-inquiries'] })
+      queryClient.invalidateQueries({ queryKey: ['admin-owners'] })
+      queryClient.invalidateQueries({ queryKey: ['admin-stats-full'] })
+    }
   })
 
   const handleCopyLink = async () => {

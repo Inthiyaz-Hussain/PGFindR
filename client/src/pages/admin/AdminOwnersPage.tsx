@@ -141,14 +141,60 @@ export function AdminOwnersPage() {
         .eq('id', kycId)
       if (error) throw error
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-owners'] })
-      queryClient.invalidateQueries({ queryKey: ['admin-stats-full'] })
-      toast.success('KYC updated')
+    onMutate: async ({ kycId, status, adminNotes }) => {
+      await queryClient.cancelQueries({ queryKey: ['admin-owners'] })
+      const queries = queryClient.getQueriesData({ queryKey: ['admin-owners'] })
+      const previousData = queries.map(([key, data]) => [key, data])
+      
+      const ownerId = selectedOwner?.id
+      let optimisticOwner = selectedOwner
+
+      if (ownerId) {
+        queries.forEach(([queryKey, oldData]: any) => {
+          if (!oldData || !oldData.owners) return
+          queryClient.setQueryData(queryKey, {
+            ...oldData,
+            owners: oldData.owners.map((o: any) => {
+              if (o.id === ownerId) {
+                const newOwner = { 
+                  ...o, 
+                  kyc: { 
+                    ...(o.kyc || {}), 
+                    id: kycId,
+                    status,
+                    admin_notes: adminNotes || null
+                  } 
+                }
+                optimisticOwner = newOwner
+                return newOwner
+              }
+              return o
+            })
+          })
+        })
+      }
+      
       setSelectedOwner(null)
       setKycNote('')
+      
+      return { previousData, optimisticOwner }
     },
-    onError: () => toast.error('Failed to update KYC'),
+    onSuccess: () => {
+      toast.success('KYC updated')
+    },
+    onError: (_err, _variables, context: any) => {
+      if (context?.previousData) {
+        context.previousData.forEach(([key, data]: [any, any]) => queryClient.setQueryData(key, data))
+      }
+      if (context?.optimisticOwner) {
+        setSelectedOwner(context.optimisticOwner as any)
+      }
+      toast.error('Failed to update KYC')
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-owners'] })
+      queryClient.invalidateQueries({ queryKey: ['admin-stats-full'] })
+    }
   })
 
   const verifyOwnerMutation = useMutation({
@@ -172,9 +218,28 @@ export function AdminOwnersPage() {
 
       return resData as { message: string; actionLink: string | null }
     },
-    onSuccess: (data, vars) => {
-      queryClient.invalidateQueries({ queryKey: ['admin-owners'] })
+    onMutate: async ({ ownerId, verify }) => {
+      await queryClient.cancelQueries({ queryKey: ['admin-owners'] })
+      const queries = queryClient.getQueriesData({ queryKey: ['admin-owners'] })
+      const previousData = queries.map(([key, data]) => [key, data])
+
+      queries.forEach(([queryKey, oldData]: any) => {
+        if (!oldData || !oldData.owners) return
+        queryClient.setQueryData(queryKey, {
+          ...oldData,
+          owners: oldData.owners.map((o: any) => 
+            o.id === ownerId ? { ...o, onboarding_verified: verify } : o
+          )
+        })
+      })
       
+      if (!verify) {
+        setSelectedOwner(null)
+      }
+
+      return { previousData, ownerId }
+    },
+    onSuccess: (data, vars) => {
       if (vars.verify && data.actionLink) {
         setGeneratedLink(data.actionLink)
       } else {
@@ -182,7 +247,15 @@ export function AdminOwnersPage() {
         setSelectedOwner(null)
       }
     },
-    onError: (err: any) => toast.error(err.message || 'Failed to update owner verification status'),
+    onError: (err: any, _vars: any, context: any) => {
+      if (context?.previousData) {
+        context.previousData.forEach(([key, data]: [any, any]) => queryClient.setQueryData(key, data))
+      }
+      toast.error(err.message || 'Failed to update owner verification status')
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-owners'] })
+    }
   })
 
   const totalPages = Math.ceil((ownersData?.total || 0) / ITEMS_PER_PAGE)

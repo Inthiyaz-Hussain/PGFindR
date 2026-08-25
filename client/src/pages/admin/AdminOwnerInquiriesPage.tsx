@@ -125,23 +125,55 @@ export function AdminOwnerInquiriesPage() {
       }
       return resData
     },
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: ['admin-owner-inquiries'] })
+      const queries = queryClient.getQueriesData({ queryKey: ['admin-owner-inquiries'] })
+      const previousData = queries.map(([key, data]) => [key, data])
+
+      const previousSelected = selectedInquiry
+
+      queries.forEach(([queryKey, oldData]: any) => {
+        if (!oldData || !oldData.data) return
+        queryClient.setQueryData(queryKey, {
+          ...oldData,
+          data: oldData.data.map((inq: any) => 
+            inq.id === id ? { ...inq, status: 'approved' } : inq
+          )
+        })
+      })
+
+      if (selectedInquiry?.id === id) {
+        setSelectedInquiry({ ...selectedInquiry, status: 'approved' } as any)
+      }
+      
+      return { previousData, previousSelected }
+    },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['admin-owner-inquiries'] })
       if (data.emailSent === false) {
         toast.warning('Approved, but email dispatch failed. Copy and share the link manually!', {
           duration: 8000,
         })
       } else {
-        toast.success('Inquiry approved successfully!')
+        toast.success('Inquiry approved and welcome email sent!')
       }
       
-      // Update selected modal details
       if (selectedInquiry) {
-        setSelectedInquiry((prev) => prev ? { ...prev, status: 'approved', reset_token: data.token } : null)
+        setSelectedInquiry((prev: any) => prev ? { ...prev, status: 'approved', reset_token: data.token } : null)
       }
     },
-    onError: (err: any) => {
+    onError: (err: any, _id: string, context: any) => {
+      if (context?.previousData) {
+        context.previousData.forEach(([key, data]: [any, any]) => {
+          queryClient.setQueryData(key, data)
+        })
+      }
+      if (context?.previousSelected !== undefined) {
+        setSelectedInquiry(context.previousSelected)
+      }
       toast.error(err.message || 'Failed to approve inquiry')
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-owner-inquiries'] })
     }
   })
 
@@ -164,13 +196,41 @@ export function AdminOwnerInquiriesPage() {
       }
       return resData
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-owner-inquiries'] })
-      toast.success('Inquiry rejected.')
+    onMutate: async ({ id }) => {
+      await queryClient.cancelQueries({ queryKey: ['admin-owner-inquiries'] })
+      const queries = queryClient.getQueriesData({ queryKey: ['admin-owner-inquiries'] })
+      const previousData = queries.map(([key, data]) => [key, data])
+      const previousSelected = selectedInquiry
+
+      queries.forEach(([queryKey, oldData]: any) => {
+        if (!oldData || !oldData.data) return
+        queryClient.setQueryData(queryKey, {
+          ...oldData,
+          data: oldData.data.map((inq: any) => 
+            inq.id === id ? { ...inq, status: 'rejected' } : inq
+          )
+        })
+      })
+
+      // Optimistically close modal for reject
       setSelectedInquiry(null)
+      
+      return { previousData, previousSelected }
     },
-    onError: (err: any) => {
+    onSuccess: () => {
+      toast.success('Inquiry rejected.')
+    },
+    onError: (err: any, _vars, context: any) => {
+      if (context?.previousData) {
+        context.previousData.forEach(([key, data]: [any, any]) => queryClient.setQueryData(key, data))
+      }
+      if (context?.previousSelected) {
+        setSelectedInquiry(context.previousSelected)
+      }
       toast.error(err.message || 'Failed to reject inquiry')
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-owner-inquiries'] })
     }
   })
 
