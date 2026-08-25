@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { CheckCircle, XCircle, Eye, MapPin, Building2, Search, ChevronLeft, ChevronRight, Edit, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -8,7 +8,6 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
 import { Empty, EmptyMedia, EmptyTitle, EmptyDescription } from '@/components/ui/empty'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabaseUntyped } from '@/lib/supabase'
@@ -29,8 +28,9 @@ export function AdminPGsPage() {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const queryClient = useQueryClient()
-  const [deleteId, setDeleteId] = useState<string | null>(null)
-  const [suspendId, setSuspendId] = useState<string | null>(null)
+  
+  const [optimisticDeletedIds, setOptimisticDeletedIds] = useState<Set<string>>(new Set())
+  const pendingDeletes = useRef<Record<string, ReturnType<typeof setTimeout>>>({})
 
   const page = Number(searchParams.get('page') || '1')
   const statusFilter = searchParams.get('status') || 'all'
@@ -71,15 +71,25 @@ export function AdminPGsPage() {
   })
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: PGStatus }) => {
+    mutationFn: async ({ id, status }: { id: string; status: PGStatus; previousStatus?: PGStatus }) => {
       const { error } = await supabaseUntyped.from('pg_listings').update({ status, updated_at: new Date().toISOString() }).eq('id', id)
       if (error) throw error
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['admin-pgs'] })
       queryClient.invalidateQueries({ queryKey: ['admin-stats-full'] })
-      toast.success('Status updated')
-      setSuspendId(null)
+      
+      if (variables.previousStatus) {
+        toast.success(`Status updated to ${STATUS_CONFIG[variables.status].label}`, {
+          duration: 3000,
+          action: {
+            label: 'Undo',
+            onClick: () => updateMutation.mutate({ id: variables.id, status: variables.previousStatus as PGStatus })
+          }
+        })
+      } else {
+        toast.success('Status updated', { duration: 3000 })
+      }
     },
     onError: () => toast.error('Failed to update'),
   })
@@ -102,11 +112,42 @@ export function AdminPGsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-pgs'] })
       queryClient.invalidateQueries({ queryKey: ['admin-stats-full'] })
-      toast.success('PG deleted')
-      setDeleteId(null)
     },
     onError: (err: any) => toast.error(err.message || 'Failed to delete'),
   })
+
+  const handleDelete = (id: string) => {
+    setOptimisticDeletedIds(prev => new Set(prev).add(id))
+    
+    const timeoutId = setTimeout(() => {
+      deleteMutation.mutate(id)
+      delete pendingDeletes.current[id]
+      setOptimisticDeletedIds(prev => {
+        const next = new Set(prev)
+        next.delete(id)
+        return next
+      })
+    }, 3000)
+
+    pendingDeletes.current[id] = timeoutId
+
+    toast.success('PG deleted', {
+      duration: 3000,
+      action: {
+        label: 'Undo',
+        onClick: () => {
+          clearTimeout(pendingDeletes.current[id])
+          delete pendingDeletes.current[id]
+          setOptimisticDeletedIds(prev => {
+            const next = new Set(prev)
+            next.delete(id)
+            return next
+          })
+          toast.success('Delete undone', { duration: 2000 })
+        }
+      }
+    })
+  }
 
   const totalPages = Math.ceil((pgData?.total || 0) / ITEMS_PER_PAGE)
 
@@ -197,11 +238,11 @@ export function AdminPGsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {pgData.listings.map((pg) => {
+                {pgData.listings.filter(pg => !optimisticDeletedIds.has(pg.id)).map((pg) => {
                   const cfg = STATUS_CONFIG[pg.status]
                   const owner = pg.owner as { full_name?: string; phone?: string | null } | null
                   return (
-                    <TableRow key={pg.id}>
+                    <TableRow key={pg.id} onClick={() => navigate(`/pg/${pg.id}`)} className="cursor-pointer hover:bg-muted/50 transition-colors">
                       <TableCell>
                         <div className="font-medium">{pg.name}</div>
                         <div className="text-xs text-muted-foreground capitalize">{pg.pg_type} PG</div>
@@ -228,28 +269,28 @@ export function AdminPGsPage() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-2">
-                          <Button variant="ghost" size="icon-sm" onClick={() => navigate(`/pg/${pg.id}`)} title="View">
+                          <Button variant="ghost" size="icon-sm" onClick={(e) => { e.stopPropagation(); navigate(`/pg/${pg.id}`) }} title="View">
                             <Eye className="size-4" />
                           </Button>
-                          <Button variant="ghost" size="icon-sm" onClick={() => navigate(`/admin/pgs/${pg.id}/edit`)} title="Edit">
+                          <Button variant="ghost" size="icon-sm" onClick={(e) => { e.stopPropagation(); navigate(`/admin/pgs/${pg.id}/edit`) }} title="Edit">
                             <Edit className="size-4" />
                           </Button>
                           {pg.status === 'pending' && (
-                            <Button variant="ghost" size="icon-sm" className="text-green-600 hover:text-green-700" onClick={() => updateMutation.mutate({ id: pg.id, status: 'approved' })} title="Approve">
+                            <Button variant="ghost" size="icon-sm" className="text-green-600 hover:text-green-700" onClick={(e) => { e.stopPropagation(); updateMutation.mutate({ id: pg.id, status: 'approved', previousStatus: pg.status }) }} title="Approve">
                               <CheckCircle className="size-4" />
                             </Button>
                           )}
                           {pg.status === 'approved' && (
-                            <Button variant="ghost" size="icon-sm" className="text-orange-600 hover:text-orange-700" onClick={() => setSuspendId(pg.id)} title="Suspend">
+                            <Button variant="ghost" size="icon-sm" className="text-orange-600 hover:text-orange-700" onClick={(e) => { e.stopPropagation(); updateMutation.mutate({ id: pg.id, status: 'inactive', previousStatus: pg.status }) }} title="Suspend">
                               <XCircle className="size-4" />
                             </Button>
                           )}
                           {(pg.status === 'inactive' || pg.status === 'rejected') && (
-                            <Button variant="ghost" size="icon-sm" className="text-green-600 hover:text-green-700" onClick={() => updateMutation.mutate({ id: pg.id, status: 'approved' })} title="Reactivate">
+                            <Button variant="ghost" size="icon-sm" className="text-green-600 hover:text-green-700" onClick={(e) => { e.stopPropagation(); updateMutation.mutate({ id: pg.id, status: 'approved', previousStatus: pg.status }) }} title="Reactivate">
                               <CheckCircle className="size-4" />
                             </Button>
                           )}
-                          <Button variant="ghost" size="icon-sm" className="text-destructive hover:text-destructive" onClick={() => setDeleteId(pg.id)} title="Delete">
+                          <Button variant="ghost" size="icon-sm" className="text-destructive hover:text-destructive" onClick={(e) => { e.stopPropagation(); handleDelete(pg.id) }} title="Delete">
                             <Trash2 className="size-4" />
                           </Button>
                         </div>
@@ -286,38 +327,6 @@ export function AdminPGsPage() {
           </div>
         </div>
       )}
-
-      {/* Suspend Dialog */}
-      <AlertDialog open={!!suspendId} onOpenChange={(open) => !open && setSuspendId(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Suspend this PG?</AlertDialogTitle>
-            <AlertDialogDescription>This will make the PG invisible to seekers. The owner can request reactivation.</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={() => suspendId && updateMutation.mutate({ id: suspendId, status: 'inactive' })}>
-              Suspend
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Delete Dialog */}
-      <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete this PG?</AlertDialogTitle>
-            <AlertDialogDescription>This will permanently delete the PG listing and all associated data. This action cannot be undone.</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={() => deleteId && deleteMutation.mutate(deleteId)} className="bg-destructive text-white hover:bg-destructive/90">
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   )
 }
