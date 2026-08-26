@@ -16,7 +16,7 @@ const testRecipient = 'inthiyazhussain69@gmail.com'
 async function runTest() {
   const success = await sendMail(
     testRecipient,
-    'SwiftPG - SMTP Connection Diagnostic Test',
+    'FindPGRoom - SMTP Connection Diagnostic Test',
     '<h3>If you see this, your SMTP configuration is fully working!</h3>'
   )
   if (success) {

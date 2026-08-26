@@ -107,7 +107,7 @@ export function RegisterCallback() {
           <Card className="border-slate-200/80 dark:border-slate-800/80 shadow-2xl text-center p-8 flex flex-col items-center gap-5">
             <Loader2 className="h-10 w-10 text-indigo-600 dark:text-indigo-400 animate-spin" />
             <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Verifying Google Account...</h2>
-            <p className="text-sm text-muted-foreground">Checking credentials and submitting your interest inquiry to SwiftPG Admin.</p>
+            <p className="text-sm text-muted-foreground">Checking credentials and submitting your interest inquiry to FindPGRoom Admin.</p>
           </Card>
         )}
 

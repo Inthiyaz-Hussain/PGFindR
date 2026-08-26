@@ -147,7 +147,7 @@ export function OwnerSetPasswordPage() {
           </div>
           <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">Link Invalid or Expired</h2>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            {validationError || 'This link has expired or is invalid. Please contact support@swiftpg.in'}
+            {validationError || 'This link has expired or is invalid. Please contact support@findpgroom.in'}
           </p>
           <div className="pt-2 border-t w-full">
             <Link to="/" className="text-sm font-semibold text-indigo-650 hover:underline">
@@ -169,7 +169,7 @@ export function OwnerSetPasswordPage() {
           <div className="space-y-2">
             <CardTitle className="text-2xl font-bold">Password Set!</CardTitle>
             <CardDescription className="text-sm text-slate-500 dark:text-slate-400">
-              Your password has been set! Your SwiftPG owner account is now active. Click below to log in.
+              Your password has been set! Your FindPGRoom owner account is now active. Click below to log in.
             </CardDescription>
           </div>
           <Button asChild className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-6">
@@ -184,7 +184,7 @@ export function OwnerSetPasswordPage() {
     <div className="min-h-screen flex items-center justify-center bg-radial from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-950 px-4 py-12">
       <div className="w-full max-w-md space-y-6">
         <div className="flex flex-col items-center gap-2 text-center">
-          <img src="/logo-swiftpg.png" alt="SwiftPG" className="h-11 w-11 rounded-xl object-cover ring-1 ring-slate-200 dark:ring-slate-800 shadow-sm" />
+          <img src="/logo-findpgroom.png" alt="FindPGRoom" className="h-11 w-11 rounded-xl object-cover ring-1 ring-slate-200 dark:ring-slate-800 shadow-sm" />
           <h1 className="text-2xl font-bold tracking-tight mt-2">Activate Owner Account</h1>
           <p className="text-sm text-muted-foreground">
             Welcome, <span className="font-semibold text-slate-900 dark:text-slate-200">{inquiryDetails?.fullName}</span>! Set a password for your account linked to <span className="font-medium">{inquiryDetails?.email}</span>.

@@ -51,7 +51,7 @@ function makeRequest(path, method, headers = {}, body = null) {
 
 async function run() {
   console.log('🏁 STARTING END-TO-END FLOW VERIFICATION...');
-  const testEmail = 'test_owner_flow@swiftpg.in';
+  const testEmail = 'test_owner_flow@findpgroom.in';
 
   try {
     // Connect to PG directly for absolute cleanup
@@ -65,7 +65,7 @@ async function run() {
     await pgClient.query("DELETE FROM pg_listings WHERE owner_id IN (SELECT id FROM auth.users WHERE email = $1)", [testEmail]);
     await pgClient.query("DELETE FROM owner_documents WHERE owner_id IN (SELECT id FROM auth.users WHERE email = $1)", [testEmail]);
     await pgClient.query("DELETE FROM auth.users WHERE email = $1", [testEmail]);
-    await pgClient.query("DELETE FROM auth.users WHERE email = $1", ['admin_flow_test@swiftpg.in']);
+    await pgClient.query("DELETE FROM auth.users WHERE email = $1", ['admin_flow_test@findpgroom.in']);
     await pgClient.end();
     console.log('Cleanup completed successfully!');
 
@@ -99,7 +99,7 @@ async function run() {
     // So the service role JWT is fully valid and has role = 'service_role'.
     // Let's see if we can log in with a test admin.
     // Wait! Supabase allows us to sign in with password if we create a user. Let's create a temp admin account:
-    const adminEmail = 'admin_flow_test@swiftpg.in';
+    const adminEmail = 'admin_flow_test@findpgroom.in';
     const { data: adminAuthUser } = await supabaseAdmin.auth.admin.createUser({
       email: adminEmail,
       password: 'AdminPassword123!',

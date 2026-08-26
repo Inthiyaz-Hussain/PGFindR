@@ -43,8 +43,8 @@ export function SplashScreen({ onDismiss }: SplashScreenProps) {
       <div className="relative flex flex-col items-center gap-5">
         {/* Animated logo */}
         <img
-          src="/logo-swiftpg.png"
-          alt="SwiftPG Logo"
+          src="/logo-findpgroom.png"
+          alt="FindPGRoom Logo"
           className="h-20 w-20 rounded-2xl object-cover shadow-2xl ring-1 ring-white/10 animate-in zoom-in-50 duration-500"
         />
 

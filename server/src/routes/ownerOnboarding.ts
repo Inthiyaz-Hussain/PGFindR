@@ -255,15 +255,15 @@ router.put('/api/admin/owner-inquiries/:id/approve', authenticateToken, requireR
 
     const setPasswordLink = `${clientUrl}/owner/set-password?token=${token}`
 
-    const emailSubject = `SwiftPG - Your Owner Account Has Been Approved - Set Your Password`
+    const emailSubject = `FindPGRoom - Your Owner Account Has Been Approved - Set Your Password`
     const emailHtml = `
       <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
         <h2 style="color: #4f46e5; margin-bottom: 20px;">Hello ${inquiry.full_name},</h2>
         <p style="font-size: 16px; line-height: 1.6; color: #334155;">
-          Your PG listing inquiry for <strong>${inquiry.pg_name}</strong> in <strong>${inquiry.pg_city}</strong> has been reviewed and approved by the SwiftPG team.
+          Your PG listing inquiry for <strong>${inquiry.pg_name}</strong> in <strong>${inquiry.pg_city}</strong> has been reviewed and approved by the FindPGRoom team.
         </p>
         <p style="font-size: 16px; line-height: 1.6; color: #334155; margin-top: 20px; margin-bottom: 20px;">
-          Please click the button below to configure your SwiftPG owner account password. This link is valid for 24 hours only:
+          Please click the button below to configure your FindPGRoom owner account password. This link is valid for 24 hours only:
         </p>
         <div style="text-align: center; margin: 30px 0;">
           <a href="${setPasswordLink}" style="background-color: #4f46e5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 500; font-size: 16px; display: inline-block;">Set Your Password</a>
@@ -274,7 +274,7 @@ router.put('/api/admin/owner-inquiries/:id/approve', authenticateToken, requireR
         </p>
         <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 30px 0;" />
         <p style="font-size: 12px; line-height: 1.6; color: #94a3b8;">
-          If you did not request this, please ignore this email or contact support@swiftpg.in
+          If you did not request this, please ignore this email or contact support@findpgroom.in
         </p>
       </div>
     `
@@ -285,10 +285,12 @@ router.put('/api/admin/owner-inquiries/:id/approve', authenticateToken, requireR
     console.log(`Set Password Link: ${setPasswordLink}`)
     console.log(`=========================================\n`)
 
-    // Send email asynchronously in the background so it doesn't block the API response
-    sendMail(inquiry.email, emailSubject, emailHtml).catch((err) => {
-      console.error(`❌ Background email dispatch failed for ${inquiry.email}:`, err)
-    })
+    // Send email synchronously to ensure it completes on production (e.g. Render)
+    const emailSuccess = await sendMail(inquiry.email, emailSubject, emailHtml);
+    if (!emailSuccess) {
+      console.error(`❌ Email dispatch failed for ${inquiry.email}`);
+      return res.status(500).json({ error: 'Failed to send password setup email. Please check your SMTP configuration.' });
+    }
 
     // Trigger n8n WhatsApp webhook
     // HOLD WHATSAPP WEBHOOK FOR NOW
@@ -447,15 +449,15 @@ router.put('/api/admin/owner-inquiries/:id/resend-email', authenticateToken, req
 
     const setPasswordLink = `${clientUrl}/owner/set-password?token=${token}`
 
-    const emailSubject = `SwiftPG - Your Owner Account Has Been Approved - Set Your Password (Resend)`
+    const emailSubject = `FindPGRoom - Your Owner Account Has Been Approved - Set Your Password (Resend)`
     const emailHtml = `
       <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
         <h2 style="color: #4f46e5; margin-bottom: 20px;">Hello ${inquiry.full_name},</h2>
         <p style="font-size: 16px; line-height: 1.6; color: #334155;">
-          Your PG listing inquiry for <strong>${inquiry.pg_name}</strong> in <strong>${inquiry.pg_city}</strong> has been reviewed and approved by the SwiftPG team.
+          Your PG listing inquiry for <strong>${inquiry.pg_name}</strong> in <strong>${inquiry.pg_city}</strong> has been reviewed and approved by the FindPGRoom team.
         </p>
         <p style="font-size: 16px; line-height: 1.6; color: #334155; margin-top: 20px; margin-bottom: 20px;">
-          Please click the button below to configure your SwiftPG owner account password. This link is valid for 24 hours only:
+          Please click the button below to configure your FindPGRoom owner account password. This link is valid for 24 hours only:
         </p>
         <div style="text-align: center; margin: 30px 0;">
           <a href="${setPasswordLink}" style="background-color: #4f46e5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 500; font-size: 16px; display: inline-block;">Set Your Password</a>
@@ -466,7 +468,7 @@ router.put('/api/admin/owner-inquiries/:id/resend-email', authenticateToken, req
         </p>
         <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 30px 0;" />
         <p style="font-size: 12px; line-height: 1.6; color: #94a3b8;">
-          If you did not request this, please ignore this email or contact support@swiftpg.in
+          If you did not request this, please ignore this email or contact support@findpgroom.in
         </p>
       </div>
     `
@@ -477,10 +479,12 @@ router.put('/api/admin/owner-inquiries/:id/resend-email', authenticateToken, req
     console.log(`Set Password Link: ${setPasswordLink}`)
     console.log(`=========================================\n`)
 
-    // Send email asynchronously in the background so it doesn't block the API response
-    sendMail(inquiry.email, emailSubject, emailHtml).catch((err) => {
-      console.error(`❌ Background email dispatch failed for ${inquiry.email}:`, err)
-    })
+    // Send email synchronously to ensure it completes on production (e.g. Render)
+    const emailSuccess = await sendMail(inquiry.email, emailSubject, emailHtml);
+    if (!emailSuccess) {
+      console.error(`❌ Email dispatch failed for ${inquiry.email}`);
+      return res.status(500).json({ error: 'Failed to resend password setup email. Please check your SMTP configuration.' });
+    }
 
     // Trigger n8n WhatsApp webhook
     // HOLD WHATSAPP WEBHOOK FOR NOW
@@ -554,7 +558,7 @@ router.get('/api/owner/set-password', async (req: any, res) => {
       .single()
 
     if (error || !inquiry) {
-      return res.status(400).json({ error: 'This link has expired or is invalid. Please contact support@swiftpg.in' })
+      return res.status(400).json({ error: 'This link has expired or is invalid. Please contact support@findpgroom.in' })
     }
 
     if (inquiry.reset_token_used) {
@@ -563,7 +567,7 @@ router.get('/api/owner/set-password', async (req: any, res) => {
 
     const expiryTime = new Date(inquiry.reset_token_expires_at).getTime()
     if (Date.now() > expiryTime) {
-      return res.status(400).json({ error: 'This link has expired. Please contact support@swiftpg.in to resend.' })
+      return res.status(400).json({ error: 'This link has expired. Please contact support@findpgroom.in to resend.' })
     }
 
     if (inquiry.status !== 'approved' && inquiry.status !== 'password_sent') {
@@ -966,7 +970,7 @@ router.put('/api/admin/kyc/:owner_id/approve', authenticateToken, requireRole('a
     // Simulate approval notification
     console.log(`\n=========================================`)
     console.log(`SIMULATING KYC APPROVAL EMAIL DISPATCH TO OWNER: ${owner?.email}`)
-    console.log(`Subject: Congratulations! Your SwiftPG Account is Fully Verified`)
+    console.log(`Subject: Congratulations! Your FindPGRoom Account is Fully Verified`)
     console.log(`Body:`)
     console.log(`Hello ${owner?.full_name},`)
     console.log(`Congratulations! Your KYC documents and bank details have been verified by our team.`)

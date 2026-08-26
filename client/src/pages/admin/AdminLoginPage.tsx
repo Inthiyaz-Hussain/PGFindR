@@ -60,7 +60,7 @@ export function AdminLoginPage() {
   }
 
   const handleDemoFill = () => {
-    setValue('email', 'admin@swiftpg.demo')
+    setValue('email', 'admin@findpgroom.demo')
     setValue('password', 'Admin@123')
     toast.info('Demo admin credentials filled!')
   }
@@ -74,7 +74,7 @@ export function AdminLoginPage() {
         <div className="flex flex-col items-center gap-3">
           <Link to="/" className="flex items-center gap-2.5">
             <img
-              src="/logo-swiftpg.png"
+              src="/logo-findpgroom.png"
               alt="FindPgR Icon"
               className="h-11 w-11 rounded-xl object-cover ring-1 ring-slate-200 dark:ring-slate-800 shadow-xs"
             />
@@ -173,7 +173,7 @@ export function AdminLoginPage() {
             {isDev && (
               <div className="mt-4 p-3 bg-muted rounded-lg text-xs space-y-2 border">
                 <div className="font-semibold text-muted-foreground">Demo Admin Credentials:</div>
-                <div>Email: admin@swiftpg.demo</div>
+                <div>Email: admin@findpgroom.demo</div>
                 <div>Password: Admin@123</div>
                 <Button variant="outline" size="sm" onClick={handleDemoFill} className="w-full mt-1">
                   Quick Fill Demo Admin

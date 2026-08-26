@@ -483,7 +483,7 @@ router.post('/admin/verify-owner', authenticateToken, requireRole('admin'), asyn
         }
 
         // Simulate sending password setup email to the owner
-        const emailSubject = 'Set Your Password - SwiftPG Owner Portal'
+        const emailSubject = 'Set Your Password - FindPGRoom Owner Portal'
         const emailBody = `
           Hi,
           
@@ -495,7 +495,7 @@ router.post('/admin/verify-owner', authenticateToken, requireRole('admin'), asyn
           After setting your password, you will be able to complete your listing details and submit your KYC verification.
           
           Regards,
-          SwiftPG Admin Team
+          FindPGRoom Admin Team
         `
         console.log(`==================================================`)
         console.log(`SIMULATING EMAIL DISPATCH TO OWNER FOR PASSWORD SETUP`)

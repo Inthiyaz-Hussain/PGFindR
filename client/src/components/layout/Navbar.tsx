@@ -105,8 +105,8 @@ export function Navbar({
               className="flex items-center gap-2.5 group transition-transform duration-200 active:scale-95"
             >
               <img
-                src="/logo-swiftpg.png"
-                alt="SwiftPG Icon"
+                src="/logo-findpgroom.png"
+                alt="FindPGRoom Icon"
                 className="h-10 w-10 rounded-xl object-cover ring-1 ring-slate-200 dark:ring-slate-800 shadow-xs group-hover:scale-105 transition-transform"
               />
               <span className="text-xl font-bold tracking-tight text-indigo-950 dark:text-slate-100">
@@ -420,8 +420,8 @@ export function Navbar({
                         className="flex items-center gap-2 text-left"
                       >
                         <img
-                          src="/logo-swiftpg.png"
-                          alt="SwiftPG Icon"
+                          src="/logo-findpgroom.png"
+                          alt="FindPGRoom Icon"
                           className="h-8 w-8 rounded-lg object-cover"
                         />
                         <span className="text-lg font-bold text-slate-900 dark:text-slate-100">

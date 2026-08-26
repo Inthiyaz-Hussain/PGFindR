@@ -306,7 +306,7 @@ export function AdminOwnerInquiriesPage() {
           duration: 8000,
         })
       } else {
-        toast.success('WhatsApp invitation & email resent successfully!')
+        toast.success('Email invitation resent successfully!')
       }
       if (selectedInquiry) {
         setSelectedInquiry((prev) => prev ? { ...prev, reset_token: data.token } : null)
@@ -653,7 +653,7 @@ export function AdminOwnerInquiriesPage() {
                         disabled={approveMutation.isPending || rejectMutation.isPending}
                       >
                         {approveMutation.isPending ? <Loader2 className="size-3 animate-spin mr-1" /> : <CheckCircle className="size-3.5 mr-1" />}
-                        Approve & Send Access via WhatsApp
+                        Approve & Send Access via Email
                       </Button>
                     </>
                   )}
@@ -664,8 +664,8 @@ export function AdminOwnerInquiriesPage() {
                       onClick={() => resendEmailMutation.mutate(selectedInquiry.id)}
                       disabled={resendEmailMutation.isPending}
                     >
-                      {resendEmailMutation.isPending ? <Loader2 className="size-3 animate-spin mr-1" /> : <RefreshCw className="size-3.5 mr-1" />}
-                      Resend WhatsApp Invitation
+                      {resendEmailMutation.isPending ? <Loader2 className="size-3 animate-spin mr-1" /> : <Mail className="size-3.5 mr-1" />}
+                      Resend Email Invitation
                     </Button>
                   )}
                 </div>

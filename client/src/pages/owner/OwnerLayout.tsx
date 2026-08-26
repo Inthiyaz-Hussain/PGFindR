@@ -165,7 +165,7 @@ export function OwnerLayout() {
           <DialogHeader>
             <DialogTitle className="text-lg font-bold text-center">Feature Locked 🔒</DialogTitle>
             <DialogDescription className="text-sm text-muted-foreground pt-1.5 leading-relaxed">
-              This section is locked behind KYC verification. It will automatically unlock once your KYC documents and bank details are approved by SwiftPG admins.
+              This section is locked behind KYC verification. It will automatically unlock once your KYC documents and bank details are approved by FindPGRoom admins.
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-2 pt-2">

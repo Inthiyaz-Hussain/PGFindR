@@ -1,6 +1,6 @@
-# SwiftPG (PGFindR) - Premium Coliving Space Platform
+# FindPGRoom (PGFindR) - Premium Coliving Space Platform
 
-SwiftPG (PGFindR) is a modern, zero-brokerage coliving and Paying Guest (PG) accommodation platform. Built using React, TypeScript, Node.js, and Supabase, it allows seekers to search and book verified accommodations instantly, and property owners to manage listings, bed availability, inquiries, and payouts seamlessly.
+FindPGRoom (PGFindR) is a modern, zero-brokerage coliving and Paying Guest (PG) accommodation platform. Built using React, TypeScript, Node.js, and Supabase, it allows seekers to search and book verified accommodations instantly, and property owners to manage listings, bed availability, inquiries, and payouts seamlessly.
 
 ---
 
@@ -24,7 +24,7 @@ SwiftPG (PGFindR) is a modern, zero-brokerage coliving and Paying Guest (PG) acc
 - **Platform Analytics**: Monitor overall user registrations (Seekers & Owners), active rooms, transactions, and commission logs.
 
 ### Global Enhancements
-- **Logo Harmonization**: Consistent **SwiftPG** branding matching navbar and footer styles.
+- **Logo Harmonization**: Consistent **FindPGRoom** branding matching navbar and footer styles.
 - **Role-Appropriate Navbar**: Dynamic headers adapting menu choices and hiding/showing search controls depending on the active user context.
 - **Page-Appropriate Footer**: Contextual support links and call-to-actions based strictly on the screen path.
 

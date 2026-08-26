@@ -105,8 +105,8 @@ export function Footer({ compact = false }: FooterProps) {
               <div className="space-y-4">
                 <Link to="/" className="flex items-center gap-2 group max-w-fit">
                   <img
-                    src="/logo-swiftpg.png"
-                    alt="SwiftPG Icon"
+                    src="/logo-findpgroom.png"
+                    alt="FindPGRoom Icon"
                     className="h-10 w-10 rounded-xl object-cover ring-1 ring-slate-800 shadow-xs group-hover:scale-105 transition-transform"
                   />
                   <span className="text-xl font-bold tracking-tight text-white">

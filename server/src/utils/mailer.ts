@@ -34,7 +34,7 @@ export async function sendMail(to: string, subject: string, htmlContent: string)
     console.warn('  SMTP_PORT=587')
     console.warn('  SMTP_USER=your-email@gmail.com')
     console.warn('  SMTP_PASS=your-app-password')
-    console.warn('  SMTP_FROM="SwiftPG Admin" <your-email@gmail.com>\n')
+    console.warn('  SMTP_FROM="FindPGRoom Admin" <your-email@gmail.com>\n')
     return false
   }
 
@@ -55,7 +55,7 @@ export async function sendMail(to: string, subject: string, htmlContent: string)
     }
 
     const info = await transporterInstance.sendMail({
-      from: process.env.SMTP_FROM || `"SwiftPG Admin" <${smtpUser}>`,
+      from: process.env.SMTP_FROM || `"FindPGRoom Admin" <${smtpUser}>`,
       to,
       subject,
       html: htmlContent,

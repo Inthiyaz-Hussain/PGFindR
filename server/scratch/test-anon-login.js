@@ -9,7 +9,7 @@ async function test(key, label) {
   const client = createClient(url, key);
   try {
     const { data, error } = await client.auth.signInWithPassword({
-      email: 'test_owner_flow@swiftpg.in',
+      email: 'test_owner_flow@findpgroom.in',
       password: 'SecurePassword123!'
     });
     if (error) {

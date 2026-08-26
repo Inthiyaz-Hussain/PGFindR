@@ -81,7 +81,7 @@ export function OwnerSignupPage() {
         <div className="flex flex-col items-center gap-3">
           <Link to="/" className="flex items-center gap-2.5">
             <img
-              src="/logo-swiftpg.png"
+              src="/logo-findpgroom.png"
               alt="FindPgR Icon"
               className="h-11 w-11 rounded-xl object-cover ring-1 ring-slate-200 dark:ring-slate-800 shadow-xs"
             />

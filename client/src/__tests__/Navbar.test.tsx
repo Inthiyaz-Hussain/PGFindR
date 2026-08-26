@@ -15,7 +15,7 @@ describe('Navbar Component', () => {
 
   it('renders brand logo and title correctly', () => {
     renderWithProviders(<Navbar brandName="FindPgR" />)
-    const logoImg = screen.getAllByAltText('SwiftPG Icon')
+    const logoImg = screen.getAllByAltText('FindPGRoom Icon')
     expect(logoImg.length).toBeGreaterThan(0)
     expect(logoImg[0]).toBeInTheDocument()
     expect(screen.getByText('Find')).toBeInTheDocument()

@@ -589,7 +589,7 @@ export function OnboardingPage() {
               Onboarding Completed!
             </h1>
             <p className="text-slate-500 max-w-lg mx-auto text-sm md:text-base leading-relaxed">
-              Your property details and KYC information are currently being reviewed by the SwiftPG administration team.
+              Your property details and KYC information are currently being reviewed by the FindPGRoom administration team.
             </p>
           </div>
 

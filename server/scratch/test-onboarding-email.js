@@ -9,7 +9,7 @@ dotenv.config({ path: path.resolve(process.cwd(), 'server/.env') })
 console.log('--- Testing Onboarding Email Send ---')
 console.log('SMTP_USER:', process.env.SMTP_USER)
 
-const emailSubject = `SwiftPG - Your Owner Account Has Been Approved - Set Your Password`
+const emailSubject = `FindPGRoom - Your Owner Account Has Been Approved - Set Your Password`
 const setPasswordLink = `http://localhost:5173/owner/set-password?token=mocktoken12345`
 const emailHtml = `
   <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">

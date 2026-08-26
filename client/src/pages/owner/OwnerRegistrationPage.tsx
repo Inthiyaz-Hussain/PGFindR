@@ -142,8 +142,8 @@ export function OwnerRegistrationPage() {
         <div className="flex flex-col items-center gap-3">
           <Link to="/" className="flex items-center gap-2.5">
             <img
-              src="/logo-swiftpg.png"
-              alt="SwiftPG Logo"
+              src="/logo-findpgroom.png"
+              alt="FindPGRoom Logo"
               className="h-11 w-11 rounded-xl object-cover ring-1 ring-slate-200 dark:ring-slate-800 shadow-sm"
             />
             <span className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
@@ -171,7 +171,7 @@ export function OwnerRegistrationPage() {
               <Info className="h-5 w-5 shrink-0 text-blue-600 dark:text-blue-400" />
               <div>
                 <span className="font-semibold block mb-0.5">Registration Process Note</span>
-                This is an interest inquiry. After submitting and verifying your email with Google, SwiftPG Admin will review the legitimacy of your PG details and send a Set Password invitation link within 48 hours.
+                This is an interest inquiry. After submitting and verifying your email with Google, FindPGRoom Admin will review the legitimacy of your PG details and send a Set Password invitation link within 48 hours.
               </div>
             </div>
 
@@ -269,13 +269,13 @@ export function OwnerRegistrationPage() {
                   )}
                 />
 
-                {/* How did you hear about SwiftPG? */}
+                {/* How did you hear about FindPGRoom? */}
                 <Controller
                   name="referralSource"
                   control={control}
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid || undefined}>
-                      <FieldLabel htmlFor="referralSource">How did you hear about SwiftPG?</FieldLabel>
+                      <FieldLabel htmlFor="referralSource">How did you hear about FindPGRoom?</FieldLabel>
                       <Select value={field.value} onValueChange={field.onChange}>
                         <SelectTrigger id="referralSource" className="bg-background">
                           <SelectValue placeholder="Select Option" />

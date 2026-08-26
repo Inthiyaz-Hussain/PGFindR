@@ -426,7 +426,7 @@ export function HomePage() {
               <span>Back</span>
             </button>
             <div className="flex items-center gap-2.5">
-              <img src="/logo-swiftpg.png" alt="FindPgR" className="h-8 w-8 rounded-lg object-cover" />
+              <img src="/logo-findpgroom.png" alt="FindPgR" className="h-8 w-8 rounded-lg object-cover" />
               <span className="text-lg font-bold tracking-tight text-white">
                 Find<span className="text-indigo-400 font-extrabold">PgR</span>
               </span>

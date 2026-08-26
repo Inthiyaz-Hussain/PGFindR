@@ -130,7 +130,7 @@ export function OwnerLoginPage() {
   }
 
   const handleDemoFill = () => {
-    setValue('email', 'owner@swiftpg.demo')
+    setValue('email', 'owner@findpgroom.demo')
     setValue('password', 'Owner@123')
     toast.info('Demo owner credentials filled!')
   }
@@ -146,7 +146,7 @@ export function OwnerLoginPage() {
           <div className="flex flex-col items-center gap-3">
             <Link to="/" className="flex items-center gap-2.5">
               <img
-                src="/logo-swiftpg.png"
+                src="/logo-findpgroom.png"
                 alt="FindPgR Icon"
                 className="h-11 w-11 rounded-xl object-cover ring-1 ring-slate-200 dark:ring-slate-800 shadow-xs"
               />
@@ -231,7 +231,7 @@ export function OwnerLoginPage() {
         <div className="flex flex-col items-center gap-3">
           <Link to="/" className="flex items-center gap-2.5">
             <img
-              src="/logo-swiftpg.png"
+              src="/logo-findpgroom.png"
               alt="FindPgR Icon"
               className="h-11 w-11 rounded-xl object-cover ring-1 ring-slate-200 dark:ring-slate-800 shadow-xs"
             />
@@ -343,7 +343,7 @@ export function OwnerLoginPage() {
             {isDev && (
               <div className="mt-4 p-3 bg-muted rounded-lg text-xs space-y-2 border">
                 <div className="font-semibold text-muted-foreground">Demo Owner Credentials:</div>
-                <div>Email: owner@swiftpg.demo</div>
+                <div>Email: owner@findpgroom.demo</div>
                 <div>Password: Owner@123</div>
                 <Button variant="outline" size="sm" onClick={handleDemoFill} className="w-full mt-1">
                   Quick Fill Demo Owner

@@ -363,9 +363,9 @@ function getDemoMockData(email: string) {
     password: string
   ): Promise<{ error: Error | null; profile: Profile | null }> {
     const isDemo =
-      (email === 'owner@swiftpg.demo' && password === 'Owner@123') ||
-      (email === 'admin@swiftpg.demo' && password === 'Admin@123') ||
-      (email === 'seeker@swiftpg.demo' && password === 'Seeker@123')
+      (email === 'owner@findpgroom.demo' && password === 'Owner@123') ||
+      (email === 'admin@findpgroom.demo' && password === 'Admin@123') ||
+      (email === 'seeker@findpgroom.demo' && password === 'Seeker@123')
 
     if (isDemo) {
       console.log('Demo credentials used, bypassing Supabase and using local mock login.')
