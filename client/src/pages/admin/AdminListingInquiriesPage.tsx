@@ -75,6 +75,7 @@ export function AdminListingInquiriesPage() {
 
       return { inquiries: paginated, total }
     },
+    refetchInterval: 5000
   })
 
   const verifyMutation = useMutation({

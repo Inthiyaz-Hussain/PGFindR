@@ -104,7 +104,8 @@ export function AdminOwnerInquiriesPage() {
       }
       return response.json()
     },
-    enabled: !!sessionData?.access_token
+    enabled: !!sessionData?.access_token,
+    refetchInterval: 5000
   })
 
   // Approve inquiry mutation
@@ -460,7 +461,7 @@ export function AdminOwnerInquiriesPage() {
 
           {selectedInquiry && (
             <div className="flex flex-col gap-4">
-              <div className="overflow-y-auto max-h-[50vh] pr-2 -mr-2 space-y-4 pt-1">
+              <div className="overflow-y-auto max-h-[50vh] space-y-4 pt-1">
                 {/* Owner Info Grid */}
                 <div className="grid grid-cols-2 gap-4 rounded-xl border border-slate-100 dark:border-slate-800 p-4 bg-muted/20 text-sm">
                   <div>
@@ -564,12 +565,12 @@ export function AdminOwnerInquiriesPage() {
               </div>
 
               {/* Action buttons */}
-              <div className="flex items-center justify-between border-t pt-4 gap-3">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-t pt-4 gap-3">
                 <span className="text-xs text-muted-foreground">
                   Current Status: <Badge className={`ml-1 capitalize text-[10px] py-0.5 border-0 ${STATUS_CONFIG[selectedInquiry.status]?.class}`}>{selectedInquiry.status.replace(/_/g, ' ')}</Badge>
                 </span>
                 
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   {selectedInquiry.status === 'pending_admin_review' && (
                     <>
                       <Button
