@@ -16,7 +16,7 @@ import { supabase } from '@/lib/supabase'
 
 const registerOwnerSchema = z.object({
   fullName: z.string().min(2, 'Name must be at least 2 characters').max(80, 'Name is too long'),
-  email: z.string().email('Enter a valid email address'),
+  email: z.string().trim().email('Enter a valid email address'),
   mobile: z.string().regex(/^\+?[0-9\s-]{10,20}$/, 'Enter a valid mobile number'),
   pgName: z.string().min(3, 'PG Name must be at least 3 characters'),
   pgCity: z.string().min(2, 'Please select or enter the city'),

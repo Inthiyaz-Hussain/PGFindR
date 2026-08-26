@@ -40,7 +40,10 @@ export function RegisterCallback() {
         setSubmittedEmail(savedForm.email)
 
         // 3. Email Match Validation
-        if (session.user.email?.toLowerCase() !== savedForm.email.toLowerCase()) {
+        const googleEmail = session.user.email?.trim().toLowerCase() || ''
+        const formEmail = savedForm.email?.trim().toLowerCase() || ''
+        
+        if (googleEmail !== formEmail) {
           toast.error('Please sign in with the same Google account as your email above.')
           setStatus('error')
           setErrorMsg('Google account email does not match the email entered in the inquiry form.')
