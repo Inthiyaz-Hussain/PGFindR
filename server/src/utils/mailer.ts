@@ -35,7 +35,8 @@ export async function sendMail(to: string, subject: string, htmlContent: string)
     console.warn('  SMTP_USER=your-email@gmail.com')
     console.warn('  SMTP_PASS=your-app-password')
     console.warn('  SMTP_FROM="FindPGRoom Admin" <your-email@gmail.com>\n')
-    return false
+    // Return true for simulation mode so the onboarding flow doesn't break when SMTP isn't configured.
+    return true
   }
 
   try {
