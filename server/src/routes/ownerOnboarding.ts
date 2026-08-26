@@ -291,6 +291,8 @@ router.put('/api/admin/owner-inquiries/:id/approve', authenticateToken, requireR
     })
 
     // Trigger n8n WhatsApp webhook
+    // HOLD WHATSAPP WEBHOOK FOR NOW
+    /*
     let whatsappNumberToUse = inquiry.mobile;
     if (inquiry.admin_notes && inquiry.admin_notes.includes('WhatsApp:')) {
       const match = inquiry.admin_notes.match(/WhatsApp:\s*(\+?\d+)/);
@@ -331,6 +333,7 @@ router.put('/api/admin/owner-inquiries/:id/approve', authenticateToken, requireR
         })
         .catch((err: any) => console.error(`❌ n8n WhatsApp webhook dispatch failed for ${inquiry.email}:`, err));
     }
+    */
 
     return res.json({
       message: 'Inquiry approved and Set Password email triggered.',
@@ -480,6 +483,8 @@ router.put('/api/admin/owner-inquiries/:id/resend-email', authenticateToken, req
     })
 
     // Trigger n8n WhatsApp webhook
+    // HOLD WHATSAPP WEBHOOK FOR NOW
+    /*
     let whatsappNumberToUse = inquiry.mobile;
     if (inquiry.admin_notes && inquiry.admin_notes.includes('WhatsApp:')) {
       const match = inquiry.admin_notes.match(/WhatsApp:\s*(\+?\d+)/);
@@ -520,9 +525,10 @@ router.put('/api/admin/owner-inquiries/:id/resend-email', authenticateToken, req
         })
         .catch((err: any) => console.error(`❌ n8n WhatsApp webhook dispatch failed for ${inquiry.email}:`, err));
     }
+    */
 
     return res.json({
-      message: 'Set Password email and WhatsApp invitation triggered successfully.',
+      message: 'Set Password email triggered successfully.',
       emailSent: true,
       token,
       email: inquiry.email
