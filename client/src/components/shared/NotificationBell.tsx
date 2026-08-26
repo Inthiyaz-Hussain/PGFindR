@@ -29,6 +29,8 @@ function formatTimeAgo(date: string): string {
 
 function getNotificationIcon(type: string): string {
   switch (type) {
+    case 'owner_inquiry_new':
+      return '🏢'
     case 'inquiry_new':
       return '📩'
     case 'inquiry_confirmed':
@@ -55,6 +57,8 @@ export function NotificationBell() {
     const data = notification.data
     if (notification.type === 'inquiry_new' && data.inquiry_id) {
       navigate(`/owner/inquiries`)
+    } else if (notification.type === 'owner_inquiry_new') {
+      navigate(`/admin/owner-inquiries`)
     } else if (notification.type === 'inquiry_confirmed') {
       if (data.booking_id) {
         navigate(`/payment/${data.booking_id}`)

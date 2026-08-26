@@ -1,4 +1,4 @@
-import { Building2, Users, TrendingUp, ShieldCheck, UserCheck, CreditCard, IndianRupee, Clock } from 'lucide-react'
+import { Building2, Users, TrendingUp, ShieldCheck, UserCheck, CreditCard, IndianRupee, Clock, FileText } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -23,6 +23,7 @@ export function AdminDashboard() {
         bookingsCompleted,
         bookingsPending,
         paymentsThisMonth,
+        inquiriesPending,
       ] = await Promise.all([
         supabaseUntyped.from('pg_listings').select('id', { count: 'exact', head: true }),
         supabaseUntyped.from('pg_listings').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
@@ -34,6 +35,7 @@ export function AdminDashboard() {
         supabaseUntyped.from('bookings').select('id', { count: 'exact', head: true }).in('status', ['active', 'completed']),
         supabaseUntyped.from('bookings').select('id', { count: 'exact', head: true }).in('status', ['pending_payment', 'payment_done']),
         supabaseUntyped.from('payments').select('commission_amount, platform_fee, service_charge').eq('status', 'completed').gte('created_at', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()),
+        supabaseUntyped.from('owner_inquiries').select('id', { count: 'exact', head: true }).eq('status', 'pending_admin_review'),
       ])
 
       const thisMonthRevenue = (paymentsThisMonth.data || []).reduce((sum: number, p: any) => sum + (p.commission_amount || 0) + (p.platform_fee || 0) + (p.service_charge || 0), 0)
@@ -49,8 +51,10 @@ export function AdminDashboard() {
         completedBookings: bookingsCompleted.count || 0,
         pendingBookings: bookingsPending.count || 0,
         thisMonthRevenue,
+        pendingInquiries: inquiriesPending.count || 0,
       }
     },
+    refetchInterval: 10000,
   })
 
   return (
@@ -94,7 +98,29 @@ export function AdminDashboard() {
       </div>
 
       {/* Secondary Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <Card 
+          className="cursor-pointer hover:shadow-md hover:border-indigo-500/40 transition-all duration-200 select-none"
+          onClick={() => navigate('/admin/owner-inquiries')}
+        >
+          <CardContent className="pt-5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-50 dark:bg-orange-950/30">
+                  <FileText className="size-5 text-orange-600 dark:text-orange-400" />
+                </div>
+                <div>
+                  <div className="text-2xl font-bold">{isLoading ? '—' : stats?.pendingInquiries}</div>
+                  <div className="text-xs text-muted-foreground">New Inquiries</div>
+                </div>
+              </div>
+              <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); navigate('/admin/owner-inquiries'); }}>
+                Review
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
         <Card 
           className="cursor-pointer hover:shadow-md hover:border-indigo-500/40 transition-all duration-200 select-none"
           onClick={() => navigate('/admin/pgs?status=pending')}

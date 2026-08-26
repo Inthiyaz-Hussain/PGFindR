@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { toast } from 'sonner'
 import { supabaseUntyped } from '@/lib/supabase'
 import { useAuth } from './useAuth'
 
@@ -62,9 +63,14 @@ export function useNotifications() {
           table: 'notifications',
           filter: `user_id=eq.${user.id}`,
         },
-        () => {
+        (payload: any) => {
           refetch()
           refetchUnread()
+          if (payload.new?.title && payload.new?.body) {
+            toast.info(payload.new.title, { description: payload.new.body })
+          } else {
+            toast.info('New notification received!')
+          }
         }
       )
       .on(

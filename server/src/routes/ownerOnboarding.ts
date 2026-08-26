@@ -103,6 +103,23 @@ router.post('/api/owner/inquiry', authenticateToken, async (req: any, res) => {
 
     if (insertErr) throw insertErr
 
+    // Insert notifications for all admins
+    const { data: admins } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('role', 'admin')
+
+    if (admins && admins.length > 0) {
+      const notifications = admins.map(admin => ({
+        user_id: admin.id,
+        type: 'owner_inquiry_new',
+        title: 'New Owner Inquiry',
+        body: `${fullName} is interested in listing ${pgName} in ${pgCity}.`,
+        data: { inquiry_id: inquiry.id }
+      }))
+      await supabase.from('notifications').insert(notifications)
+    }
+
     return res.status(201).json({
       message: 'Inquiry submitted successfully',
       inquiry
@@ -327,7 +344,26 @@ router.put('/api/admin/owner-inquiries/:id/approve', authenticateToken, requireR
   }
 })
 
-// 5. PUT /api/admin/owner-inquiries/:id/reject - Reject inquiry with optional reason note
+// 5. DELETE /api/admin/owner-inquiries/:id - Delete an owner inquiry
+router.delete('/api/admin/owner-inquiries/:id', authenticateToken, requireRole('admin'), async (req: any, res) => {
+  try {
+    const { id } = req.params
+
+    const { error } = await supabase
+      .from('owner_inquiries')
+      .delete()
+      .eq('id', id)
+
+    if (error) throw error
+
+    return res.json({ message: 'Inquiry deleted successfully' })
+  } catch (err: any) {
+    console.error('Delete inquiry error:', err)
+    return res.status(500).json({ error: err.message || 'Internal server error' })
+  }
+})
+
+// 6. PUT /api/admin/owner-inquiries/:id/reject - Reject inquiry with optional reason note
 router.put('/api/admin/owner-inquiries/:id/reject', authenticateToken, requireRole('admin'), async (req: any, res) => {
   try {
     const { id } = req.params

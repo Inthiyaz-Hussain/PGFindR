@@ -235,6 +235,52 @@ export function AdminOwnerInquiriesPage() {
     }
   })
 
+  // Delete inquiry mutation
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+      const response = await fetch(`${apiUrl}/api/admin/owner-inquiries/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${sessionData?.access_token}`
+        }
+      })
+      
+      const resData = await response.json()
+      if (!response.ok) {
+        throw new Error(resData.error || 'Deletion failed')
+      }
+      return resData
+    },
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: ['admin-owner-inquiries'] })
+      const queries = queryClient.getQueriesData({ queryKey: ['admin-owner-inquiries'] })
+      const previousData = queries.map(([key, data]) => [key, data])
+
+      queries.forEach(([queryKey, oldData]: any) => {
+        if (!oldData || !oldData.data) return
+        queryClient.setQueryData(queryKey, {
+          ...oldData,
+          data: oldData.data.filter((inq: any) => inq.id !== id)
+        })
+      })
+      
+      return { previousData }
+    },
+    onSuccess: () => {
+      toast.success('Inquiry deleted successfully.')
+    },
+    onError: (err: any, _id, context: any) => {
+      if (context?.previousData) {
+        context.previousData.forEach(([key, data]: [any, any]) => queryClient.setQueryData(key, data))
+      }
+      toast.error(err.message || 'Failed to delete inquiry')
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-owner-inquiries'] })
+    }
+  })
+
   // Resend email mutation
   const resendEmailMutation = useMutation({
     mutationFn: async (id: string) => {
@@ -407,9 +453,25 @@ export function AdminOwnerInquiriesPage() {
                         {new Date(inq.created_at).toLocaleDateString('en-IN')}
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline" className={`text-xs border-0 ${cfg.class}`}>
-                          {cfg.label}
-                        </Badge>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className={`text-xs border-0 ${cfg.class}`}>
+                            {cfg.label}
+                          </Badge>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8 text-destructive hover:text-destructive hover:bg-red-50 dark:hover:bg-red-950/30"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              if (confirm('Are you sure you want to delete this inquiry?')) {
+                                deleteMutation.mutate(inq.id)
+                              }
+                            }}
+                            disabled={deleteMutation.isPending}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   )
