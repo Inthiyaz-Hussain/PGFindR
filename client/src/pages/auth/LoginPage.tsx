@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Field, FieldLabel, FieldError } from '@/components/ui/field'
-import { Separator } from '@/components/ui/separator'
+
 import { useAuth } from '@/hooks/useAuth'
 import { supabase } from '@/lib/supabase'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
@@ -113,29 +113,6 @@ export function LoginPage() {
     }
   }
 
-  const handleGoogleSignIn = async () => {
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/auth/login?from=${encodeURIComponent(from || '/seeker')}`,
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'select_account',
-          },
-          data: {
-            role: targetRole,
-          }
-        } as any
-      })
-      if (error) {
-        toast.error(error.message || 'Google Sign-In failed')
-      }
-    } catch (e) {
-      console.error(e)
-      toast.error('Google Sign-In error')
-    }
-  }
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-muted/30 px-4 py-12">
@@ -172,28 +149,6 @@ export function LoginPage() {
           </CardHeader>
 
           <CardContent>
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full flex items-center justify-center gap-2 font-medium hover:bg-slate-50 dark:hover:bg-slate-900 border-slate-200 dark:border-slate-800 transition-all duration-200 hover:scale-[1.01] shadow-xs"
-              onClick={handleGoogleSignIn}
-              disabled={isPending}
-            >
-              <svg className="h-4 w-4" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path d="M21.35,11.1H12v2.7h5.38c-0.24,1.28 -0.96,2.37 -2.04,3.1v2.6h3.29c1.92,-1.78 3.02,-4.4 3.02,-7.4C21.65,11.8 21.55,11.4 21.35,11.1z" fill="#4285F4" />
-                <path d="M12,20.8c2.6,0 4.8,-0.8 6.4,-2.3l-3.29,-2.6c-0.9,0.6 -2.07,1 -3.11,1c-3.11,0 -5.74,-2.11 -6.68,-4.96H2.03v2.7C3.65,17.9 7.56,20.8 12,20.8z" fill="#34A853" />
-                <path d="M5.32,11.94c-0.24,-0.72 -0.38,-1.5 -0.38,-2.3s0.14,-1.58 0.38,-2.3V4.64H2.03C1.22,6.26 0.76,8.08 0.76,10s0.46,3.74 1.27,5.36L5.32,11.94z" fill="#FBBC05" />
-                <path d="M12,4.8c1.44,0 2.72,0.5 3.73,1.46l2.8,-2.8C16.8,1.9 14.6,1.2 12,1.2c-4.44,0 -8.35,2.9 -9.97,7.06l3.29,2.7C6.26,8.11 8.89,6 12,4.8z" fill="#EA4335" />
-              </svg>
-              Sign in with Google
-            </Button>
-
-            <div className="relative my-5">
-              <Separator />
-              <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-2 text-xs text-muted-foreground">
-                Or sign in with email
-              </span>
-            </div>
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
 
@@ -311,24 +266,7 @@ export function LoginPage() {
               </div>
             )}
 
-            {targetRole !== 'admin' && (
-              <div className="mt-6">
-                <div className="relative">
-                  <Separator />
-                  <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-2 text-xs text-muted-foreground">
-                    New to PGFindR?
-                  </span>
-                </div>
-                <div className="mt-5 text-center">
-                  <Link
-                    to="/auth/register"
-                    className="text-sm font-medium text-primary hover:underline underline-offset-4"
-                  >
-                    Create an account
-                  </Link>
-                </div>
-              </div>
-            )}
+
           </CardContent>
         </Card>
 

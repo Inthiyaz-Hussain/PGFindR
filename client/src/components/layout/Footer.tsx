@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
 import { useQuery } from '@tanstack/react-query'
@@ -7,6 +8,10 @@ import {
   ShieldCheck,
   ArrowUp
 } from 'lucide-react'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
+import { Textarea } from '@/components/ui/textarea'
+import { toast } from 'sonner'
 
 const Facebook = (props: React.SVGProps<SVGSVGElement>) => (
   <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" {...props}>
@@ -41,8 +46,20 @@ export interface FooterProps {
 }
 
 export function Footer({ compact = false }: FooterProps) {
+  const [isSuggestOpen, setIsSuggestOpen] = useState(false)
+  const [suggestion, setSuggestion] = useState('')
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const handleSuggestionSubmit = () => {
+    if (!suggestion.trim()) {
+      toast.error('Please enter a suggestion first')
+      return
+    }
+    toast.success('Thank you for your suggestion! We will review it shortly.')
+    setIsSuggestOpen(false)
+    setSuggestion('')
   }
 
   const { user, profile } = useAuth()
@@ -417,9 +434,23 @@ export function Footer({ compact = false }: FooterProps) {
           <p className="text-xs text-slate-500 text-center sm:text-left">
             &copy; {new Date().getFullYear()} FindPgR. All rights reserved.
           </p>
-          <div className="flex items-center gap-1.5 py-1 px-3 rounded-full bg-slate-800/40 border border-slate-800/60 text-slate-500 text-[11px] font-medium">
-            <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" />
-            <span>100% Verified Listings &amp; Secure Browsing</span>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-1.5 py-1 px-3 rounded-full bg-slate-800/40 border border-slate-800/60 text-slate-500 text-[11px] font-medium hidden sm:flex">
+              <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" />
+              <span>100% Verified Listings &amp; Secure Browsing</span>
+            </div>
+            {(role === 'seeker' || role === 'owner') && (
+              <button
+                onClick={() => setIsSuggestOpen(true)}
+                className="flex items-center gap-2 py-1.5 px-4 rounded-full bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 hover:bg-indigo-600/40 hover:text-indigo-300 hover:border-indigo-500/50 transition-all cursor-pointer relative overflow-hidden shadow-[0_0_15px_rgba(79,70,229,0.2)] animate-pulse hover:animate-none group"
+              >
+                <span className="relative flex h-2.5 w-2.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-indigo-500"></span>
+                </span>
+                <span className="text-[11px] font-bold uppercase tracking-wider">Suggest Feature</span>
+              </button>
+            )}
           </div>
           <button
             onClick={scrollToTop}
@@ -430,6 +461,39 @@ export function Footer({ compact = false }: FooterProps) {
           </button>
         </div>
       </div>
+
+      <Dialog open={isSuggestOpen} onOpenChange={setIsSuggestOpen}>
+        <DialogContent className="sm:max-w-md border-slate-200 dark:border-slate-800">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400">
+              <span className="relative flex h-3 w-3">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-indigo-500"></span>
+              </span>
+              Suggest a Feature
+            </DialogTitle>
+            <DialogDescription>
+              What new features or improvements would help you get more customers or make your experience better?
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 pt-4">
+            <Textarea
+              placeholder="I would love to see..."
+              value={suggestion}
+              onChange={(e) => setSuggestion(e.target.value)}
+              className="min-h-[120px] resize-none"
+            />
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setIsSuggestOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleSuggestionSubmit} className="bg-indigo-600 hover:bg-indigo-700 text-white">
+                Submit Suggestion
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </footer>
   )
 }
