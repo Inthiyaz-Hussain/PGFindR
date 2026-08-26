@@ -29,6 +29,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { useAuth } from '@/hooks/useAuth'
+import { NotificationBell } from '@/components/shared/NotificationBell'
 
 
 
@@ -272,6 +273,13 @@ export function Navbar({
             {/* Divider */}
             {user && <div className="h-6 w-px bg-slate-200 dark:bg-slate-800" />}
 
+            {/* Notification Bell */}
+            {user && (
+              <div className="flex items-center">
+                <NotificationBell />
+              </div>
+            )}
+
             {/* User Profile Avatar & Dropdown */}
             {user && (
               <DropdownMenu>
@@ -370,6 +378,9 @@ export function Navbar({
 
           {/* ================= MOBILE HAMBURGER BUTTON ================= */}
           <div className="flex md:hidden items-center gap-2">
+            {/* Mobile Notification Bell */}
+            {user && <NotificationBell />}
+
             {/* Mobile Wishlist Button */}
             <button
               onClick={() => {

@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { useAuth } from '@/hooks/useAuth'
 import { cn } from '@/lib/utils'
-import { NotificationBell } from '@/components/shared/NotificationBell'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
 
@@ -108,7 +107,6 @@ export function AdminLayout() {
                   <div className="text-xs text-sidebar-foreground/60">Administrator</div>
                 </div>
               </NavLink>
-              <NotificationBell />
               <Button variant="ghost" size="icon-sm" onClick={signOut}>
                 <LogOut className="size-3.5" />
               </Button>
