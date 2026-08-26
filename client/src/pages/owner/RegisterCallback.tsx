@@ -85,8 +85,8 @@ export function RegisterCallback() {
         // 6. Sign out of Supabase Auth since their account is not approved/created yet!
         await supabase.auth.signOut()
         
-        setStatus('success')
         toast.success('Inquiry submitted successfully!')
+        navigate('/seeker/about')
       } catch (err: any) {
         console.error('Registration callback error:', err)
         setStatus('error')
