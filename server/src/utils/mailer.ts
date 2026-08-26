@@ -8,7 +8,7 @@ let transporterInstance: nodemailer.Transporter | null = null
  * Sends a real email using Nodemailer if SMTP credentials are configured in .env.
  * Falls back gracefully to console log simulation if credentials are missing.
  */
-export async function sendMail(to: string, subject: string, htmlContent: string): Promise<boolean> {
+export async function sendMail(to: string, subject: string, htmlContent: string): Promise<{ success: boolean; error?: string }> {
   // Reload env in case process was started before SMTP credentials were added
   if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
     dotenv.config({ path: path.resolve(process.cwd(), '.env') })
@@ -36,7 +36,7 @@ export async function sendMail(to: string, subject: string, htmlContent: string)
     console.warn('  SMTP_PASS=your-app-password')
     console.warn('  SMTP_FROM="FindPGRoom Admin" <your-email@gmail.com>\n')
     // Return true for simulation mode so the onboarding flow doesn't break when SMTP isn't configured.
-    return true
+    return { success: true }
   }
 
   try {
@@ -63,12 +63,13 @@ export async function sendMail(to: string, subject: string, htmlContent: string)
     })
 
     console.log(`✅ Email sent successfully to ${to}! MessageId: ${info.messageId}`)
-    return true
+    return { success: true }
   } catch (err: any) {
-    console.error(`❌ Failed to send email to ${to}:`, err.message || err)
+    const errorMessage = err.message || String(err)
+    console.error(`❌ Failed to send email to ${to}:`, errorMessage)
     // If there is an authentication or network error, reset the transporter instance so it recreates on next attempt
     transporterInstance = null
-    return false
+    return { success: false, error: errorMessage }
   }
 }
 

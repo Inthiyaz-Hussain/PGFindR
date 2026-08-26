@@ -286,10 +286,10 @@ router.put('/api/admin/owner-inquiries/:id/approve', authenticateToken, requireR
     console.log(`=========================================\n`)
 
     // Send email synchronously to ensure it completes on production (e.g. Render)
-    const emailSuccess = await sendMail(inquiry.email, emailSubject, emailHtml);
-    if (!emailSuccess) {
+    const emailResult = await sendMail(inquiry.email, emailSubject, emailHtml);
+    if (!emailResult.success) {
       console.error(`❌ Email dispatch failed for ${inquiry.email}`);
-      return res.status(500).json({ error: 'Failed to send password setup email. Please check your SMTP configuration.' });
+      return res.status(500).json({ error: `Failed to send password setup email: ${emailResult.error || 'Check your SMTP configuration.'}` });
     }
 
     // Trigger n8n WhatsApp webhook
@@ -480,10 +480,10 @@ router.put('/api/admin/owner-inquiries/:id/resend-email', authenticateToken, req
     console.log(`=========================================\n`)
 
     // Send email synchronously to ensure it completes on production (e.g. Render)
-    const emailSuccess = await sendMail(inquiry.email, emailSubject, emailHtml);
-    if (!emailSuccess) {
+    const emailResult = await sendMail(inquiry.email, emailSubject, emailHtml);
+    if (!emailResult.success) {
       console.error(`❌ Email dispatch failed for ${inquiry.email}`);
-      return res.status(500).json({ error: 'Failed to resend password setup email. Please check your SMTP configuration.' });
+      return res.status(500).json({ error: `Failed to resend password setup email: ${emailResult.error || 'Check your SMTP configuration.'}` });
     }
 
     // Trigger n8n WhatsApp webhook
