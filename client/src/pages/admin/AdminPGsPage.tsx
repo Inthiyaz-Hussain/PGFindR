@@ -112,6 +112,7 @@ export function AdminPGsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-pgs'] })
       queryClient.invalidateQueries({ queryKey: ['admin-stats-full'] })
+      queryClient.invalidateQueries({ queryKey: ['pgs'] })
     },
     onError: (err: any) => toast.error(err.message || 'Failed to delete'),
   })

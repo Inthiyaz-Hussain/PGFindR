@@ -86,6 +86,7 @@ export function PGListPage() {
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['owner-pgs'] })
       queryClient.invalidateQueries({ queryKey: ['owner-listings'] })
+      queryClient.invalidateQueries({ queryKey: ['pgs'] })
     },
   })
 

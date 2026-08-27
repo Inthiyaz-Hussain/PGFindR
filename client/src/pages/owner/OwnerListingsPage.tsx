@@ -57,6 +57,7 @@ export function OwnerListingsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['owner-all-listings'] })
+      queryClient.invalidateQueries({ queryKey: ['pgs'] })
       toast.success('Listing deleted')
       setDeleteId(null)
     },
