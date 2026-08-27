@@ -312,15 +312,15 @@ router.post('/demo-confirm', paymentRateLimiter, validateRequest(initiatePayment
         user_id: booking.seeker_id,
         type: 'payment_success',
         title: 'Payment Successful & Invoice Generated',
-        body: `Hello ${seekerName}, your payment of ₹${payment.amount} for ${pgName} is successful. Status: Completed. Invoice #${invoiceNumber} has been generated.`,
-        data: { booking_id, payment_id: payment.id, invoice_number: invoiceNumber },
+        body: `Hello ${seekerName}, your payment of ₹${payment.amount} for ${pgName} is successful. Status: Completed. View Invoice: /invoice/seeker/${payment.id}`,
+        data: { booking_id, payment_id: payment.id, invoice_number: invoiceNumber, link: `/invoice/seeker/${payment.id}` },
       },
       {
         user_id: booking.owner_id,
         type: 'new_booking',
         title: 'Payment Received & Invoice Generated',
-        body: `Dear Owner, seeker ${seekerName} has successfully paid ₹${payment.amount} for ${pgName}. Status: Completed. Invoice #${invoiceNumber} has been generated.`,
-        data: { booking_id, payment_id: payment.id, invoice_number: invoiceNumber },
+        body: `Dear Owner, seeker ${seekerName} has successfully paid. View Payout Statement: /invoice/owner/${payment.id}`,
+        data: { booking_id, payment_id: payment.id, invoice_number: invoiceNumber, link: `/invoice/owner/${payment.id}` },
       },
     ])
 
@@ -464,18 +464,18 @@ router.post('/verify', paymentRateLimiter, validateRequest(verifyPaymentSchema),
     // Send confirmation notifications
     await supabase.from('notifications').insert([
       {
-        user_id: booking?.seeker_id,
+        user_id: booking.seeker_id,
         type: 'payment_success',
         title: 'Payment Successful & Invoice Generated',
-        body: `Hello ${seekerName}, your payment of ₹${updatedPayment.amount} for ${pgName} is successful. Status: Completed. Invoice #${invoiceNumber} has been generated.`,
-        data: { booking_id, payment_id: updatedPayment.id, invoice_number: invoiceNumber },
+        body: `Hello ${seekerName}, your payment of ₹${updatedPayment.amount} for ${pgName} is successful. Status: Completed. View Invoice: /invoice/seeker/${updatedPayment.id}`,
+        data: { booking_id, payment_id: updatedPayment.id, invoice_number: invoiceNumber, link: `/invoice/seeker/${updatedPayment.id}` },
       },
       {
-        user_id: booking?.owner_id,
+        user_id: booking.owner_id,
         type: 'new_booking',
         title: 'Payment Received & Invoice Generated',
-        body: `Dear Owner, seeker ${seekerName} has successfully paid ₹${updatedPayment.amount} for ${pgName}. Status: Completed. Invoice #${invoiceNumber} has been generated.`,
-        data: { booking_id, payment_id: updatedPayment.id, invoice_number: invoiceNumber },
+        body: `Dear Owner, seeker ${seekerName} has successfully paid. View Payout Statement: /invoice/owner/${updatedPayment.id}`,
+        data: { booking_id, payment_id: updatedPayment.id, invoice_number: invoiceNumber, link: `/invoice/owner/${updatedPayment.id}` },
       },
     ])
 

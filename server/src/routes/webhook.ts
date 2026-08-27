@@ -295,22 +295,22 @@ router.post('/cashfree', async (req: any, res) => {
         const pgName = (booking as any)?.pg?.name || 'PG'
 
         // Send notifications
-        await supabase.from('notifications').insert([
-          {
-            user_id: booking.seeker_id,
-            type: 'payment_success',
-            title: 'Payment Successful & Invoice Generated',
-            body: `Hello ${seekerName}, your payment of ₹${payment.amount} for ${pgName} is successful. Status: Completed. Invoice #${invoiceNumber} has been generated.`,
-            data: { booking_id: booking.id, payment_id: payment.id, invoice_number: invoiceNumber },
-          },
-          {
-            user_id: booking.owner_id,
-            type: 'new_booking',
-            title: 'Payment Received & Invoice Generated',
-            body: `Dear Owner, seeker ${seekerName} has successfully paid ₹${payment.amount} for ${pgName}. Status: Completed. Invoice #${invoiceNumber} has been generated.`,
-            data: { booking_id: booking.id, payment_id: payment.id, invoice_number: invoiceNumber },
-          },
-        ])
+          await supabase.from('notifications').insert([
+            {
+              user_id: booking.seeker_id,
+              type: 'payment_success',
+              title: 'Payment Successful & Invoice Generated',
+              body: `Hello ${seekerName}, your payment of ₹${payment.amount} for ${pgName} is successful. Status: Completed. View Invoice: /invoice/seeker/${payment.id}`,
+              data: { booking_id: booking.id, payment_id: payment.id, invoice_number: invoiceNumber, link: `/invoice/seeker/${payment.id}` },
+            },
+            {
+              user_id: booking.owner_id,
+              type: 'new_booking',
+              title: 'Payment Received & Invoice Generated',
+              body: `Dear Owner, seeker ${seekerName} has successfully paid. View Payout Statement: /invoice/owner/${payment.id}`,
+              data: { booking_id: booking.id, payment_id: payment.id, invoice_number: invoiceNumber, link: `/invoice/owner/${payment.id}` },
+            },
+          ])
         break
       }
 

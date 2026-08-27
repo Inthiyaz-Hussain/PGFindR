@@ -23,6 +23,7 @@ import { TermsConditionsPage } from '@/pages/public/TermsConditionsPage'
 import { PrivacyPolicyPage } from '@/pages/public/PrivacyPolicyPage'
 import { RefundPolicyPage } from '@/pages/public/RefundPolicyPage'
 import { NotFoundPage } from '@/pages/public/NotFoundPage'
+import InvoicePage from '@/pages/payment/InvoicePage'
 
 // Seeker
 import { SeekerLayout } from '@/pages/seeker/SeekerLayout'
@@ -92,6 +93,7 @@ export function App() {
               <Route path="/auth/login" element={<LoginPage />} />
               <Route path="/auth/register" element={<RegisterPage />} />
               <Route path="/auth/reset-password" element={<ResetPasswordPage />} />
+              <Route path="/invoice/:type/:paymentId" element={<InvoicePage />} />
               <Route path="/owner/register" element={<OwnerRegistrationPage />} />
               <Route path="/owner/register-callback" element={<RegisterCallback />} />
               <Route path="/owner/set-password" element={<OwnerSetPasswordPage />} />

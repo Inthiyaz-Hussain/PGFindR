@@ -55,7 +55,13 @@ export function NotificationBell() {
 
     // Navigate based on notification type
     const data = notification.data
-    if (notification.type === 'inquiry_new' && data.inquiry_id) {
+    if (data && typeof data.link === 'string') {
+      if (data.link.startsWith('/invoice')) {
+        window.open(data.link, '_blank')
+      } else {
+        navigate(data.link)
+      }
+    } else if (notification.type === 'inquiry_new' && data.inquiry_id) {
       navigate(`/owner/inquiries`)
     } else if (notification.type === 'owner_inquiry_new') {
       navigate(`/admin/owner-inquiries`)

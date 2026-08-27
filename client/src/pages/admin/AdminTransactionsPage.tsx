@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { CreditCard, Download, Search, ChevronLeft, ChevronRight, IndianRupee, Calendar } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -346,7 +346,8 @@ export function AdminTransactionsPage() {
                   <TableHead>Commission</TableHead>
                   <TableHead>Total Revenue</TableHead>
                   <TableHead>Payout</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead className="w-[100px]">Status</TableHead>
+                  <TableHead className="w-[140px] text-right">Invoices</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -373,6 +374,16 @@ export function AdminTransactionsPage() {
                       <TableCell className="text-xs">{tx.owner_payout.toLocaleString('en-IN')}</TableCell>
                       <TableCell>
                         <Badge variant="outline" className={cfg.class}>{cfg.label}</Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Link to={`/invoice/seeker/${tx.id}`} target="_blank">
+                            <Button variant="outline" size="sm" className="h-7 text-xs px-2">Seeker</Button>
+                          </Link>
+                          <Link to={`/invoice/owner/${tx.id}`} target="_blank">
+                            <Button variant="outline" size="sm" className="h-7 text-xs px-2">Owner</Button>
+                          </Link>
+                        </div>
                       </TableCell>
                     </TableRow>
                   )

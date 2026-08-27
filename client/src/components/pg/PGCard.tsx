@@ -2,7 +2,7 @@ import type { PGListing } from '@/types'
 import { Link } from 'react-router-dom'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { MapPin, Wifi, Utensils, Wind, Car, Shield, BedDouble } from 'lucide-react'
+import { MapPin, BedDouble } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface PGCardProps {
@@ -40,11 +40,11 @@ export function PGCard({ pg, liveAvailableBeds = null, className }: PGCardProps)
   const availabilityBadge = getAvailabilityBadge()
 
   const amenityIcons = [
-    { show: pg.wifi_included, Icon: Wifi, label: 'WiFi' },
-    { show: pg.food_included, Icon: Utensils, label: 'Food' },
-    { show: pg.ac_rooms, Icon: Wind, label: 'AC' },
-    { show: pg.parking, Icon: Car, label: 'Parking' },
-    { show: pg.security_24x7, Icon: Shield, label: 'Security' },
+    { show: pg.wifi_included, image: '/images/icon-wifi.png', label: 'WiFi' },
+    { show: pg.food_included, image: '/images/icon-food.png', label: 'Food' },
+    { show: pg.ac_rooms, image: '/images/icon-ac.png', label: 'AC' },
+    { show: pg.parking, image: '/images/icon-parking.png', label: 'Parking' },
+    { show: pg.security_24x7, image: '/images/icon-cctv.png', label: 'Security' },
   ].filter((a) => a.show)
 
   return (
@@ -99,14 +99,14 @@ export function PGCard({ pg, liveAvailableBeds = null, className }: PGCardProps)
           {/* Amenities */}
           {amenityIcons.length > 0 && (
             <div className="mt-3 flex flex-wrap gap-1.5">
-              {amenityIcons.slice(0, 4).map(({ Icon, label }) => (
-                <div key={label} className="flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">
-                  <Icon className="size-3" />
+              {amenityIcons.slice(0, 4).map(({ image, label }) => (
+                <div key={label} className="flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground border shadow-sm">
+                  <img src={image} alt={label} className="w-3.5 h-3.5 object-contain" />
                   {label}
                 </div>
               ))}
               {amenityIcons.length > 4 && (
-                <div className="flex items-center rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">
+                <div className="flex items-center rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground border shadow-sm">
                   +{amenityIcons.length - 4}
                 </div>
               )}

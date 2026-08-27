@@ -180,6 +180,16 @@ export function OwnerEarningsPage() {
                             {new Date(payment.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
                           </span>
                         </div>
+                        <div className="ml-2">
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8 text-muted-foreground hover:text-primary"
+                            onClick={() => window.open(`/invoice/owner/${payment.id}`, '_blank')}
+                          >
+                            <Receipt className="size-4" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </div>

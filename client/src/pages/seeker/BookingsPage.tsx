@@ -33,7 +33,7 @@ export function BookingsPage() {
       if (seekerUser) {
         const { data } = await supabase
           .from('bookings')
-          .select('*, pg:pg_listings(id, name, city, locality), bed:beds(room_number, bed_label, sharing_type)')
+          .select('*, pg:pg_listings(id, name, city, locality), bed:beds(room_number, bed_label, sharing_type), payments(id)')
           .eq('seeker_id', seekerUser.id)
           .order('created_at', { ascending: false })
         return (data || []) as Booking[]
@@ -41,7 +41,7 @@ export function BookingsPage() {
         if (savedBookingIds.length === 0) return []
         const { data } = await supabase
           .from('bookings')
-          .select('*, pg:pg_listings(id, name, city, locality), bed:beds(room_number, bed_label, sharing_type)')
+          .select('*, pg:pg_listings(id, name, city, locality), bed:beds(room_number, bed_label, sharing_type), payments(id)')
           .in('id', savedBookingIds)
           .order('created_at', { ascending: false })
         return (data || []) as Booking[]
@@ -113,6 +113,18 @@ export function BookingsPage() {
                     >
                       <CreditCard className="size-4 mr-1.5" />
                       Pay ₹{b.deposit_amount.toLocaleString('en-IN')} Now
+                    </Button>
+                  )}
+
+                  {(b.status === 'payment_done' || b.status === 'active' || b.status === 'completed') && (b as any).payments?.[0]?.id && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full mt-1"
+                      onClick={() => window.open(`/invoice/seeker/${(b as any).payments[0].id}`, '_blank')}
+                    >
+                      <CreditCard className="size-4 mr-1.5" />
+                      Download Invoice
                     </Button>
                   )}
                 </CardContent>
