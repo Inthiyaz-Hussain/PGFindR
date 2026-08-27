@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
+import useEmblaCarousel from 'embla-carousel-react'
 import { SplashScreen } from '@/components/home/SplashScreen'
 import { POPULAR_CITIES } from '@/components/home/LocationPrompt'
 import { SearchBar } from '@/components/home/SearchBar'
@@ -11,6 +12,22 @@ export function HomePage() {
   const [showFilterPanel, setShowFilterPanel] = useState(false)
   const [location, setLocation] = useState<LocationState>(DEFAULT_LOCATION)
   const [filters, setFilters] = useState<SearchFilters>(DEFAULT_FILTERS)
+
+  // Embla Carousel setup
+  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true })
+  const [selectedIndex, setSelectedIndex] = useState(0)
+
+  const onSelect = useCallback(() => {
+    if (!emblaApi) return
+    setSelectedIndex(emblaApi.selectedScrollSnap())
+  }, [emblaApi])
+
+  useEffect(() => {
+    if (!emblaApi) return
+    onSelect()
+    emblaApi.on('select', onSelect)
+    emblaApi.on('reInit', onSelect)
+  }, [emblaApi, onSelect])
 
   // Hydration-safe: read localStorage after mount
   useEffect(() => {
@@ -81,23 +98,36 @@ export function HomePage() {
       {/* Main Content */}
       <div className="container max-w-2xl mx-auto px-4 py-6 space-y-6">
         {/* Header */}
-        <div className="space-y-4">
-          <div className="space-y-1">
-            <h1 className="text-2xl font-bold tracking-tight">Find your PG</h1>
-            <p className="text-sm text-muted-foreground">
-              Discover verified paying guests near you
-            </p>
-          </div>
-          <div className="w-full h-48 sm:h-64 rounded-3xl overflow-hidden relative shadow-xl ring-1 ring-slate-900/5">
-            <img 
-              src="/seeker-banner.jpg" 
-              alt="Premium Co-living Space" 
-              className="w-full h-full object-cover hover:scale-105 transition-transform duration-700"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-5 sm:p-6">
-              <span className="text-white font-bold text-xl sm:text-2xl">Experience Premium Living</span>
-              <span className="text-white/80 text-sm mt-1">Discover spaces designed for your comfort</span>
+        {/* Carousel Banners */}
+        <div className="w-full relative group">
+          <div className="overflow-hidden rounded-3xl shadow-xl ring-1 ring-slate-900/5 h-48 sm:h-64" ref={emblaRef}>
+            <div className="flex h-full touch-pan-y">
+              {[1, 2, 3, 4, 5].map((index) => (
+                <div key={index} className="flex-[0_0_100%] min-w-0 relative h-full">
+                  <img
+                    src={`/images/banner-${index}.png`}
+                    alt={`FindPGR Feature ${index}`}
+                    className="w-full h-full object-cover object-center"
+                  />
+                  {/* Subtle gradient overlay to make any overlay text readable if added later */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent pointer-events-none" />
+                </div>
+              ))}
             </div>
+          </div>
+          
+          {/* Carousel Dots */}
+          <div className="absolute -bottom-6 left-0 right-0 flex justify-center gap-2">
+            {[1, 2, 3, 4, 5].map((_, index) => (
+              <button
+                key={index}
+                className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                  index === selectedIndex ? 'bg-primary w-4' : 'bg-primary/30'
+                }`}
+                onClick={() => emblaApi?.scrollTo(index)}
+                aria-label={`Go to slide ${index + 1}`}
+              />
+            ))}
           </div>
         </div>
 

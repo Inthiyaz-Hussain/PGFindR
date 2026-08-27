@@ -30,12 +30,12 @@ interface FilterPanelProps {
 }
 
 const AMENITIES = [
-  { id: 'wifi_included', label: 'WiFi' },
-  { id: 'food_included', label: 'Food' },
-  { id: 'ac_rooms', label: 'AC Rooms' },
-  { id: 'parking', label: 'Parking' },
-  { id: 'laundry', label: 'Laundry' },
-  { id: 'security_24x7', label: '24/7 Security' },
+  { id: 'wifi_included', label: 'WiFi', image: '/images/icon-wifi.png' },
+  { id: 'food_included', label: 'Food Included', image: '/images/icon-food.png' },
+  { id: 'ac_rooms', label: 'AC Rooms', image: '/images/icon-ac.png' },
+  { id: 'parking', label: 'Parking', image: '/images/icon-parking.png' },
+  { id: 'laundry', label: 'Laundry', image: '/images/icon-washing.png' },
+  { id: 'security_24x7', label: '24/7 Security', image: '/images/icon-cctv.png' },
 ] as const
 
 export function FilterPanel({ open, onOpenChange, filters, onApply }: FilterPanelProps) {
@@ -131,25 +131,35 @@ export function FilterPanel({ open, onOpenChange, filters, onApply }: FilterPane
 
           {/* Sharing Type */}
           <div className="space-y-3">
-            <span className="text-sm font-medium">Sharing Type</span>
-            <div className="flex flex-wrap gap-2">
+            <span className="text-sm font-medium">Room Sharing</span>
+            <div className="grid grid-cols-2 gap-3">
               {([1, 2, 3, 4] as SharingNumber[]).map((type) => {
-                const labels = { 1: 'Single', 2: 'Double', 3: 'Triple', 4: 'Dorm' }
+                const config: Record<number, { label: string, image: string }> = { 
+                  1: { label: 'Single Room', image: '/images/room-single.png' }, 
+                  2: { label: 'Double Sharing', image: '/images/room-double.png' }, 
+                  3: { label: 'Triple Sharing', image: '/images/room-triple.png' }, 
+                  4: { label: 'Dormitory', image: '/images/room-four.png' } 
+                }
                 const isActive = localFilters.sharingTypes.includes(type)
                 return (
-                  <button
+                  <label
                     key={type}
-                    type="button"
-                    onClick={() => toggleSharing(type)}
                     className={cn(
-                      'flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium transition-all',
+                      'flex items-center gap-2 rounded-lg border p-3 cursor-pointer transition-all',
                       isActive
-                        ? 'border-primary bg-primary/10 text-primary'
-                        : 'border-input bg-background hover:bg-accent'
+                        ? 'border-primary bg-primary/5'
+                        : 'border-input hover:bg-accent'
                     )}
                   >
-                    {labels[type]}
-                  </button>
+                    <Checkbox
+                      checked={isActive}
+                      onCheckedChange={() => toggleSharing(type)}
+                    />
+                    <div className="flex items-center gap-2">
+                      <img src={config[type].image} alt={config[type].label} className="w-5 h-5 object-contain" />
+                      <span className="text-sm">{config[type].label}</span>
+                    </div>
+                  </label>
                 )
               })}
             </div>
@@ -205,7 +215,7 @@ export function FilterPanel({ open, onOpenChange, filters, onApply }: FilterPane
           <div className="space-y-3">
             <span className="text-sm font-medium">Amenities</span>
             <div className="grid grid-cols-2 gap-3">
-              {AMENITIES.map(({ id, label }) => {
+              {AMENITIES.map(({ id, label, image }) => {
                 const checked = localFilters.amenities.includes(id)
                 return (
                   <label
@@ -219,7 +229,10 @@ export function FilterPanel({ open, onOpenChange, filters, onApply }: FilterPane
                       checked={checked}
                       onCheckedChange={() => toggleAmenity(id)}
                     />
-                    <span className="text-sm">{label}</span>
+                    <div className="flex items-center gap-2">
+                      <img src={image} alt={label} className="w-5 h-5 object-contain drop-shadow-sm" />
+                      <span className="text-sm">{label}</span>
+                    </div>
                   </label>
                 )
               })}

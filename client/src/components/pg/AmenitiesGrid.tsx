@@ -1,15 +1,16 @@
-import { Wifi, Wind, UtensilsCrossed, Car, WashingMachine, Video, Zap } from 'lucide-react'
+import { Wifi, Wind, UtensilsCrossed, Car, WashingMachine, Video, Zap, Sparkles } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-const AMENITY_MAP: Record<string, { label: string; icon: React.ElementType }> = {
-  wifi: { label: 'WiFi', icon: Wifi },
-  ac: { label: 'AC', icon: Wind },
-  food_veg: { label: 'Food (Veg)', icon: UtensilsCrossed },
-  food_nonveg: { label: 'Food (Non-Veg)', icon: UtensilsCrossed },
-  laundry: { label: 'Laundry', icon: WashingMachine },
-  parking: { label: 'Parking', icon: Car },
-  cctv: { label: 'CCTV', icon: Video },
-  generator: { label: 'Generator', icon: Zap },
+const AMENITY_MAP: Record<string, { label: string; icon: React.ElementType; image?: string }> = {
+  wifi: { label: 'Wi-Fi', icon: Wifi, image: '/images/icon-wifi.png' },
+  ac: { label: 'AC', icon: Wind, image: '/images/icon-ac.png' },
+  food_veg: { label: 'Food', icon: UtensilsCrossed, image: '/images/icon-food.png' },
+  food_nonveg: { label: 'Food', icon: UtensilsCrossed, image: '/images/icon-food.png' },
+  laundry: { label: 'Laundry', icon: WashingMachine, image: '/images/icon-washing.png' },
+  parking: { label: 'Parking', icon: Car, image: '/images/icon-parking.png' },
+  cctv: { label: 'CCTV', icon: Video, image: '/images/icon-cctv.png' },
+  generator: { label: 'Power Backup', icon: Zap, image: '/images/icon-power.png' },
+  housekeeping: { label: 'Housekeeping', icon: Sparkles, image: '/images/icon-housekeeping.png' }
 }
 
 interface AmenityItem {
@@ -41,12 +42,18 @@ export function AmenitiesGrid({ amenities }: AmenitiesGridProps) {
           <div
             key={item.key}
             className={cn(
-              'flex items-center gap-3 rounded-xl border p-4 transition-colors',
+              'flex flex-col items-center justify-center gap-2 rounded-xl border p-4 transition-colors text-center',
               'border-border bg-card hover:bg-accent/50'
             )}
           >
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-              <Icon className="size-4 text-primary" />
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center">
+              {config.image ? (
+                <img src={config.image} alt={config.label} className="w-10 h-10 object-contain drop-shadow-sm hover:scale-110 transition-transform" />
+              ) : (
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                  <Icon className="size-5 text-primary" />
+                </div>
+              )}
             </div>
             <span className="text-sm font-medium">{config.label}</span>
           </div>

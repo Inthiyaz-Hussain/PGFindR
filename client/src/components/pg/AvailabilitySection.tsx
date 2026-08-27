@@ -7,11 +7,11 @@ import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
 import type { SharingTypeItem } from '@/types'
 
-const SHARING_CONFIG: Record<number, { label: string; icon: React.ElementType }> = {
-  1: { label: 'Single Sharing', icon: BedSingle },
-  2: { label: 'Double Sharing', icon: BedDouble },
-  3: { label: 'Triple Sharing', icon: Users },
-  4: { label: 'Dormitory', icon: Warehouse },
+const SHARING_CONFIG: Record<number, { label: string; icon: React.ElementType; image?: string }> = {
+  1: { label: 'Single Room', icon: BedSingle, image: '/images/room-single.png' },
+  2: { label: '2-Sharing', icon: BedDouble, image: '/images/room-double.png' },
+  3: { label: '3-Sharing', icon: Users, image: '/images/room-triple.png' },
+  4: { label: '4-Sharing', icon: Warehouse, image: '/images/room-four.png' },
 }
 
 interface AvailabilitySectionProps {
@@ -117,8 +117,14 @@ export function AvailabilitySection({
             <CardContent className="p-4">
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-                    <Icon className="size-5 text-primary" />
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center">
+                    {config.image ? (
+                      <img src={config.image} alt={config.label} className="w-full h-full object-contain" />
+                    ) : (
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                        <Icon className="size-5 text-primary" />
+                      </div>
+                    )}
                   </div>
                   <div className="min-w-0">
                     <div className="font-semibold text-sm">{config.label}</div>
