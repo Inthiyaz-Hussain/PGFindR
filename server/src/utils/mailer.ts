@@ -1,7 +1,6 @@
 import nodemailer from 'nodemailer'
 import dns from 'dns'
-import util from 'util'
-const resolve4 = util.promisify(dns.resolve4)
+const dnsPromises = dns.promises
 
 // Force IPv4 globally for DNS resolution to prevent ENETUNREACH on broken IPv6 networks
 try {
@@ -54,7 +53,7 @@ export async function sendMail(to: string, subject: string, htmlContent: string)
       let resolvedHost = smtpHost
       try {
         // Manually resolve IPv4 to completely bypass Node's broken IPv6 fallback
-        const addresses = await resolve4(smtpHost)
+        const addresses = await dnsPromises.resolve4(smtpHost)
         if (addresses && addresses.length > 0) {
           resolvedHost = addresses[0]
           console.log(`[MAILER] Resolved ${smtpHost} to IPv4: ${resolvedHost}`)
