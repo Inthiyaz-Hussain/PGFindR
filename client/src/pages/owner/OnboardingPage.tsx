@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Loader2, ArrowLeft, ArrowRight, CheckCircle2, Shield, Upload, Info, Clock, AlertTriangle, LogOut, Edit } from 'lucide-react'
+import { Loader2, ArrowLeft, ArrowRight, CheckCircle2, Shield, Upload, Info, Clock, AlertTriangle, LogOut, Edit, FileText } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAuth } from '@/hooks/useAuth'
 import { supabaseUntyped, ensureBucketExists } from '@/lib/supabase'
