@@ -903,7 +903,7 @@ router.get('/api/admin/kyc-queue', authenticateToken, requireRole('admin'), asyn
   try {
     const { data: profiles, error } = await supabase
       .from('profiles')
-      .select('*, documents:owner_documents(*), pgs:pg_listings(name)')
+      .select('*, documents:owner_documents(*), pgs:pg_listings(*, rooms(*, beds(*)), amenities(*))')
       .eq('kyc_status', 'submitted')
       .order('kyc_submitted_at', { ascending: false })
 
@@ -922,7 +922,8 @@ router.get('/api/admin/kyc-queue', authenticateToken, requireRole('admin'), asyn
         bank_ifsc: p.bank_ifsc,
         bank_holder_name: p.bank_holder_name
       },
-      pg_name: p.pgs?.[0]?.name || 'N/A'
+      pg_name: p.pgs?.[0]?.name || 'N/A',
+      pg_details: p.pgs?.[0] || null
     }))
 
     return res.json(queue)

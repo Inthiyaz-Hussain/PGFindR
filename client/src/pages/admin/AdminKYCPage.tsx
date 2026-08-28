@@ -31,6 +31,7 @@ interface KYCSubmission {
     bank_holder_name: string
   }
   pg_name: string
+  pg_details: any
 }
 
 export function AdminKYCPage() {
@@ -326,6 +327,41 @@ export function AdminKYCPage() {
                       </div>
                     </div>
 
+                    {/* PG Listing Details (Review before activating) */}
+                    {selectedKyc.pg_details && (
+                      <div className="bg-muted/30 border border-slate-100 dark:border-slate-800 p-4 rounded-xl space-y-3">
+                        <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider block">PG Details for Review</span>
+                        <div className="space-y-2 text-xs">
+                          <div>
+                            <span className="text-muted-foreground block">Name</span>
+                            <span className="font-semibold text-slate-800 dark:text-slate-200">{selectedKyc.pg_details.name}</span>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground block">Address</span>
+                            <span className="font-medium text-slate-800 dark:text-slate-200">{selectedKyc.pg_details.address}, {selectedKyc.pg_details.locality}, {selectedKyc.pg_details.city}</span>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2 mt-2 pt-2 border-t">
+                             <div>
+                               <span className="text-muted-foreground block">Total Rooms</span>
+                               <span className="font-medium text-slate-800 dark:text-slate-200">{selectedKyc.pg_details.rooms?.length || 0}</span>
+                             </div>
+                             <div>
+                               <span className="text-muted-foreground block">Total Beds</span>
+                               <span className="font-medium text-slate-800 dark:text-slate-200">{selectedKyc.pg_details.total_beds || 0}</span>
+                             </div>
+                             <div>
+                               <span className="text-muted-foreground block">Rent Range</span>
+                               <span className="font-medium text-slate-800 dark:text-slate-200">₹{selectedKyc.pg_details.monthly_rent_min} - ₹{selectedKyc.pg_details.monthly_rent_max}</span>
+                             </div>
+                             <div>
+                               <span className="text-muted-foreground block">Deposit</span>
+                               <span className="font-medium text-slate-800 dark:text-slate-200">₹{selectedKyc.pg_details.deposit_amount}</span>
+                             </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
                     {/* Documents Links */}
                     <div className="space-y-3">
                       <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider block">Document Proofs ({selectedKyc.document_count})</span>
@@ -509,29 +545,38 @@ export function AdminKYCPage() {
             </DialogTitle>
           </DialogHeader>
           <div className="flex-1 overflow-auto flex items-center justify-center p-4 bg-slate-950/5 rounded-lg border min-h-[50vh]">
-            {previewDoc?.url.startsWith('data:application/pdf') ? (
-              <iframe
-                src={previewDoc.url}
-                className="w-full h-[70vh] border-0 rounded-lg"
-                title="PDF Preview"
-              />
-            ) : previewDoc?.url.startsWith('data:image') || previewDoc?.url.includes('image') || previewDoc?.url.includes('.jpg') || previewDoc?.url.includes('.png') || previewDoc?.url.includes('.jpeg') ? (
+            {previewDoc?.url.toLowerCase().includes('.pdf') ? (
+              <object data={previewDoc.url} className="w-full h-[70vh] border-0 rounded-lg">
+                <div className="text-center space-y-3 p-8">
+                  <FileText className="h-16 w-16 text-slate-400 mx-auto" />
+                  <p className="text-sm text-muted-foreground">Preview not available in this browser.</p>
+                  <Button asChild variant="outline">
+                    <a href={previewDoc?.url} target="_blank" rel="noreferrer">
+                      Open PDF in New Tab
+                    </a>
+                  </Button>
+                </div>
+              </object>
+            ) : previewDoc?.url ? (
               <img
                 src={previewDoc.url}
                 alt="Document Preview"
                 className="max-w-full max-h-[70vh] object-contain rounded-lg shadow-sm"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = 'none';
+                  (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
+                }}
               />
-            ) : (
-              <div className="text-center space-y-3">
-                <FileText className="h-16 w-16 text-slate-400 mx-auto" />
-                <p className="text-sm text-muted-foreground">Preview not available for this file type.</p>
-                <Button asChild variant="outline">
-                  <a href={previewDoc?.url} download={`document_${previewDoc?.doc_type}`}>
-                    Download File
-                  </a>
-                </Button>
-              </div>
-            )}
+            ) : null}
+            <div className="hidden text-center space-y-3 w-full h-full flex-col items-center justify-center">
+              <FileText className="h-16 w-16 text-slate-400 mx-auto" />
+              <p className="text-sm text-muted-foreground">Preview failed to load.</p>
+              <Button asChild variant="outline">
+                <a href={previewDoc?.url} target="_blank" rel="noreferrer">
+                  Open File Directly
+                </a>
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
