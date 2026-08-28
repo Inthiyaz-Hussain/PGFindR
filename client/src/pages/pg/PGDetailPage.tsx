@@ -379,7 +379,7 @@ export function PGDetailPage() {
           {/* Amenities */}
           <section>
             <h2 className="scroll-m-20 text-xl font-semibold tracking-tight mb-3">Amenities</h2>
-            <AmenitiesGrid amenities={pg.amenities || []} />
+            <AmenitiesGrid amenities={pg.amenities || []} pg={pg as any} />
           </section>
 
           {/* Location & Connectivity */}

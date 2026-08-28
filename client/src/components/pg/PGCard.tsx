@@ -39,12 +39,21 @@ export function PGCard({ pg, liveAvailableBeds = null, className }: PGCardProps)
 
   const availabilityBadge = getAvailabilityBadge()
 
+  // Type assertion since `amenities` isn't strictly on PGListing type but is returned by API
+  const amenitiesArray = (pg as any).amenities || []
+
+  const hasWifi = pg.wifi_included || amenitiesArray.some((a: any) => a.key === 'wifi' && a.is_available)
+  const hasFood = pg.food_included || amenitiesArray.some((a: any) => (a.key === 'food_veg' || a.key === 'food_nonveg') && a.is_available)
+  const hasAC = pg.ac_rooms || amenitiesArray.some((a: any) => a.key === 'ac' && a.is_available)
+  const hasParking = pg.parking || amenitiesArray.some((a: any) => a.key === 'parking' && a.is_available)
+  const hasSecurity = pg.security_24x7 || amenitiesArray.some((a: any) => a.key === 'cctv' && a.is_available)
+
   const amenityIcons = [
-    { show: pg.wifi_included, image: '/images/icon-wifi.png', label: 'WiFi' },
-    { show: pg.food_included, image: '/images/icon-food.png', label: 'Food' },
-    { show: pg.ac_rooms, image: '/images/icon-ac.png', label: 'AC' },
-    { show: pg.parking, image: '/images/icon-parking.png', label: 'Parking' },
-    { show: pg.security_24x7, image: '/images/icon-cctv.png', label: 'Security' },
+    { show: hasWifi, image: '/images/icon-wifi.png', label: 'WiFi' },
+    { show: hasFood, image: '/images/icon-food.png', label: 'Food' },
+    { show: hasAC, image: '/images/icon-ac.png', label: 'AC' },
+    { show: hasParking, image: '/images/icon-parking.png', label: 'Parking' },
+    { show: hasSecurity, image: '/images/icon-cctv.png', label: 'Security' },
   ].filter((a) => a.show)
 
   return (

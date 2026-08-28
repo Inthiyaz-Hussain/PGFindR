@@ -13,17 +13,39 @@ const AMENITY_MAP: Record<string, { label: string; icon: React.ElementType; imag
   housekeeping: { label: 'Housekeeping', icon: Sparkles, image: '/images/icon-housekeeping.png' }
 }
 
+import type { PGListing } from '@/types'
+
 interface AmenityItem {
   key: string
   is_available: boolean
 }
 
 interface AmenitiesGridProps {
-  amenities: AmenityItem[]
+  amenities?: AmenityItem[]
+  pg?: PGListing
 }
 
-export function AmenitiesGrid({ amenities }: AmenitiesGridProps) {
-  const available = amenities.filter((a) => a.is_available)
+export function AmenitiesGrid({ amenities, pg }: AmenitiesGridProps) {
+  const merged: Record<string, boolean> = {}
+
+  if (pg) {
+    if (pg.wifi_included) merged['wifi'] = true
+    if (pg.food_included) merged['food_veg'] = true
+    if (pg.ac_rooms) merged['ac'] = true
+    if (pg.parking) merged['parking'] = true
+    if (pg.laundry) merged['laundry'] = true
+    if (pg.security_24x7) merged['cctv'] = true
+  }
+
+  if (amenities && Array.isArray(amenities)) {
+    amenities.forEach(a => {
+      if (a.is_available) {
+        merged[a.key] = true
+      }
+    })
+  }
+
+  const available = Object.keys(merged).map(key => ({ key, is_available: true }))
 
   if (available.length === 0) {
     return (

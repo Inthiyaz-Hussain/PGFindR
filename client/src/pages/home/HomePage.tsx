@@ -26,6 +26,7 @@ import {
 import { toast } from 'sonner'
 
 import { SplashScreen } from '@/components/home/SplashScreen'
+import { AppScreenshots } from '@/components/home/AppScreenshots'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useAuth } from '@/hooks/useAuth'
@@ -541,6 +542,11 @@ export function HomePage() {
             </Button>
           </div>
 
+          {/* App Screenshots Section */}
+          <div className="mb-12">
+            <AppScreenshots />
+          </div>
+
           {/* Bottom Call to Action Section */}
           <div className="rounded-3xl bg-gradient-to-br from-slate-900 to-indigo-950 border border-indigo-500/20 p-8 sm:p-10 text-center relative overflow-hidden mb-8">
             <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/5 rounded-full blur-3xl" />
@@ -656,6 +662,9 @@ export function HomePage() {
 
 
         </div>
+        
+        {/* App Screenshots Section */}
+        <AppScreenshots />
       </div>
 
       {/* Choice Modal */}
