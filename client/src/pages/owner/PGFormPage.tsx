@@ -428,6 +428,7 @@ export function PGFormPage() {
           .upload(uniqueFileName, fileToUpload, {
             cacheControl: '3600',
             upsert: true,
+            contentType: fileToUpload.type,
           })
 
         if (uploadError) {

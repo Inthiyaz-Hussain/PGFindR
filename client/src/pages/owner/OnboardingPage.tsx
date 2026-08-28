@@ -207,7 +207,7 @@ export function OnboardingPage() {
         
         const { error: uploadError } = await supabaseUntyped.storage
           .from('pg-images')
-          .upload(fileName, file, { cacheControl: '3600', upsert: false })
+          .upload(fileName, file, { cacheControl: '3600', upsert: false, contentType: file.type })
 
         if (uploadError) throw uploadError
 
@@ -298,7 +298,7 @@ export function OnboardingPage() {
 
       const { error: uploadError } = await supabaseUntyped.storage
         .from('owner-documents')
-        .upload(fileName, file, { cacheControl: '3600', upsert: false })
+        .upload(fileName, file, { cacheControl: '3600', upsert: false, contentType: file.type })
 
       if (uploadError) throw uploadError
 
