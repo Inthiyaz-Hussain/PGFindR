@@ -895,9 +895,9 @@ export function OnboardingPage() {
                         max="100"
                         value={config.num_rooms}
                         onChange={e => {
-                          const val = Math.max(1, Number(e.target.value) || 1)
+                          const val = e.target.value === '' ? '' : Math.max(1, Number(e.target.value))
                           const newConfigs = [...roomConfigs]
-                          newConfigs[index] = { ...config, num_rooms: val }
+                          newConfigs[index] = { ...config, num_rooms: val as any }
                           setRoomConfigs(newConfigs)
                         }}
                         placeholder="e.g. 10"
@@ -938,8 +938,9 @@ export function OnboardingPage() {
                         min="100"
                         value={config.monthly_rent}
                         onChange={e => {
+                          const val = e.target.value === '' ? '' : Math.max(0, Number(e.target.value))
                           const newConfigs = [...roomConfigs]
-                          newConfigs[index] = { ...config, monthly_rent: Math.max(0, Number(e.target.value) || 0) }
+                          newConfigs[index] = { ...config, monthly_rent: val as any }
                           setRoomConfigs(newConfigs)
                         }}
                         placeholder="e.g. 8000"
@@ -957,10 +958,10 @@ export function OnboardingPage() {
                         max={config.num_rooms * config.sharing_type}
                         value={config.occupied_beds}
                         onChange={e => {
-                          const totalBeds = config.num_rooms * config.sharing_type
-                          const val = Math.max(0, Math.min(totalBeds, Number(e.target.value) || 0))
+                          const totalBeds = (Number(config.num_rooms) || 1) * config.sharing_type
+                          const val = e.target.value === '' ? '' : Math.max(0, Math.min(totalBeds, Number(e.target.value)))
                           const newConfigs = [...roomConfigs]
-                          newConfigs[index] = { ...config, occupied_beds: val }
+                          newConfigs[index] = { ...config, occupied_beds: val as any }
                           setRoomConfigs(newConfigs)
                         }}
                         placeholder="e.g. 4"
