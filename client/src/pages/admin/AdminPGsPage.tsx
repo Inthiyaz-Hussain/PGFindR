@@ -243,13 +243,28 @@ export function AdminPGsPage() {
                   const cfg = STATUS_CONFIG[pg.status]
                   const owner = pg.owner as { full_name?: string; phone?: string | null } | null
                   return (
-                    <TableRow key={pg.id} onClick={() => navigate(`/pg/${pg.id}`)} className="cursor-pointer hover:bg-muted/50 transition-colors">
+                    <TableRow key={pg.id} className="hover:bg-muted/50 transition-colors">
                       <TableCell>
-                        <div className="font-medium">{pg.name}</div>
+                        <div 
+                          className="font-medium text-indigo-600 dark:text-indigo-400 cursor-pointer hover:underline"
+                          onClick={(e) => { e.stopPropagation(); navigate(`/pg/${pg.id}`) }}
+                        >
+                          {pg.name}
+                        </div>
                         <div className="text-xs text-muted-foreground capitalize">{pg.pg_type} PG</div>
                       </TableCell>
                       <TableCell>
-                        <div>{owner?.full_name || '—'}</div>
+                        <div 
+                          className="font-medium cursor-pointer hover:text-indigo-600 dark:hover:text-indigo-400 hover:underline"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            if (owner?.full_name) {
+                              navigate(`/admin/owners?search=${encodeURIComponent(owner.full_name)}`)
+                            }
+                          }}
+                        >
+                          {owner?.full_name || '—'}
+                        </div>
                         {owner?.phone && <div className="text-xs text-muted-foreground">{owner.phone}</div>}
                       </TableCell>
                       <TableCell>
