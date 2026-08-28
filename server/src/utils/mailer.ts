@@ -1,5 +1,7 @@
 import nodemailer from 'nodemailer'
 import dns from 'dns'
+import util from 'util'
+const resolve4 = util.promisify(dns.resolve4)
 
 // Force IPv4 globally for DNS resolution to prevent ENETUNREACH on broken IPv6 networks
 try {
@@ -49,8 +51,20 @@ export async function sendMail(to: string, subject: string, htmlContent: string)
 
   try {
     if (!transporterInstance) {
+      let resolvedHost = smtpHost
+      try {
+        // Manually resolve IPv4 to completely bypass Node's broken IPv6 fallback
+        const addresses = await resolve4(smtpHost)
+        if (addresses && addresses.length > 0) {
+          resolvedHost = addresses[0]
+          console.log(`[MAILER] Resolved ${smtpHost} to IPv4: ${resolvedHost}`)
+        }
+      } catch (dnsErr) {
+        console.warn(`[MAILER] Failed to resolve IPv4 for ${smtpHost}, falling back to default hostname`)
+      }
+
       transporterInstance = nodemailer.createTransport({
-        host: smtpHost,
+        host: resolvedHost,
         port: Number(process.env.SMTP_PORT || 465),
         secure: Number(process.env.SMTP_PORT || 465) === 465,
         auth: {
@@ -58,6 +72,7 @@ export async function sendMail(to: string, subject: string, htmlContent: string)
           pass: smtpPass,
         },
         tls: {
+          servername: smtpHost, // Required for SSL certificate validation when connecting via IP
           rejectUnauthorized: false,
         },
         family: 4, // Force IPv4 to prevent ENETUNREACH on IPv6 networks
