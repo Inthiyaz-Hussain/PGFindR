@@ -26,7 +26,6 @@ import {
 import { toast } from 'sonner'
 
 import { SplashScreen } from '@/components/home/SplashScreen'
-import { AppScreenshots } from '@/components/home/AppScreenshots'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useAuth } from '@/hooks/useAuth'
@@ -480,8 +479,11 @@ export function HomePage() {
             {/* Feature 1: Get Tenants */}
             <div className="rounded-2xl border border-slate-800 bg-slate-900/40 backdrop-blur-md p-6 hover:border-indigo-500/30 transition-all duration-300 flex flex-col justify-between">
               <div className="space-y-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-                  <User className="h-6 w-6" />
+                <div className="flex justify-between items-start">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                    <User className="h-6 w-6" />
+                  </div>
+                  <img src="/Screenshot 2026-08-27 164009.png" alt="Get Tenants" className="h-20 w-auto object-contain drop-shadow-md rounded-lg" />
                 </div>
                 <h3 className="text-xl font-bold text-white">Get Verified Tenants</h3>
                 <p className="text-sm text-slate-400 leading-relaxed">
@@ -503,8 +505,11 @@ export function HomePage() {
             {/* Feature 2: Manage Empty Beds */}
             <div className="rounded-2xl border border-slate-800 bg-slate-900/40 backdrop-blur-md p-6 hover:border-indigo-500/30 transition-all duration-300 flex flex-col justify-between">
               <div className="space-y-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-                  <BedDouble className="h-6 w-6" />
+                <div className="flex justify-between items-start">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                    <BedDouble className="h-6 w-6" />
+                  </div>
+                  <img src="/Screenshot 2026-08-27 164035.png" alt="Manage Inventory" className="h-20 w-auto object-contain drop-shadow-md rounded-lg" />
                 </div>
                 <h3 className="text-xl font-bold text-white">Manage Room & Bed Inventory</h3>
                 <p className="text-sm text-slate-400 leading-relaxed">
@@ -526,8 +531,11 @@ export function HomePage() {
             {/* Feature 3: Digital Presence */}
             <div className="rounded-2xl border border-slate-800 bg-slate-900/40 backdrop-blur-md p-6 hover:border-indigo-500/30 transition-all duration-300 flex flex-col justify-between">
               <div className="space-y-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-                  <Globe className="h-6 w-6" />
+                <div className="flex justify-between items-start">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                    <Globe className="h-6 w-6" />
+                  </div>
+                  <img src="/Screenshot 2026-08-27 164048.png" alt="Digital Brand" className="h-20 w-auto object-contain drop-shadow-md rounded-lg" />
                 </div>
                 <h3 className="text-xl font-bold text-white">Digital Brand Presence</h3>
                 <p className="text-sm text-slate-400 leading-relaxed">
@@ -560,10 +568,7 @@ export function HomePage() {
             </Button>
           </div>
 
-          {/* App Screenshots Section */}
-          <div className="mb-12">
-            <AppScreenshots />
-          </div>
+
 
           {/* Bottom Call to Action Section */}
           <div className="rounded-3xl bg-gradient-to-br from-slate-900 to-indigo-950 border border-indigo-500/20 p-8 sm:p-10 text-center relative overflow-hidden mb-8">
@@ -620,10 +625,13 @@ export function HomePage() {
           {/* Card 1: Seeker */}
           <div className="group relative flex flex-col justify-between rounded-2xl border border-slate-800 bg-slate-900/60 backdrop-blur-xl p-6 shadow-xl hover:border-indigo-500/40 hover:bg-slate-900/80 transition-all duration-300">
             <div className="space-y-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 group-hover:bg-indigo-600 group-hover:text-white transition-colors duration-300">
-                <Compass className="h-6 w-6" />
+              <div className="flex justify-between items-start">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 group-hover:bg-indigo-600 group-hover:text-white transition-colors duration-300">
+                  <Compass className="h-6 w-6" />
+                </div>
+                <img src="/Screenshot 2026-08-27 164141.png" alt="Seeker" className="h-24 w-auto object-contain opacity-80 group-hover:opacity-100 transition-opacity drop-shadow-md rounded-lg" />
               </div>
-              <h2 className="text-xl font-bold text-white">Seeker / Tenant</h2>
+              <h2 className="text-xl font-bold text-white mt-2">Seeker / Tenant</h2>
               <p className="text-sm text-slate-400 leading-relaxed">
                 Find and book verified premium PG accommodations. Enjoy easy online booking, real-time availability updates, and secure monthly rent payments.
               </p>
@@ -654,10 +662,13 @@ export function HomePage() {
           {/* Card 2: Owner */}
           <div className="group relative flex flex-col justify-between rounded-2xl border border-slate-800 bg-slate-900/60 backdrop-blur-xl p-6 shadow-xl hover:border-indigo-500/40 hover:bg-slate-900/80 transition-all duration-300">
             <div className="space-y-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 group-hover:bg-indigo-600 group-hover:text-white transition-colors duration-300">
-                <Building2 className="h-6 w-6" />
+              <div className="flex justify-between items-start">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 group-hover:bg-indigo-600 group-hover:text-white transition-colors duration-300">
+                  <Building2 className="h-6 w-6" />
+                </div>
+                <img src="/Screenshot 2026-08-27 164150.png" alt="Property Owner" className="h-24 w-auto object-contain opacity-80 group-hover:opacity-100 transition-opacity drop-shadow-md rounded-lg" />
               </div>
-              <h2 className="text-xl font-bold text-white">Property Owner</h2>
+              <h2 className="text-xl font-bold text-white mt-2">Property Owner</h2>
               <p className="text-sm text-slate-400 leading-relaxed">
                 List your PG properties, manage room inventory, accept bookings from verified tenants, verify KYC documentation, and track your monthly earnings.
               </p>
@@ -681,8 +692,7 @@ export function HomePage() {
 
         </div>
         
-        {/* App Screenshots Section */}
-        <AppScreenshots />
+
       </div>
 
       {/* Choice Modal */}
