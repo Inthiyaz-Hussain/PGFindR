@@ -1251,7 +1251,7 @@ export function OnboardingPage() {
                     type="file"
                     id="onboarding-id-proof"
                     className="hidden"
-                    accept="image/*,application/pdf"
+                    accept=".pdf,.png,.jpg,.jpeg,image/*,application/pdf"
                     onChange={e => e.target.files?.[0] && handleKycUpload('id_proof', e.target.files[0])}
                     disabled={uploadingKyc.id_proof}
                   />
@@ -1275,10 +1275,7 @@ export function OnboardingPage() {
                       </div>
                       <a href={kycDocuments.id_proof} target="_blank" rel="noreferrer" className="block w-full aspect-[4/3] bg-slate-100 dark:bg-slate-800 rounded border border-slate-200 dark:border-slate-700 overflow-hidden hover:opacity-90 transition-opacity relative group">
                         {kycDocuments.id_proof.toLowerCase().includes('.pdf') ? (
-                          <div className="w-full h-full flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-900/50 p-4">
-                             <FileText className="size-12 text-indigo-400 mb-2" />
-                             <span className="text-xs font-medium text-slate-600 dark:text-slate-400">PDF Document</span>
-                          </div>
+                          <iframe src={kycDocuments.id_proof} className="w-full h-full pointer-events-none object-cover border-0" title="ID Proof Preview" />
                         ) : (
                           <img 
                             src={kycDocuments.id_proof} 
@@ -1312,7 +1309,7 @@ export function OnboardingPage() {
                     type="file"
                     id="onboarding-address-proof"
                     className="hidden"
-                    accept="image/*,application/pdf"
+                    accept=".pdf,.png,.jpg,.jpeg,image/*,application/pdf"
                     onChange={e => e.target.files?.[0] && handleKycUpload('address_proof', e.target.files[0])}
                     disabled={uploadingKyc.address_proof}
                   />
@@ -1336,10 +1333,7 @@ export function OnboardingPage() {
                       </div>
                       <a href={kycDocuments.address_proof} target="_blank" rel="noreferrer" className="block w-full aspect-[4/3] bg-slate-100 dark:bg-slate-800 rounded border border-slate-200 dark:border-slate-700 overflow-hidden hover:opacity-90 transition-opacity relative group">
                         {kycDocuments.address_proof.toLowerCase().includes('.pdf') ? (
-                          <div className="w-full h-full flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-900/50 p-4">
-                             <FileText className="size-12 text-indigo-400 mb-2" />
-                             <span className="text-xs font-medium text-slate-600 dark:text-slate-400">PDF Document</span>
-                          </div>
+                          <iframe src={kycDocuments.address_proof} className="w-full h-full pointer-events-none object-cover border-0" title="Address Proof Preview" />
                         ) : (
                           <img 
                             src={kycDocuments.address_proof} 
@@ -1373,7 +1367,7 @@ export function OnboardingPage() {
                     type="file"
                     id="onboarding-ownership-proof"
                     className="hidden"
-                    accept="image/*,application/pdf"
+                    accept=".pdf,.png,.jpg,.jpeg,image/*,application/pdf"
                     onChange={e => e.target.files?.[0] && handleKycUpload('ownership_proof', e.target.files[0])}
                     disabled={uploadingKyc.ownership_proof}
                   />
@@ -1397,10 +1391,7 @@ export function OnboardingPage() {
                       </div>
                       <a href={kycDocuments.ownership_proof} target="_blank" rel="noreferrer" className="block w-full aspect-[4/3] bg-slate-100 dark:bg-slate-800 rounded border border-slate-200 dark:border-slate-700 overflow-hidden hover:opacity-90 transition-opacity relative group">
                         {kycDocuments.ownership_proof.toLowerCase().includes('.pdf') ? (
-                          <div className="w-full h-full flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-900/50 p-4">
-                             <FileText className="size-12 text-indigo-400 mb-2" />
-                             <span className="text-xs font-medium text-slate-600 dark:text-slate-400">PDF Document</span>
-                          </div>
+                          <iframe src={kycDocuments.ownership_proof} className="w-full h-full pointer-events-none object-cover border-0" title="Ownership Proof Preview" />
                         ) : (
                           <img 
                             src={kycDocuments.ownership_proof} 
