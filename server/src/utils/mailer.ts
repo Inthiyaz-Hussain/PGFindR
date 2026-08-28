@@ -53,7 +53,7 @@ export async function sendMail(to: string, subject: string, htmlContent: string)
           rejectUnauthorized: false,
         },
         family: 4, // Force IPv4 to prevent ENETUNREACH on IPv6 networks
-      })
+      } as any)
     }
 
     const info = await transporterInstance.sendMail({
