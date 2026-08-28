@@ -1256,9 +1256,9 @@ export function OnboardingPage() {
                     onChange={e => e.target.files?.[0] && handleKycUpload('id_proof', e.target.files[0])}
                     disabled={uploadingKyc.id_proof}
                   />
-                  <div 
-                    onClick={() => !uploadingKyc.id_proof && document.getElementById('onboarding-id-proof')?.click()}
-                    className={`border border-dashed border-slate-200 dark:border-slate-800 rounded-lg p-3 text-center cursor-pointer bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors ${uploadingKyc.id_proof ? 'opacity-50 pointer-events-none' : ''}`}
+                  <label 
+                    htmlFor="onboarding-id-proof"
+                    className={`block border border-dashed border-slate-200 dark:border-slate-800 rounded-lg p-3 text-center cursor-pointer bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors ${uploadingKyc.id_proof ? 'opacity-50 pointer-events-none' : ''}`}
                   >
                     {uploadingKyc.id_proof ? (
                       <Loader2 className="mx-auto size-5 text-indigo-500 animate-spin mb-1" />
@@ -1267,7 +1267,7 @@ export function OnboardingPage() {
                     )}
                     <span className="text-[10px] font-semibold text-slate-600 block">{uploadingKyc.id_proof ? 'Uploading...' : 'Upload Aadhaar PDF'}</span>
                     <span className="text-[9px] text-muted-foreground">Click to browse (Max 5MB)</span>
-                  </div>
+                  </label>
                   {kycDocuments.id_proof && (
                     <div className="mt-3 text-center">
                       <div className="text-[10px] text-emerald-600 font-semibold flex items-center justify-center gap-1 mb-2">
@@ -1314,9 +1314,9 @@ export function OnboardingPage() {
                     onChange={e => e.target.files?.[0] && handleKycUpload('address_proof', e.target.files[0])}
                     disabled={uploadingKyc.address_proof}
                   />
-                  <div 
-                    onClick={() => !uploadingKyc.address_proof && document.getElementById('onboarding-address-proof')?.click()}
-                    className={`border border-dashed border-slate-200 dark:border-slate-800 rounded-lg p-3 text-center cursor-pointer bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors ${uploadingKyc.address_proof ? 'opacity-50 pointer-events-none' : ''}`}
+                  <label 
+                    htmlFor="onboarding-address-proof"
+                    className={`block border border-dashed border-slate-200 dark:border-slate-800 rounded-lg p-3 text-center cursor-pointer bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors ${uploadingKyc.address_proof ? 'opacity-50 pointer-events-none' : ''}`}
                   >
                     {uploadingKyc.address_proof ? (
                       <Loader2 className="mx-auto size-5 text-indigo-500 animate-spin mb-1" />
@@ -1325,7 +1325,7 @@ export function OnboardingPage() {
                     )}
                     <span className="text-[10px] font-semibold text-slate-600 block">{uploadingKyc.address_proof ? 'Uploading...' : 'Upload PAN PDF'}</span>
                     <span className="text-[9px] text-muted-foreground">Click to browse (Max 5MB)</span>
-                  </div>
+                  </label>
                   {kycDocuments.address_proof && (
                     <div className="mt-3 text-center">
                       <div className="text-[10px] text-emerald-600 font-semibold flex items-center justify-center gap-1 mb-2">
@@ -1372,9 +1372,9 @@ export function OnboardingPage() {
                     onChange={e => e.target.files?.[0] && handleKycUpload('ownership_proof', e.target.files[0])}
                     disabled={uploadingKyc.ownership_proof}
                   />
-                  <div 
-                    onClick={() => !uploadingKyc.ownership_proof && document.getElementById('onboarding-ownership-proof')?.click()}
-                    className={`border border-dashed border-slate-200 dark:border-slate-800 rounded-lg p-3 text-center cursor-pointer bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors ${uploadingKyc.ownership_proof ? 'opacity-50 pointer-events-none' : ''}`}
+                  <label 
+                    htmlFor="onboarding-ownership-proof"
+                    className={`block border border-dashed border-slate-200 dark:border-slate-800 rounded-lg p-3 text-center cursor-pointer bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors ${uploadingKyc.ownership_proof ? 'opacity-50 pointer-events-none' : ''}`}
                   >
                     {uploadingKyc.ownership_proof ? (
                       <Loader2 className="mx-auto size-5 text-indigo-500 animate-spin mb-1" />
@@ -1383,7 +1383,7 @@ export function OnboardingPage() {
                     )}
                     <span className="text-[10px] font-semibold text-slate-600 block">{uploadingKyc.ownership_proof ? 'Uploading...' : 'Upload Deed/Tax PDF'}</span>
                     <span className="text-[9px] text-muted-foreground">Click to browse (Max 5MB)</span>
-                  </div>
+                  </label>
                   {kycDocuments.ownership_proof && (
                     <div className="mt-3 text-center">
                       <div className="text-[10px] text-emerald-600 font-semibold flex items-center justify-center gap-1 mb-2">
