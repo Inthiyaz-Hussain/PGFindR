@@ -1253,7 +1253,10 @@ export function OnboardingPage() {
                     id="onboarding-id-proof"
                     className="hidden"
                     accept=".pdf,.png,.jpg,.jpeg,image/*,application/pdf"
-                    onChange={e => e.target.files?.[0] && handleKycUpload('id_proof', e.target.files[0])}
+                    onChange={e => {
+                      if (e.target.files?.[0]) handleKycUpload('id_proof', e.target.files[0])
+                      e.target.value = ''
+                    }}
                     disabled={uploadingKyc.id_proof}
                   />
                   <label 
@@ -1311,7 +1314,10 @@ export function OnboardingPage() {
                     id="onboarding-address-proof"
                     className="hidden"
                     accept=".pdf,.png,.jpg,.jpeg,image/*,application/pdf"
-                    onChange={e => e.target.files?.[0] && handleKycUpload('address_proof', e.target.files[0])}
+                    onChange={e => {
+                      if (e.target.files?.[0]) handleKycUpload('address_proof', e.target.files[0])
+                      e.target.value = ''
+                    }}
                     disabled={uploadingKyc.address_proof}
                   />
                   <label 
@@ -1369,7 +1375,10 @@ export function OnboardingPage() {
                     id="onboarding-ownership-proof"
                     className="hidden"
                     accept=".pdf,.png,.jpg,.jpeg,image/*,application/pdf"
-                    onChange={e => e.target.files?.[0] && handleKycUpload('ownership_proof', e.target.files[0])}
+                    onChange={e => {
+                      if (e.target.files?.[0]) handleKycUpload('ownership_proof', e.target.files[0])
+                      e.target.value = ''
+                    }}
                     disabled={uploadingKyc.ownership_proof}
                   />
                   <label 
@@ -1431,14 +1440,24 @@ export function OnboardingPage() {
 
       {/* Wizard Footer Buttons */}
       <div className="flex justify-between items-center border-t pt-5">
-        <Button
-          variant="outline"
-          disabled={step === 1 || submitting}
-          onClick={() => setStep(step - 1)}
-          className="border-slate-300 hover:bg-slate-100"
-        >
-          <ArrowLeft className="size-4 mr-2" /> Back
-        </Button>
+        <div className="flex gap-2 sm:gap-3">
+          <Button
+            variant="outline"
+            disabled={step === 1 || submitting}
+            onClick={() => setStep(step - 1)}
+            className="border-slate-300 hover:bg-slate-100 px-3 sm:px-4"
+          >
+            <ArrowLeft className="size-4 sm:mr-2" /> <span className="hidden sm:inline">Back</span>
+          </Button>
+
+          <Button
+            variant="secondary"
+            onClick={() => toast.success('Draft saved successfully! You can resume later.')}
+            className="bg-slate-100 text-slate-700 hover:bg-slate-200"
+          >
+            Save as Draft
+          </Button>
+        </div>
 
         {step < 5 ? (
           <Button
