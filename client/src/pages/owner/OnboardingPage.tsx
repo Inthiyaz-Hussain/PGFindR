@@ -1274,9 +1274,13 @@ export function OnboardingPage() {
                         Document Attached
                       </div>
                       <a href={kycDocuments.id_proof} target="_blank" rel="noreferrer" className="block w-full aspect-[4/3] bg-slate-100 dark:bg-slate-800 rounded border border-slate-200 dark:border-slate-700 overflow-hidden hover:opacity-90 transition-opacity relative group">
-                        <object data={kycDocuments.id_proof} className="w-full h-full pointer-events-none object-cover">
-                           <div className="flex items-center justify-center w-full h-full text-xs text-indigo-600 font-medium p-4 text-center">Preview not available. Click to view.</div>
-                        </object>
+                        {kycDocuments.id_proof.toLowerCase().includes('.pdf') ? (
+                          <object data={kycDocuments.id_proof} className="w-full h-full pointer-events-none object-cover">
+                             <div className="flex items-center justify-center w-full h-full text-xs text-indigo-600 font-medium p-4 text-center">Preview not available. Click to view.</div>
+                          </object>
+                        ) : (
+                          <img src={kycDocuments.id_proof} alt="ID Proof" className="w-full h-full object-cover" />
+                        )}
                         <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                           <span className="bg-white text-black text-xs font-bold px-3 py-1.5 rounded-full">Click to open full size</span>
                         </div>
@@ -1318,9 +1322,13 @@ export function OnboardingPage() {
                         Document Attached
                       </div>
                       <a href={kycDocuments.address_proof} target="_blank" rel="noreferrer" className="block w-full aspect-[4/3] bg-slate-100 dark:bg-slate-800 rounded border border-slate-200 dark:border-slate-700 overflow-hidden hover:opacity-90 transition-opacity relative group">
-                        <object data={kycDocuments.address_proof} className="w-full h-full pointer-events-none object-cover">
-                           <div className="flex items-center justify-center w-full h-full text-xs text-indigo-600 font-medium p-4 text-center">Preview not available. Click to view.</div>
-                        </object>
+                        {kycDocuments.address_proof.toLowerCase().includes('.pdf') ? (
+                          <object data={kycDocuments.address_proof} className="w-full h-full pointer-events-none object-cover">
+                             <div className="flex items-center justify-center w-full h-full text-xs text-indigo-600 font-medium p-4 text-center">Preview not available. Click to view.</div>
+                          </object>
+                        ) : (
+                          <img src={kycDocuments.address_proof} alt="Address Proof" className="w-full h-full object-cover" />
+                        )}
                         <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                           <span className="bg-white text-black text-xs font-bold px-3 py-1.5 rounded-full">Click to open full size</span>
                         </div>
@@ -1362,9 +1370,13 @@ export function OnboardingPage() {
                         Document Attached
                       </div>
                       <a href={kycDocuments.ownership_proof} target="_blank" rel="noreferrer" className="block w-full aspect-[4/3] bg-slate-100 dark:bg-slate-800 rounded border border-slate-200 dark:border-slate-700 overflow-hidden hover:opacity-90 transition-opacity relative group">
-                        <object data={kycDocuments.ownership_proof} className="w-full h-full pointer-events-none object-cover">
-                           <div className="flex items-center justify-center w-full h-full text-xs text-indigo-600 font-medium p-4 text-center">Preview not available. Click to view.</div>
-                        </object>
+                        {kycDocuments.ownership_proof.toLowerCase().includes('.pdf') ? (
+                          <object data={kycDocuments.ownership_proof} className="w-full h-full pointer-events-none object-cover">
+                             <div className="flex items-center justify-center w-full h-full text-xs text-indigo-600 font-medium p-4 text-center">Preview not available. Click to view.</div>
+                          </object>
+                        ) : (
+                          <img src={kycDocuments.ownership_proof} alt="Ownership Proof" className="w-full h-full object-cover" />
+                        )}
                         <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                           <span className="bg-white text-black text-xs font-bold px-3 py-1.5 rounded-full">Click to open full size</span>
                         </div>

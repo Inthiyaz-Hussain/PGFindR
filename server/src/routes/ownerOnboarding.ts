@@ -1200,60 +1200,85 @@ router.post('/api/owner/onboard', authenticateToken, requireRole('owner'), async
     await supabase.from('rooms').delete().eq('pg_id', pgId)
     await supabase.from('beds').delete().eq('pg_id', pgId)
 
-    for (const room of rooms) {
-      // Find or insert sharing type
-      const { data: sharingType, error: stErr } = await supabase
-        .from('sharing_types')
-        .upsert({
-          pg_id: pgId,
-          type: room.sharing_type,
-          price_monthly: room.beds[0]?.monthly_rent || 10000,
-          total_beds: room.beds.length,
-          occupied_beds: room.beds.filter((b: any) => b.status === 'occupied').length,
-        }, { onConflict: 'pg_id,type' })
-        .select('id')
-        .single()
-
-      if (stErr) throw stErr
-
-      // Create room
-      const { data: rm, error: rmErr } = await supabase
-        .from('rooms')
-        .insert({
-          pg_id: pgId,
-          sharing_type_id: sharingType.id,
-          room_label: room.room_label,
-          floor: room.floor,
-          door_facing: room.door_facing,
-          has_window: room.has_window,
-          window_facing: room.window_facing || null,
-          window_count: room.window_count || null,
-          room_size_sqft: room.room_size_sqft || null,
-          room_notes: room.room_notes || null
-        })
-        .select('id')
-        .single()
-
-      if (rmErr) throw rmErr
-
-      // Create beds
-      const sharingTypeLabel = room.sharing_type === 1 ? 'single' : room.sharing_type === 2 ? 'double' : room.sharing_type === 3 ? 'triple' : 'dormitory'
-      const bedInserts = room.beds.map((bed: any) => ({
+    if (rooms && rooms.length > 0) {
+      // 1. Batch upsert sharing types
+      const sharingTypesToUpsert = rooms.map((room: any) => ({
         pg_id: pgId,
-        room_id: rm.id,
-        room_number: room.room_label, // Legacy compatibility
-        bed_label: bed.bed_label,
-        sharing_type: sharingTypeLabel, // Legacy compatibility
-        monthly_rent: bed.monthly_rent,
-        status: bed.status,
-        floor_number: room.floor, // Legacy compatibility
-        has_ac: standardAmenities.ac || false, // Legacy compatibility
-        has_attached_bath: false, // Legacy compatibility
-        bed_type: bed.bed_type,
+        type: room.sharing_type,
+        price_monthly: room.beds?.[0]?.monthly_rent || 10000,
+        total_beds: room.beds?.length || 0,
+        occupied_beds: room.beds?.filter((b: any) => b.status === 'occupied').length || 0,
+      }))
+      
+      const uniqueTypes = [...new Map(sharingTypesToUpsert.map((item: any) => [item.type, item])).values()]
+      
+      const { data: upsertedSharingTypes, error: stErr } = await supabase
+        .from('sharing_types')
+        .upsert(uniqueTypes, { onConflict: 'pg_id,type' })
+        .select('id, type')
+        
+      if (stErr) throw stErr
+      
+      const typeIdMap: Record<number, string> = {}
+      upsertedSharingTypes?.forEach((st: any) => {
+        typeIdMap[st.type] = st.id
+      })
+
+      // 2. Batch insert rooms
+      const roomsToInsert = rooms.map((room: any) => ({
+        pg_id: pgId,
+        sharing_type_id: typeIdMap[room.sharing_type],
+        room_label: room.room_label,
+        floor: room.floor,
+        door_facing: room.door_facing,
+        has_window: room.has_window,
+        window_facing: room.window_facing || null,
+        window_count: room.window_count || null,
+        room_size_sqft: room.room_size_sqft || null,
+        room_notes: room.room_notes || null
       }))
 
-      const { error: bedErr } = await supabase.from('beds').insert(bedInserts)
-      if (bedErr) throw bedErr
+      const { data: insertedRooms, error: rmErr } = await supabase
+        .from('rooms')
+        .insert(roomsToInsert)
+        .select('id, room_label')
+
+      if (rmErr) throw rmErr
+      
+      const roomLabelToIdMap: Record<string, string> = {}
+      insertedRooms?.forEach((rm: any) => {
+        roomLabelToIdMap[rm.room_label] = rm.id
+      })
+
+      // 3. Batch insert beds
+      const allBedInserts: any[] = []
+      for (const room of rooms) {
+        const rmId = roomLabelToIdMap[room.room_label]
+        const sharingTypeLabel = room.sharing_type === 1 ? 'single' : room.sharing_type === 2 ? 'double' : room.sharing_type === 3 ? 'triple' : 'dormitory'
+        
+        if (room.beds && Array.isArray(room.beds)) {
+          const bedInserts = room.beds.map((bed: any) => ({
+            pg_id: pgId,
+            room_id: rmId,
+            room_number: room.room_label, // Legacy compatibility
+            bed_label: bed.bed_label,
+            sharing_type: sharingTypeLabel, // Legacy compatibility
+            monthly_rent: bed.monthly_rent,
+            status: bed.status,
+            floor_number: room.floor, // Legacy compatibility
+            has_ac: standardAmenities.ac || false, // Legacy compatibility
+            has_attached_bath: false, // Legacy compatibility
+            bed_type: bed.bed_type,
+          }))
+          allBedInserts.push(...bedInserts)
+        }
+      }
+
+      if (allBedInserts.length > 0) {
+        // Chunk inserts to prevent massive payloads if necessary (supabase handles up to thousands easily though)
+        const { error: bedErr } = await supabase.from('beds').insert(allBedInserts)
+        if (bedErr) throw bedErr
+      }
     }
 
     // E. Update Standard Amenities
