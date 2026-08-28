@@ -90,7 +90,7 @@ router.get('/', async (req, res) => {
     // ── Build query ──────────────────────────────────────────────────────────
     let query = supabase
       .from('pg_listings')
-      .select('*, photos:pg_photos(url, is_primary)')
+      .select('*, photos:pg_photos(url, is_primary), amenities(*)')
       .eq('status', 'approved')
 
     const CATEGORY_KEYWORDS = [
