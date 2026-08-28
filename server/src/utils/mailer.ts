@@ -1,4 +1,12 @@
 import nodemailer from 'nodemailer'
+import dns from 'dns'
+
+// Force IPv4 globally for DNS resolution to prevent ENETUNREACH on broken IPv6 networks
+try {
+  dns.setDefaultResultOrder('ipv4first')
+} catch (e) {
+  // Ignore if not supported in this Node version
+}
 import dotenv from 'dotenv'
 import path from 'path'
 
