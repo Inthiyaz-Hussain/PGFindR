@@ -292,6 +292,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } else {
         setLoading(false)
       }
+    }).catch(err => {
+      console.error('Error fetching initial session:', err)
+      setLoading(false)
     })
 
     // 4. Listen to auth state changes to drive session changes
