@@ -23,6 +23,7 @@ import { TermsConditionsPage } from '@/pages/public/TermsConditionsPage'
 import { PrivacyPolicyPage } from '@/pages/public/PrivacyPolicyPage'
 import { RefundPolicyPage } from '@/pages/public/RefundPolicyPage'
 import { NotFoundPage } from '@/pages/public/NotFoundPage'
+import { AboutPage as PublicAboutPage } from '@/pages/public/AboutPage'
 import InvoicePage from '@/pages/payment/InvoicePage'
 
 // Seeker
@@ -77,6 +78,7 @@ export function App() {
               <Route element={<PublicLayout />}>
                 <Route path="/" element={<HomePage />} />
                 <Route path="/search" element={<SearchPage />} />
+                <Route path="/about" element={<PublicAboutPage />} />
                 <Route path="/pg/:id" element={<PGDetailPage />} />
                 <Route path="/my-inquiries" element={<MyInquiriesPage />} />
                 <Route path="/terms" element={<TermsConditionsPage />} />
