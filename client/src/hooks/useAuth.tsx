@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useRef, useState } from 'r
 import type { User, Session } from '@supabase/supabase-js'
 import { supabase, supabaseUntyped } from '@/lib/supabase'
 import type { Profile, UserRole } from '@/types'
+import { toast } from 'sonner'
 
 interface RegisterOptions {
   email: string
@@ -207,6 +208,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             console.error('Error syncing profile avatar fallback:', err)
           }
         }
+      }
+
+      // Check if they are an unverified owner using Google Sign-In
+      if (p && p.role === 'owner' && !p.onboarding_verified && session.user.app_metadata?.provider === 'google') {
+        toast.error('Google Sign-In is restricted to verified owners. Please log in with your email and password to complete verification first.')
+        await supabase.auth.signOut()
+        if (mounted.current) {
+          setSession(null)
+          setUser(null)
+          setProfile(null)
+          setLoading(false)
+        }
+        return
       }
     }
 

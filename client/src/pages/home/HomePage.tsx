@@ -52,6 +52,7 @@ export function HomePage() {
   const [regPassword, setRegPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [registering, setRegistering] = useState(false)
+  const [regAcceptedTerms, setRegAcceptedTerms] = useState(false)
 
   // Property Details State
   const [regPgName, setRegPgName] = useState('')
@@ -101,6 +102,7 @@ export function HomePage() {
     setRegPgType('co-ed')
     setRegisterStep(1)
     setShowPassword(false)
+    setRegAcceptedTerms(false)
   }
 
   const handleOwnerRegister = async (e: React.FormEvent) => {
@@ -284,9 +286,25 @@ export function HomePage() {
                   </div>
                 </div>
 
+                <div className="space-y-1.5 pt-2">
+                  <div className="flex items-start gap-2">
+                    <input
+                      type="checkbox"
+                      id="regAcceptedTerms"
+                      checked={regAcceptedTerms}
+                      onChange={(e) => setRegAcceptedTerms(e.target.checked)}
+                      className="mt-1 h-4 w-4 rounded border-slate-600 bg-slate-900/50 text-indigo-600 focus:ring-indigo-600"
+                    />
+                    <label htmlFor="regAcceptedTerms" className="text-xs font-normal leading-tight text-slate-400 cursor-pointer">
+                      I agree to the <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-indigo-400 hover:underline">Terms & Conditions</a> and <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-indigo-400 hover:underline">Privacy Policy</a>
+                    </label>
+                  </div>
+                </div>
+
                 <Button
                   type="submit"
-                  className="w-full mt-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold active:scale-95 duration-150"
+                  disabled={!regAcceptedTerms}
+                  className="w-full mt-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold active:scale-95 duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Next: Property Details
                   <ArrowRight className="size-4 ml-2" />

@@ -38,6 +38,7 @@ const inquirySchema = z.object({
   duration_unit: z.enum(['days', 'months']),
   message: z.string().optional(),
   room_id: z.string().optional(),
+  acceptedTerms: z.boolean().refine(val => val === true, 'You must accept the terms and conditions'),
 })
 
 type InquiryFormData = z.infer<typeof inquirySchema>
@@ -64,7 +65,7 @@ export function InquiryModal({
   const isMobile = useIsMobile()
   const { user, profile, session } = useAuth()
 
-  const isEmailVerified = !!user
+  const hasGoogleAuth = session?.user?.app_metadata?.provider === 'google'
 
   const handleGoogleSignIn = async () => {
     try {
@@ -111,6 +112,7 @@ export function InquiryModal({
       duration_value: 1,
       duration_unit: 'months',
       message: '',
+      acceptedTerms: false,
     },
     mode: 'onChange',
   })
@@ -179,6 +181,7 @@ export function InquiryModal({
         duration_value: 1,
         duration_unit: 'months',
         message: '',
+        acceptedTerms: false,
       })
       // No guest email state to reset
     }
@@ -197,11 +200,6 @@ export function InquiryModal({
     let activeSession = session
 
     if (!activeUser) {
-      if (!isEmailVerified) {
-        toast.error('Please verify your email address first')
-        return
-      }
-
       // Check if we can get the session directly from supabase
       const { data: { session: latestSession } } = await supabase.auth.getSession()
       if (latestSession) {
@@ -211,7 +209,12 @@ export function InquiryModal({
     }
 
     if (!activeUser) {
-      toast.error('Authentication session not found. Please verify your email again.')
+      toast.error('Authentication session not found. Please log in with Google.')
+      return
+    }
+
+    if (activeSession?.user?.app_metadata?.provider !== 'google') {
+      toast.error('Please sign in with Google to send inquiries')
       return
     }
 
@@ -266,15 +269,15 @@ export function InquiryModal({
 
   const formContent = (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-      {/* Guest Email Field (Unauthenticated Users only) */}
-      {!user && (
+      {/* Guest/Non-Google Users */}
+      {!hasGoogleAuth && (
         <div className="space-y-3.5 p-4 bg-indigo-50/30 dark:bg-slate-800/30 rounded-xl border border-indigo-100/50 dark:border-slate-700/50 text-center">
           <div className="space-y-1">
             <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-              Identity Verification Required
+              Google Verification Required
             </h4>
             <p className="text-xs text-muted-foreground">
-              Please sign in with Google to verify your email and submit this inquiry.
+              Please sign in with Google to verify your identity and submit this inquiry.
             </p>
           </div>
           <Button
@@ -509,8 +512,31 @@ export function InquiryModal({
         />
       </div>
 
+      {/* Terms and Conditions */}
+      <div className="space-y-1.5">
+        <div className="flex items-start gap-2">
+          <Controller
+            name="acceptedTerms"
+            control={control}
+            render={({ field }) => (
+              <input
+                type="checkbox"
+                id="acceptedTerms"
+                className="mt-1 h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
+                checked={field.value}
+                onChange={(e) => field.onChange(e.target.checked)}
+              />
+            )}
+          />
+          <Label htmlFor="acceptedTerms" className="text-xs font-normal leading-tight text-slate-500">
+            I agree to the <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline">Terms & Conditions</a> and <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline">Privacy Policy</a>
+          </Label>
+        </div>
+        {errors.acceptedTerms && <p className="text-xs text-destructive">{errors.acceptedTerms.message}</p>}
+      </div>
+
       {/* Submit */}
-      <Button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-500 text-white shadow-sm" disabled={isSubmitting || (!user && !isEmailVerified)}>
+      <Button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-500 text-white shadow-sm" disabled={isSubmitting || !hasGoogleAuth || !!errors.acceptedTerms}>
         {isSubmitting ? <Loader2 className="size-4 animate-spin mr-1.5" /> : <Send className="size-4 mr-1.5" />}
         Submit Inquiry
       </Button>

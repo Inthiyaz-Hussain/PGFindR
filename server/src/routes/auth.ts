@@ -453,10 +453,24 @@ router.post('/admin/verify-owner', authenticateToken, requireRole('admin'), asyn
       }
 
       if (ownerEmail) {
-        let clientUrl = process.env.CLIENT_URL
-        if (clientUrl && clientUrl.includes(',')) {
-          clientUrl = clientUrl.split(',')[0].trim()
+        let clientUrl = req.headers?.origin
+        if (!clientUrl && req.headers?.referer) {
+          try {
+            clientUrl = new URL(req.headers.referer).origin
+          } catch (e) { }
         }
+        if (!clientUrl) {
+          clientUrl = process.env.CLIENT_URL
+          if (clientUrl && clientUrl.includes(',')) {
+            clientUrl = clientUrl.split(',')[0].trim()
+          }
+        }
+        
+        // Override outdated URL
+        if (clientUrl && clientUrl.includes('swiftpg.vercel.app')) {
+          clientUrl = clientUrl.replace('swiftpg.vercel.app', 'findpgr.vercel.app')
+        }
+        
         if (!clientUrl || clientUrl.includes('localhost') || clientUrl.includes('127.0.0.1')) {
           if (process.env.NODE_ENV === 'production') {
             clientUrl = 'https://findpgr.vercel.app'

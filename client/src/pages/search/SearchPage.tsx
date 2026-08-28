@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Search, SlidersHorizontal, X, Filter, Navigation } from 'lucide-react'
+import { Search, SlidersHorizontal, X, Filter, Navigation, Building2, Wifi, Utensils, Snowflake, Car, Shirt, ShieldCheck, User, Users, BedDouble } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -14,18 +14,17 @@ import { useQuery } from '@tanstack/react-query'
 import type { PGListing } from '@/types'
 import { PGCard } from '@/components/pg/PGCard'
 import { Empty, EmptyMedia, EmptyTitle, EmptyDescription } from '@/components/ui/empty'
-import { Building2 } from 'lucide-react'
 import { type LocationState } from '@/types/filters'
 import { POPULAR_CITIES } from '@/components/home/LocationPrompt'
 import { cn } from '@/lib/utils'
 
 const AMENITIES = [
-  { id: 'wifi_included', label: 'WiFi' },
-  { id: 'food_included', label: 'Food Included' },
-  { id: 'ac_rooms', label: 'AC Rooms' },
-  { id: 'parking', label: 'Parking' },
-  { id: 'laundry', label: 'Laundry' },
-  { id: 'security_24x7', label: '24x7 Security' },
+  { id: 'wifi_included', label: 'WiFi', icon: Wifi },
+  { id: 'food_included', label: 'Food Included', icon: Utensils },
+  { id: 'ac_rooms', label: 'AC Rooms', icon: Snowflake },
+  { id: 'parking', label: 'Parking', icon: Car },
+  { id: 'laundry', label: 'Laundry', icon: Shirt },
+  { id: 'security_24x7', label: '24x7 Security', icon: ShieldCheck },
 ]
 
 export function SearchPage() {
@@ -227,14 +226,17 @@ export function SearchPage() {
         <div className="space-y-3">
           <Label className="text-sm font-medium">Amenities</Label>
           <div className="space-y-2.5">
-            {AMENITIES.map(({ id, label }) => (
+            {AMENITIES.map(({ id, label, icon: Icon }) => (
               <div key={id} className="flex items-center gap-2">
                 <Checkbox
                   id={id}
                   checked={amenities.has(id)}
                   onCheckedChange={() => toggleAmenity(id)}
                 />
-                <Label htmlFor={id} className="font-normal cursor-pointer">{label}</Label>
+                <Label htmlFor={id} className="font-normal cursor-pointer flex items-center gap-1.5">
+                  <Icon className="size-3.5 text-muted-foreground" />
+                  {label}
+                </Label>
               </div>
             ))}
           </div>
@@ -246,18 +248,21 @@ export function SearchPage() {
           <Label className="text-sm font-medium">Room Sharing</Label>
           <div className="space-y-2.5">
             {[
-              { id: '1', label: 'Single Room' },
-              { id: '2', label: 'Double Sharing' },
-              { id: '3', label: 'Triple Sharing' },
-              { id: '4', label: 'Dormitory' },
-            ].map(({ id, label }) => (
+              { id: '1', label: 'Single Room', icon: User },
+              { id: '2', label: 'Double Sharing', icon: Users },
+              { id: '3', label: 'Triple Sharing', icon: Users },
+              { id: '4', label: 'Dormitory', icon: BedDouble },
+            ].map(({ id, label, icon: Icon }) => (
               <div key={id} className="flex items-center gap-2">
                 <Checkbox
                   id={`sharing-${id}`}
                   checked={sharingTypes.has(id)}
                   onCheckedChange={() => toggleSharingType(id)}
                 />
-                <Label htmlFor={`sharing-${id}`} className="font-normal cursor-pointer">{label}</Label>
+                <Label htmlFor={`sharing-${id}`} className="font-normal cursor-pointer flex items-center gap-1.5">
+                  <Icon className="size-3.5 text-muted-foreground" />
+                  {label}
+                </Label>
               </div>
             ))}
           </div>

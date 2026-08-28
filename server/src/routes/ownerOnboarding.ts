@@ -231,17 +231,22 @@ router.put('/api/admin/owner-inquiries/:id/approve', authenticateToken, requireR
     if (updateErr) throw updateErr
 
     // Determine client URL dynamically from request origin/referer if available
-    let clientUrl = process.env.CLIENT_URL
-    if (clientUrl && clientUrl.includes(',')) {
-      clientUrl = clientUrl.split(',')[0].trim()
-    }
-    if (!clientUrl && req.headers.origin) {
-      clientUrl = req.headers.origin
-    }
+    let clientUrl = req.headers.origin
     if (!clientUrl && req.headers.referer) {
       try {
         clientUrl = new URL(req.headers.referer).origin
       } catch (e) { }
+    }
+    if (!clientUrl) {
+      clientUrl = process.env.CLIENT_URL
+      if (clientUrl && clientUrl.includes(',')) {
+        clientUrl = clientUrl.split(',')[0].trim()
+      }
+    }
+    
+    // Override outdated URL
+    if (clientUrl && clientUrl.includes('swiftpg.vercel.app')) {
+      clientUrl = clientUrl.replace('swiftpg.vercel.app', 'findpgr.vercel.app')
     }
     // Safe fallbacks to prevent localhost leaking in production email templates
     const isLocalhostRequest = !!(req.headers.host?.includes('localhost') || req.headers.host?.includes('127.0.0.1'))
@@ -425,17 +430,22 @@ router.put('/api/admin/owner-inquiries/:id/resend-email', authenticateToken, req
     if (updateErr) throw updateErr
 
     // Determine client URL dynamically from request origin/referer if available
-    let clientUrl = process.env.CLIENT_URL
-    if (clientUrl && clientUrl.includes(',')) {
-      clientUrl = clientUrl.split(',')[0].trim()
-    }
-    if (!clientUrl && req.headers.origin) {
-      clientUrl = req.headers.origin
-    }
+    let clientUrl = req.headers.origin
     if (!clientUrl && req.headers.referer) {
       try {
         clientUrl = new URL(req.headers.referer).origin
       } catch (e) { }
+    }
+    if (!clientUrl) {
+      clientUrl = process.env.CLIENT_URL
+      if (clientUrl && clientUrl.includes(',')) {
+        clientUrl = clientUrl.split(',')[0].trim()
+      }
+    }
+    
+    // Override outdated URL
+    if (clientUrl && clientUrl.includes('swiftpg.vercel.app')) {
+      clientUrl = clientUrl.replace('swiftpg.vercel.app', 'findpgr.vercel.app')
     }
     // Safe fallbacks to prevent localhost leaking in production email templates
     const isLocalhostRequest = !!(req.headers.host?.includes('localhost') || req.headers.host?.includes('127.0.0.1'))

@@ -27,9 +27,11 @@ const SHARING_LABELS: Record<number, string> = {
 }
 
 export function OwnerInquiriesPage() {
-  const { user } = useAuth()
+  const { user, session } = useAuth()
   const queryClient = useQueryClient()
   const [activeTab, setActiveTab] = useState<InquiryStatus | 'all'>('all')
+
+  const hasGoogleAuth = session?.user?.app_metadata?.provider === 'google'
 
   const { data: inquiries, isLoading } = useQuery({
     queryKey: ['owner-all-inquiries', user?.id],
@@ -106,6 +108,20 @@ export function OwnerInquiriesPage() {
       queryClient.invalidateQueries({ queryKey: ['owner-all-inquiries', user?.id] })
     },
   })
+
+  if (!hasGoogleAuth) {
+    return (
+      <div className="flex h-[80vh] flex-col items-center justify-center p-4 text-center space-y-4">
+        <Empty>
+          <EmptyMedia variant="icon"><User /></EmptyMedia>
+          <EmptyTitle>Google Sign-In Required</EmptyTitle>
+          <EmptyDescription>
+            You must be signed in with Google to view and manage inquiries. Please sign out and sign in with Google.
+          </EmptyDescription>
+        </Empty>
+      </div>
+    )
+  }
 
   return (
     <div className="p-4 md:p-6 max-w-4xl">

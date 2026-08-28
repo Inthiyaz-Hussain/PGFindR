@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { MessageSquare, ExternalLink, Calendar, Loader2, CreditCard } from 'lucide-react'
+import { MessageSquare, ExternalLink, Calendar, Loader2, CreditCard, User } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -21,10 +21,12 @@ const STATUS_CONFIG: Record<string, { label: string; class: string }> = {
 }
 
 export function InquiriesPage() {
-  const { user, profile } = useAuth()
+  const { user, profile, session } = useAuth()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [payingInqId, setPayingInqId] = useState<string | null>(null)
+
+  const hasGoogleAuth = session?.user?.app_metadata?.provider === 'google'
 
   const isSeeker = profile?.role === 'seeker'
   const seekerUser = isSeeker ? user : null
@@ -137,6 +139,20 @@ export function InquiriesPage() {
       toast.success('Inquiry cancelled')
     },
   })
+
+  if (!hasGoogleAuth) {
+    return (
+      <div className="flex h-[80vh] flex-col items-center justify-center p-4 text-center space-y-4">
+        <Empty>
+          <EmptyMedia variant="icon"><User className="size-12 text-slate-400" /></EmptyMedia>
+          <EmptyTitle>Google Sign-In Required</EmptyTitle>
+          <EmptyDescription>
+            You must be signed in with Google to view and manage your inquiries. Please sign out and sign in with Google.
+          </EmptyDescription>
+        </Empty>
+      </div>
+    )
+  }
 
   return (
     <div className="p-4 md:p-6 max-w-3xl">

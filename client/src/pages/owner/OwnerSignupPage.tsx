@@ -27,6 +27,7 @@ const registerSchema = z
       .or(z.literal('')),
     password: z.string().min(6, 'Password must be at least 6 characters'),
     confirmPassword: z.string(),
+    acceptedTerms: z.boolean().refine(val => val === true, 'You must accept the terms and conditions'),
   })
   .refine((d) => d.password === d.confirmPassword, {
     message: 'Passwords do not match',
@@ -53,6 +54,7 @@ export function OwnerSignupPage() {
       mobile: '',
       password: '',
       confirmPassword: '',
+      acceptedTerms: false,
     },
   })
 
@@ -233,8 +235,31 @@ export function OwnerSignupPage() {
                 )}
               />
 
+              {/* Terms and Conditions */}
+              <Controller
+                name="acceptedTerms"
+                control={control}
+                render={({ field, fieldState }) => (
+                  <div className="space-y-1">
+                    <div className="flex items-start gap-2">
+                      <input
+                        type="checkbox"
+                        id="acceptedTerms"
+                        checked={field.value}
+                        onChange={(e) => field.onChange(e.target.checked)}
+                        className="mt-1 h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                      />
+                      <label htmlFor="acceptedTerms" className="text-sm font-normal leading-tight text-muted-foreground cursor-pointer">
+                        I agree to the <Link to="/terms" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Terms & Conditions</Link> and <Link to="/privacy" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Privacy Policy</Link>
+                      </label>
+                    </div>
+                    {fieldState.error && <p className="text-xs text-destructive">{fieldState.error.message}</p>}
+                  </div>
+                )}
+              />
+
               {/* Submit */}
-              <Button type="submit" className="w-full" disabled={isSubmitting}>
+              <Button type="submit" className="w-full" disabled={isSubmitting || !control._formValues.acceptedTerms}>
                 {isSubmitting ? (
                   <Loader2 className="size-4 animate-spin" />
                 ) : (
