@@ -43,6 +43,9 @@ export function AboutContent() {
           <p className="text-lg sm:text-xl text-indigo-200/80 leading-relaxed font-light">
             FindPG was born with a clear and simple vision: to make the process of finding a PG accommodation as seamless and stress-free as possible.
           </p>
+          <div className="pt-6 flex justify-center">
+            <img src="/Screenshot 2026-08-27 163938.png" alt="Cityscape" className="w-full max-w-2xl rounded-2xl shadow-2xl object-cover h-64 md:h-80 border border-indigo-500/30" />
+          </div>
         </div>
       </section>
 
@@ -65,6 +68,9 @@ export function AboutContent() {
             <p>
               Over the years, we have grown from a small local platform to a nationwide service connecting thousands of PG owners with genuine tenants. Our commitment to quality, transparency, and personalized service has remained unchanged since day one.
             </p>
+            <div className="pt-4">
+               <img src="/Screenshot 2026-08-27 164131.png" alt="Connecting owners and tenants" className="w-full rounded-2xl shadow-lg border border-slate-200 dark:border-slate-800 object-cover h-48 sm:h-64" />
+            </div>
           </div>
         </div>
         <div className="lg:col-span-5 relative group">
@@ -239,6 +245,9 @@ export function AboutContent() {
         <div className="relative z-10 flex flex-wrap gap-4 justify-center items-center">
           <Button asChild className="rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold shadow-md px-6 py-2">
             <Link to="/search?type=boys">Browse Boys PGs</Link>
+          </Button>
+          <Button asChild className="rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-semibold shadow-md px-6 py-2">
+            <Link to="/search?type=co-ed">Browse Co-living</Link>
           </Button>
           <Button asChild variant="outline" className="rounded-xl border-slate-700 bg-slate-900/60 hover:bg-slate-800 text-slate-100 font-semibold px-6 py-2">
             <Link to="/search?type=girls">Browse Girls PGs</Link>
