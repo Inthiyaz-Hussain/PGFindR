@@ -302,13 +302,15 @@ export function OnboardingPage() {
 
       if (uploadError) throw uploadError
 
-      const { data: { publicUrl } } = supabaseUntyped.storage
+      const { data, error: signedUrlError } = await supabaseUntyped.storage
         .from('owner-documents')
-        .getPublicUrl(fileName)
+        .createSignedUrl(fileName, 315360000) // 10 years valid
+
+      if (signedUrlError || !data?.signedUrl) throw new Error('Failed to generate signed URL')
 
       setKycDocuments(prev => ({
         ...prev,
-        [type]: publicUrl
+        [type]: data.signedUrl
       }))
       toast.success(`${file.name} attached successfully!`)
     } catch (err: any) {
