@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
-import { LayoutDashboard, Users, UserCheck, CreditCard, Percent, LogOut, ChevronDown, ChevronRight, Building, User, Settings, History, ShieldCheck, FileText } from 'lucide-react'
+import { LayoutDashboard, Users, UserCheck, CreditCard, Percent, LogOut, ChevronDown, ChevronRight, Building, User, Settings, History, ShieldCheck, FileText, Menu } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { useAuth } from '@/hooks/useAuth'
 import { cn } from '@/lib/utils'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 
 const NAV_GROUPS = [
   {
@@ -43,7 +44,7 @@ const NAV_GROUPS = [
   },
 ]
 
-function NavGroup({ label, items }: { label: string; items: { to: string; label: string; icon: React.ComponentType<{ className?: string }>; end: boolean }[] }) {
+function NavGroup({ label, items, onNavigate }: { label: string; items: { to: string; label: string; icon: React.ComponentType<{ className?: string }>; end: boolean }[]; onNavigate?: () => void }) {
   const [expanded, setExpanded] = useState(true)
 
   return (
@@ -62,6 +63,7 @@ function NavGroup({ label, items }: { label: string; items: { to: string; label:
               key={to}
               to={to}
               end={end}
+              onClick={onNavigate}
               className={({ isActive }) => cn(
                 'flex items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-colors',
                 isActive
@@ -82,6 +84,7 @@ function NavGroup({ label, items }: { label: string; items: { to: string; label:
 export function AdminLayout() {
   const { profile, signOut } = useAuth()
   const initials = profile?.full_name?.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase() || 'A'
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
 
 
@@ -126,7 +129,6 @@ export function AdminLayout() {
           { to: '/admin/pgs', label: 'PGs', icon: Building, end: false },
           { to: '/admin/listing-inquiries', label: 'Inquiries', icon: FileText, end: false },
           { to: '/admin/owners', label: 'Owners', icon: UserCheck, end: false },
-          { to: '/admin/transactions', label: 'Financials', icon: CreditCard, end: false },
         ].map(({ to, label, icon: Icon, end }) => {
           return (
             <NavLink
@@ -145,6 +147,24 @@ export function AdminLayout() {
             </NavLink>
           )
         })}
+        <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+          <SheetTrigger asChild>
+            <button className="flex flex-col items-center justify-center flex-1 h-full py-1 text-[11px] transition-colors text-muted-foreground hover:text-foreground">
+              <Menu className="size-5 mb-1" />
+              <span>Menu</span>
+            </button>
+          </SheetTrigger>
+          <SheetContent side="left" className="w-72 flex flex-col gap-0 p-0 border-r border-sidebar-border bg-sidebar text-sidebar-foreground">
+            <SheetHeader className="p-4 border-b border-sidebar-border text-left">
+              <SheetTitle className="text-sidebar-foreground">Admin Menu</SheetTitle>
+            </SheetHeader>
+            <div className="flex-1 overflow-y-auto p-3 space-y-4">
+              {NAV_GROUPS.map((group) => (
+                <NavGroup key={group.label} label={group.label} items={group.items} onNavigate={() => setMobileMenuOpen(false)} />
+              ))}
+            </div>
+          </SheetContent>
+        </Sheet>
       </nav>
 
       <div className="pb-20 md:pb-0">
