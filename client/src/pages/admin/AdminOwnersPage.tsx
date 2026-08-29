@@ -482,11 +482,12 @@ export function AdminOwnersPage() {
                   <h4 className="font-medium">Documents</h4>
                   <div className="space-y-2">
                     {selectedOwner.documents.map((doc) => (
-                      <div key={doc.id} className="flex items-center justify-between p-2 rounded bg-muted/50">
-                        <div className="flex items-center gap-2">
-                          <FileText className="size-4 text-muted-foreground" />
-                          <span className="text-sm capitalize">{doc.doc_type.replace('_', ' ')}</span>
-                        </div>
+                      <div key={doc.id} className="flex flex-col gap-2 p-2 rounded bg-muted/50">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <FileText className="size-4 text-muted-foreground" />
+                            <span className="text-sm capitalize">{doc.doc_type.replace('_', ' ')}</span>
+                          </div>
                         <div className="flex items-center gap-2">
                           {doc.verified ? (
                             <Badge className="bg-green-100 text-green-800">Verified</Badge>
@@ -494,10 +495,30 @@ export function AdminOwnersPage() {
                             <Badge variant="secondary">Pending</Badge>
                           )}
                           <a href={doc.url} target="_blank" rel="noopener noreferrer">
-                            <Button variant="outline" size="xs">View</Button>
+                            <Button variant="outline" size="xs">View Full</Button>
                           </a>
                         </div>
                       </div>
+                      <div className="w-full h-48 bg-white border rounded overflow-hidden mt-2 relative">
+                        {doc.url.toLowerCase().includes('.pdf') ? (
+                          <iframe src={doc.url} className="w-full h-full border-0" title={`${doc.doc_type} Preview`} />
+                        ) : (
+                          <img 
+                            src={doc.url} 
+                            alt={doc.doc_type} 
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).style.display = 'none';
+                              (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
+                            }}
+                          />
+                        )}
+                        <div className="hidden absolute inset-0 flex-col items-center justify-center bg-slate-50 dark:bg-slate-900/50 p-4">
+                           <FileText className="size-8 text-slate-400 mb-2" />
+                           <span className="text-xs font-medium text-slate-600 dark:text-slate-400">Preview Not Available</span>
+                        </div>
+                      </div>
+                    </div>
                     ))}
                   </div>
                 </div>

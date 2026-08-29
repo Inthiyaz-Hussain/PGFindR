@@ -293,12 +293,13 @@ export function OnboardingPage() {
     setUploadingKyc(prev => ({ ...prev, [type]: true }))
     try {
       await ensureBucketExists('owner-documents')
-      const fileExt = file.name.split('.').pop()
+      const fileExt = file.name.includes('.') ? file.name.split('.').pop() : 'bin'
+      const cleanFileName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_')
       const fileName = `${user?.id || 'anon'}-kyc-${type}-${Date.now()}.${fileExt}`
 
       const { error: uploadError } = await supabaseUntyped.storage
         .from('owner-documents')
-        .upload(fileName, file, { cacheControl: '3600', upsert: false, contentType: file.type })
+        .upload(fileName, file, { cacheControl: '3600', upsert: false, contentType: file.type || 'application/octet-stream' })
 
       if (uploadError) throw uploadError
 
