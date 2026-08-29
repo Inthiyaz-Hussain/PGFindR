@@ -501,7 +501,7 @@ export function AdminOwnersPage() {
                       </div>
                       <div className="w-full h-48 bg-white border rounded overflow-hidden mt-2 relative">
                         {doc.url.toLowerCase().includes('.pdf') ? (
-                          <iframe src={doc.url} className="w-full h-full border-0" title={`${doc.doc_type} Preview`} />
+                          <iframe src={`https://docs.google.com/viewer?url=${encodeURIComponent(doc.url)}&embedded=true`} className="w-full h-full border-0" title={`${doc.doc_type} Preview`} />
                         ) : (
                           <img 
                             src={doc.url} 
@@ -514,8 +514,8 @@ export function AdminOwnersPage() {
                           />
                         )}
                         <div className="hidden absolute inset-0 flex-col items-center justify-center bg-slate-50 dark:bg-slate-900/50 p-4">
-                           <FileText className="size-8 text-slate-400 mb-2" />
-                           <span className="text-xs font-medium text-slate-600 dark:text-slate-400">Preview Not Available</span>
+                           <FileText className="size-8 text-indigo-400 mb-2" />
+                           <span className="text-xs font-medium text-slate-600 dark:text-slate-400 text-center">Document Uploaded<br/>(Click View Full)</span>
                         </div>
                       </div>
                     </div>

@@ -1279,7 +1279,7 @@ export function OnboardingPage() {
                       </div>
                       <a href={kycDocuments.id_proof} target="_blank" rel="noreferrer" className="block w-full aspect-[4/3] bg-slate-100 dark:bg-slate-800 rounded border border-slate-200 dark:border-slate-700 overflow-hidden hover:opacity-90 transition-opacity relative group">
                         {kycDocuments.id_proof.toLowerCase().includes('.pdf') ? (
-                          <iframe src={kycDocuments.id_proof} className="w-full h-full pointer-events-none object-cover border-0" title="ID Proof Preview" />
+                          <iframe src={`https://docs.google.com/viewer?url=${encodeURIComponent(kycDocuments.id_proof)}&embedded=true`} className="w-full h-full pointer-events-none object-cover border-0" title="ID Proof Preview" />
                         ) : (
                           <img 
                             src={kycDocuments.id_proof} 
@@ -1292,8 +1292,8 @@ export function OnboardingPage() {
                           />
                         )}
                         <div className="hidden w-full h-full flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-900/50 p-4">
-                           <FileText className="size-12 text-slate-400 mb-2" />
-                           <span className="text-xs font-medium text-slate-600 dark:text-slate-400">Preview Failed</span>
+                           <FileText className="size-12 text-indigo-400 mb-2" />
+                           <span className="text-xs font-medium text-slate-600 dark:text-slate-400 text-center">Document Uploaded<br/>(Click to View)</span>
                         </div>
                         <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                           <span className="bg-white text-black text-xs font-bold px-3 py-1.5 rounded-full">Click to open full size</span>
@@ -1340,7 +1340,7 @@ export function OnboardingPage() {
                       </div>
                       <a href={kycDocuments.address_proof} target="_blank" rel="noreferrer" className="block w-full aspect-[4/3] bg-slate-100 dark:bg-slate-800 rounded border border-slate-200 dark:border-slate-700 overflow-hidden hover:opacity-90 transition-opacity relative group">
                         {kycDocuments.address_proof.toLowerCase().includes('.pdf') ? (
-                          <iframe src={kycDocuments.address_proof} className="w-full h-full pointer-events-none object-cover border-0" title="Address Proof Preview" />
+                          <iframe src={`https://docs.google.com/viewer?url=${encodeURIComponent(kycDocuments.address_proof)}&embedded=true`} className="w-full h-full pointer-events-none object-cover border-0" title="Address Proof Preview" />
                         ) : (
                           <img 
                             src={kycDocuments.address_proof} 
@@ -1353,8 +1353,8 @@ export function OnboardingPage() {
                           />
                         )}
                         <div className="hidden w-full h-full flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-900/50 p-4">
-                           <FileText className="size-12 text-slate-400 mb-2" />
-                           <span className="text-xs font-medium text-slate-600 dark:text-slate-400">Preview Failed</span>
+                           <FileText className="size-12 text-indigo-400 mb-2" />
+                           <span className="text-xs font-medium text-slate-600 dark:text-slate-400 text-center">Document Uploaded<br/>(Click to View)</span>
                         </div>
                         <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                           <span className="bg-white text-black text-xs font-bold px-3 py-1.5 rounded-full">Click to open full size</span>
@@ -1401,7 +1401,7 @@ export function OnboardingPage() {
                       </div>
                       <a href={kycDocuments.ownership_proof} target="_blank" rel="noreferrer" className="block w-full aspect-[4/3] bg-slate-100 dark:bg-slate-800 rounded border border-slate-200 dark:border-slate-700 overflow-hidden hover:opacity-90 transition-opacity relative group">
                         {kycDocuments.ownership_proof.toLowerCase().includes('.pdf') ? (
-                          <iframe src={kycDocuments.ownership_proof} className="w-full h-full pointer-events-none object-cover border-0" title="Ownership Proof Preview" />
+                          <iframe src={`https://docs.google.com/viewer?url=${encodeURIComponent(kycDocuments.ownership_proof)}&embedded=true`} className="w-full h-full pointer-events-none object-cover border-0" title="Ownership Proof Preview" />
                         ) : (
                           <img 
                             src={kycDocuments.ownership_proof} 
@@ -1414,8 +1414,8 @@ export function OnboardingPage() {
                           />
                         )}
                         <div className="hidden w-full h-full flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-900/50 p-4">
-                           <FileText className="size-12 text-slate-400 mb-2" />
-                           <span className="text-xs font-medium text-slate-600 dark:text-slate-400">Preview Failed</span>
+                           <FileText className="size-12 text-indigo-400 mb-2" />
+                           <span className="text-xs font-medium text-slate-600 dark:text-slate-400 text-center">Document Uploaded<br/>(Click to View)</span>
                         </div>
                         <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                           <span className="bg-white text-black text-xs font-bold px-3 py-1.5 rounded-full">Click to open full size</span>
