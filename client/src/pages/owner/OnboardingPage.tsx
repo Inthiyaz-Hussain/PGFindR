@@ -294,7 +294,6 @@ export function OnboardingPage() {
     try {
       await ensureBucketExists('owner-documents')
       const fileExt = file.name.includes('.') ? file.name.split('.').pop() : 'bin'
-      const cleanFileName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_')
       const fileName = `${user?.id || 'anon'}-kyc-${type}-${Date.now()}.${fileExt}`
 
       const { error: uploadError } = await supabaseUntyped.storage
