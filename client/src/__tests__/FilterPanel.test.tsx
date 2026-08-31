@@ -31,9 +31,9 @@ describe('FilterPanel', () => {
     )
 
     expect(screen.getByText('Filters')).toBeInTheDocument()
-    expect(screen.getByText('Sharing Type')).toBeInTheDocument()
-    expect(screen.getByText('Single')).toBeInTheDocument()
-    expect(screen.getByText('Double')).toBeInTheDocument()
+    expect(screen.getByText('Room Sharing')).toBeInTheDocument()
+    expect(screen.getByText('Single Room')).toBeInTheDocument()
+    expect(screen.getByText('Double Sharing')).toBeInTheDocument()
     expect(screen.getByText('Apply Filters')).toBeInTheDocument()
     expect(screen.getByText('Reset')).toBeInTheDocument()
   })
@@ -45,10 +45,10 @@ describe('FilterPanel', () => {
       <FilterPanel open filters={baseFilters} onOpenChange={onOpenChange} onApply={onApply} />
     )
 
-    // Toggle "Single" sharing type on
-    await user.click(screen.getByText('Single'))
-    // Toggle "Double" sharing type on
-    await user.click(screen.getByText('Double'))
+    // Toggle "Single Room" sharing type on
+    await user.click(screen.getByText('Single Room'))
+    // Toggle "Double Sharing" sharing type on
+    await user.click(screen.getByText('Double Sharing'))
 
     // Click Apply
     await user.click(screen.getByText('Apply Filters'))
@@ -70,8 +70,8 @@ describe('FilterPanel', () => {
       <FilterPanel open filters={baseFilters} onOpenChange={onOpenChange} onApply={onApply} />
     )
 
-    await user.click(screen.getByText('Triple'))
-    await user.click(screen.getByText('Triple')) // toggle off
+    await user.click(screen.getByText('Triple Sharing'))
+    await user.click(screen.getByText('Triple Sharing')) // toggle off
     await user.click(screen.getByText('Apply Filters'))
 
     await waitFor(() => {

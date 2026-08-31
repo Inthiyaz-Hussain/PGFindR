@@ -197,8 +197,8 @@ describe('InquiryModal', () => {
     renderWithProviders(<InquiryModal {...defaultProps} />)
 
     // Verify Google sign-in prompt is shown
-    expect(screen.getByText(/Identity Verification Required/i)).toBeInTheDocument()
-    expect(screen.getByText(/Please sign in with Google to verify your email/i)).toBeInTheDocument()
+    expect(screen.getByText(/Google Verification Required/i)).toBeInTheDocument()
+    expect(screen.getByText(/Please sign in with Google to verify your identity/i)).toBeInTheDocument()
 
     // Submit button is disabled by default (no user yet)
     const submitBtn = screen.getByRole('button', { name: /submit inquiry/i })

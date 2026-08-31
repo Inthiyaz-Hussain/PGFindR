@@ -32,7 +32,8 @@ vi.mock('@/lib/supabase', () => {
     order: vi.fn().mockReturnThis(),
     limit: vi.fn().mockReturnThis(),
     maybeSingle: vi.fn().mockResolvedValue({ data: { id: 'pg-123' }, error: null }),
-    single: vi.fn().mockResolvedValue({ data: { id: 'pg-123' }, error: null })
+    single: vi.fn().mockResolvedValue({ data: { id: 'pg-123' }, error: null }),
+    then: vi.fn().mockImplementation((resolve) => resolve({ data: [], error: null }))
   }
   return {
     supabase: {
@@ -49,6 +50,7 @@ vi.mock('@/lib/supabase', () => {
 describe('OnboardingPage Component', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    localStorage.clear()
   })
 
   const fillStep1 = () => {
@@ -90,7 +92,7 @@ describe('OnboardingPage Component', () => {
 
     // Check default values render in Real-time summary panel
     expect(screen.getByText('10 Rooms')).toBeInTheDocument()
-    expect(screen.getByText('2-Share')).toBeInTheDocument()
+    expect(screen.getByText('2-Share (Double)')).toBeInTheDocument()
     expect(screen.getByText(/Balcony Access:/i)).toHaveTextContent('Balcony Access: No')
 
     // Toggle Balcony Switch

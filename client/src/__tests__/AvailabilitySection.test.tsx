@@ -182,21 +182,21 @@ describe('AvailabilitySection', () => {
     })
 
     await waitFor(() => {
-      expect(screen.getByText('Single Sharing')).toBeInTheDocument()
+      expect(screen.getByText('Single Room')).toBeInTheDocument()
     })
   })
 
   it('removes sharing type on DELETE event', async () => {
     renderWithProviders(<AvailabilitySection {...defaultProps} />)
 
-    expect(screen.getByText('Double Sharing')).toBeInTheDocument()
+    expect(screen.getByText('2-Sharing')).toBeInTheDocument()
 
     act(() => {
       callbackRef.current!({ eventType: 'DELETE', new: {}, old: sharingType })
     })
 
     await waitFor(() => {
-      expect(screen.queryByText('Double Sharing')).not.toBeInTheDocument()
+      expect(screen.queryByText('2-Sharing')).not.toBeInTheDocument()
     })
   })
 
