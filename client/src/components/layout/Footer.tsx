@@ -313,7 +313,7 @@ export function Footer({ compact = false }: FooterProps) {
                   </h3>
                   <ul className="space-y-2.5 text-sm">
                     {[
-                      { label: 'About Us', to: '/' },
+                      { label: 'About Us', to: '/about' },
                       { label: 'Terms & Conditions', to: '/terms' },
                       { label: 'Privacy Policy', to: '/privacy' },
                       { label: 'Refund Policy', to: '/refund-policy' },
