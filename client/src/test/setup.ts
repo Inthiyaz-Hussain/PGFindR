@@ -42,6 +42,13 @@ vi.mock('@/lib/supabase', () => ({
     }),
     removeChannel: vi.fn(),
   },
+  supabaseUntyped: {
+    channel: vi.fn().mockReturnValue({
+      on: vi.fn().mockReturnThis(),
+      subscribe: vi.fn().mockReturnThis(),
+    }),
+    removeChannel: vi.fn(),
+  },
 }))
 
 // Mock matchMedia (jsdom doesn't implement it)
