@@ -347,11 +347,7 @@ export function PGFormPage() {
           finalOwnerId = selectedOwnerId
         }
       }
-
-      // If pg_type is coliving, we only allow type 1 (Single) sharing types to be saved
-      const finalSharingTypes = data.pg_type === 'coliving'
-        ? sharingTypes.filter((s) => s.type === 1)
-        : sharingTypes;
+      const finalSharingTypes = sharingTypes;
 
       const payload: any = {
         ...data,
@@ -923,7 +919,7 @@ export function PGFormPage() {
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel>Gender Preference *</FieldLabel>
-                  <Select value={field.value} onValueChange={field.onChange}>
+                  <Select value={field.value} onValueChange={field.onChange} disabled={!isNew}>
                     <SelectTrigger aria-invalid={fieldState.invalid}>
                       <SelectValue placeholder="Select gender preference" />
                     </SelectTrigger>
@@ -1131,13 +1127,9 @@ export function PGFormPage() {
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="1" disabled={sharingTypes.some((s, i) => s.type === 1 && i !== index)}>Single</SelectItem>
-                            {watchedPgType !== 'coliving' && watchedPgType !== 'co-ed' && (
-                              <>
-                                <SelectItem value="2" disabled={sharingTypes.some((s, i) => s.type === 2 && i !== index)}>Double</SelectItem>
-                                <SelectItem value="3" disabled={sharingTypes.some((s, i) => s.type === 3 && i !== index)}>Triple</SelectItem>
-                                <SelectItem value="4" disabled={sharingTypes.some((s, i) => s.type === 4 && i !== index)}>Dormitory</SelectItem>
-                              </>
-                            )}
+                            <SelectItem value="2" disabled={sharingTypes.some((s, i) => s.type === 2 && i !== index)}>Double</SelectItem>
+                            <SelectItem value="3" disabled={sharingTypes.some((s, i) => s.type === 3 && i !== index)}>Triple</SelectItem>
+                            <SelectItem value="4" disabled={sharingTypes.some((s, i) => s.type === 4 && i !== index)}>4 Sharing</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>

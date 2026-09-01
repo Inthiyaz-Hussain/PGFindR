@@ -23,7 +23,7 @@ const SHARING_LABELS: Record<number, string> = {
   1: 'Single Sharing',
   2: 'Double Sharing',
   3: 'Triple Sharing',
-  4: 'Dormitory',
+  4: '4 Sharing',
 }
 
 export function AvailabilityPage() {

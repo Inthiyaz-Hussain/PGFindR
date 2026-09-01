@@ -30,7 +30,7 @@ const SHARING_LABELS: Record<number, string> = {
   1: 'Single',
   2: 'Double',
   3: 'Triple',
-  4: 'Dormitory',
+  4: '4 Sharing',
 }
 
 export function MyTenantsPage() {

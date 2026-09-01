@@ -138,7 +138,7 @@ export function FilterPanel({ open, onOpenChange, filters, onApply }: FilterPane
                   1: { label: 'Single Room', image: '/images/room-single.png' }, 
                   2: { label: 'Double Sharing', image: '/images/room-double.png' }, 
                   3: { label: 'Triple Sharing', image: '/images/room-triple.png' }, 
-                  4: { label: 'Dormitory', image: '/images/room-four.png' } 
+                  4: { label: '4 Sharing', image: '/images/room-four.png' } 
                 }
                 const isActive = localFilters.sharingTypes.includes(type)
                 return (

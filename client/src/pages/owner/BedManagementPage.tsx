@@ -143,7 +143,7 @@ export function BedManagementPage() {
                     <SelectItem value="single">Single</SelectItem>
                     <SelectItem value="double">Double</SelectItem>
                     <SelectItem value="triple">Triple</SelectItem>
-                    <SelectItem value="dormitory">Dormitory</SelectItem>
+                    <SelectItem value="dormitory">4 Sharing</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

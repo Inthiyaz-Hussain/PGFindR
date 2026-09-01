@@ -251,7 +251,7 @@ export function SearchPage() {
               { id: '1', label: 'Single Room', icon: User },
               { id: '2', label: 'Double Sharing', icon: Users },
               { id: '3', label: 'Triple Sharing', icon: Users },
-              { id: '4', label: 'Dormitory', icon: BedDouble },
+              { id: '4', label: '4 Sharing', icon: BedDouble },
             ].map(({ id, label, icon: Icon }) => (
               <div key={id} className="flex items-center gap-2">
                 <Checkbox
