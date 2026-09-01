@@ -73,6 +73,8 @@ export function OwnerDashboard() {
     return sum
   }, 0) || 0
 
+  const availableBeds = totalBeds - occupiedBeds
+
   const pgStatusColor: Record<string, string> = {
     pending: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
     approved: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
@@ -163,17 +165,22 @@ export function OwnerDashboard() {
       )}
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-6 gap-4 mb-8">
         {[
-          { label: 'Total PGs', value: listings?.length || 0, icon: Building2, color: 'text-blue-600 bg-blue-50 dark:bg-blue-950/30 dark:text-blue-400' },
-          { label: 'Total Beds', value: totalBeds, icon: BedDouble, color: 'text-violet-600 bg-violet-50 dark:bg-violet-950/30 dark:text-violet-400' },
-          { label: 'Occupied Beds', value: occupiedBeds, icon: TrendingUp, color: 'text-green-600 bg-green-50 dark:bg-green-950/30 dark:text-green-400' },
-          { label: 'Pending Inquiries', value: pendingInquiries, icon: MessageSquare, color: 'text-amber-600 bg-amber-50 dark:bg-amber-950/30 dark:text-amber-400' },
+          { label: 'Total PGs', value: listings?.length || 0, icon: Building2, color: 'text-blue-600 bg-blue-50 dark:bg-blue-950/30 dark:text-blue-400', link: '/owner/pgs' },
+          { label: 'Total Beds', value: totalBeds, icon: BedDouble, color: 'text-violet-600 bg-violet-50 dark:bg-violet-950/30 dark:text-violet-400', link: '/owner/pgs' },
+          { label: 'Available Beds', value: availableBeds, icon: BedDouble, color: 'text-indigo-600 bg-indigo-50 dark:bg-indigo-950/30 dark:text-indigo-400', link: '/owner/pgs' },
+          { label: 'Occupied Beds', value: occupiedBeds, icon: TrendingUp, color: 'text-green-600 bg-green-50 dark:bg-green-950/30 dark:text-green-400', link: '/owner/pgs' },
+          { label: 'Pending Inquiries', value: pendingInquiries, icon: MessageSquare, color: 'text-amber-600 bg-amber-50 dark:bg-amber-950/30 dark:text-amber-400', link: '/owner/inquiries' },
           { label: 'This Month Earnings', value: `¥${thisMonthEarnings.toLocaleString('en-IN')}`, icon: IndianRupee, color: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30 dark:text-emerald-400', isString: true },
-        ].map(({ label, value, icon: Icon, color, isString }) => (
-          <Card key={label}>
-            <CardContent className="pt-5">
-              <div className="flex items-start gap-3">
+        ].map(({ label, value, icon: Icon, color, isString, link }) => (
+          <Card 
+            key={label} 
+            className={cn(link && "cursor-pointer hover:border-primary/50 transition-colors")}
+            onClick={() => link && navigate(link)}
+          >
+            <CardContent className="pt-5 px-4 pb-4">
+              <div className="flex flex-col gap-2">
                 <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${color}`}>
                   <Icon className="size-5" />
                 </div>
@@ -183,7 +190,7 @@ export function OwnerDashboard() {
                   ) : (
                     <div className="text-xl font-bold">{isString ? value : value}</div>
                   )}
-                  <div className="text-xs text-muted-foreground">{label}</div>
+                  <div className="text-xs text-muted-foreground whitespace-nowrap">{label}</div>
                 </div>
               </div>
             </CardContent>

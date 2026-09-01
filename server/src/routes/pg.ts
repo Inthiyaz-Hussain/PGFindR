@@ -113,11 +113,11 @@ router.post('/save-listing', async (req, res) => {
       await db.from('sharing_types').delete().eq('pg_id', pgId)
       
       // Deduplicate by type to prevent unique constraint violation
-      const uniqueSharingTypes = Array.from(new Map(sharingTypes.map((s: any) => [s.type, s])).values());
+      const uniqueSharingTypes = Array.from(new Map(sharingTypes.map((s: any) => [Number(s.type), s])).values());
       
       const sharingPayloads = (uniqueSharingTypes as any[]).map((s: any) => ({
         pg_id: pgId,
-        type: s.type,
+        type: Number(s.type),
         price_monthly: Number(s.price_monthly) || 0,
         price_daily: s.price_daily ? Number(s.price_daily) : null,
         total_beds: Number(s.total_beds) || 0,
