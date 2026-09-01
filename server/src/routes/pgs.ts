@@ -305,6 +305,16 @@ router.get('/:id', async (req, res) => {
       pg.custom_nearby_places = customPlaces
     }
 
+    // Fetch custom_amenities separately to prevent crashes if the table hasn't been migrated
+    const { data: customAmenities } = await supabase
+      .from('custom_amenities')
+      .select('label')
+      .eq('pg_id', pgId)
+    
+    if (customAmenities) {
+      pg.custom_amenities = customAmenities
+    }
+
     // Compute average rating
     const { data: ratingAgg } = await supabase
       .from('reviews')

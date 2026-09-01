@@ -163,15 +163,19 @@ router.post('/save-listing', async (req, res) => {
 
     // Save custom amenities
     if (req.body.customAmenities && pgId) {
-      await supabase.from('custom_amenities').delete().eq('pg_id', pgId)
-      const customAmenityPayloads = req.body.customAmenities.map((label: string) => ({
-        pg_id: pgId,
-        label,
-        created_by: payload.owner_id
-      }))
-      if (customAmenityPayloads.length > 0) {
-        const { error: customAmenityErr } = await supabase.from('custom_amenities').insert(customAmenityPayloads)
-        if (customAmenityErr) throw customAmenityErr
+      try {
+        await supabase.from('custom_amenities').delete().eq('pg_id', pgId)
+        const customAmenityPayloads = req.body.customAmenities.map((label: string) => ({
+          pg_id: pgId,
+          label,
+          created_by: payload.owner_id
+        }))
+        if (customAmenityPayloads.length > 0) {
+          const { error: customAmenityErr } = await supabase.from('custom_amenities').insert(customAmenityPayloads)
+          if (customAmenityErr) console.warn('Could not save custom_amenities:', customAmenityErr)
+        }
+      } catch (e) {
+        console.warn('Could not save custom_amenities:', e)
       }
     }
 
