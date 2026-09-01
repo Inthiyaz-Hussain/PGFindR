@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Loader2, Send, User, Phone, CalendarDays, MapPin, Briefcase, Clock, BedSingle } from 'lucide-react'
+import { Loader2, Send, User, Phone, CalendarDays, MapPin, Briefcase, Clock, BedSingle, Compass } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -38,6 +38,7 @@ const inquirySchema = z.object({
   duration_unit: z.enum(['days', 'months']),
   message: z.string().optional(),
   room_id: z.string().optional(),
+  room_facing: z.string().optional(),
   acceptedTerms: z.boolean().refine(val => val === true, 'You must accept the terms and conditions'),
 })
 
@@ -112,6 +113,7 @@ export function InquiryModal({
       duration_value: 1,
       duration_unit: 'months',
       message: '',
+      room_facing: 'Any',
       acceptedTerms: false,
     },
     mode: 'onChange',
@@ -181,6 +183,7 @@ export function InquiryModal({
         duration_value: 1,
         duration_unit: 'months',
         message: '',
+        room_facing: 'Any',
         acceptedTerms: false,
       })
       // No guest email state to reset
@@ -244,6 +247,7 @@ export function InquiryModal({
         pg_id: pgId,
         seeker_id: activeUser!.id,
         ...data,
+        message: (data.room_facing && data.room_facing !== 'Any' ? `Prefers ${data.room_facing} facing room. ` : '') + (data.message || ''),
       }),
     })
 
@@ -463,6 +467,31 @@ export function InquiryModal({
         </Label>
         <Input id="city_of_origin" {...register('city_of_origin')} placeholder="Where are you from?" />
         {errors.city_of_origin && <p className="text-xs text-destructive">{errors.city_of_origin.message}</p>}
+      </div>
+
+      {/* Room Facing */}
+      <div className="space-y-1.5">
+        <Label htmlFor="room_facing" className="flex items-center gap-1.5">
+          <Compass className="size-3.5" /> Room Facing Preference
+        </Label>
+        <Controller
+          name="room_facing"
+          control={control}
+          render={({ field }) => (
+            <Select value={field.value} onValueChange={field.onChange}>
+              <SelectTrigger id="room_facing">
+                <SelectValue placeholder="Select facing preference" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Any">Any</SelectItem>
+                <SelectItem value="East">East</SelectItem>
+                <SelectItem value="West">West</SelectItem>
+                <SelectItem value="North">North</SelectItem>
+                <SelectItem value="South">South</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
+        />
       </div>
 
       {/* Duration */}

@@ -82,6 +82,8 @@ export function PGFormPage() {
     wifi: false, ac: false, food_veg: false, food_nonveg: false,
     laundry: false, parking: false, cctv: false, generator: false,
   })
+  const [customAmenities, setCustomAmenities] = useState<string[]>([])
+  const [newCustomAmenity, setNewCustomAmenity] = useState('')
   const [photos, setPhotos] = useState<{ url: string; type: 'room' | 'common' | 'exterior' | 'kitchen' | 'washroom'; caption?: string }[]>([])
   const [uploading, setUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
@@ -256,6 +258,11 @@ export function PGFormPage() {
         setAmenities(newAmenities)
       }
 
+      const { data: custAmenitiesList } = await supabaseUntyped.from('custom_amenities').select('*').eq('pg_id', id!)
+      if (custAmenitiesList) {
+        setCustomAmenities(custAmenitiesList.map((c: any) => c.label))
+      }
+
       const { data: photoData } = await supabaseUntyped.from('pg_photos').select('*').eq('pg_id', id!)
       if (photoData) {
         setPhotos(photoData.map((p: Record<string, unknown>) => ({
@@ -358,6 +365,7 @@ export function PGFormPage() {
           payload,
           sharingTypes: finalSharingTypes,
           amenities,
+          customAmenities,
           photos,
           isAdmin
         })
@@ -470,6 +478,24 @@ export function PGFormPage() {
 
   const removeSharingType = (index: number) => {
     setSharingTypes(sharingTypes.filter((_, i) => i !== index))
+  }
+
+  const addCustomAmenity = () => {
+    if (!newCustomAmenity.trim()) return
+    if (customAmenities.length >= 10) {
+      toast.error('Maximum 10 custom amenities allowed.')
+      return
+    }
+    if (newCustomAmenity.length > 50) {
+      toast.error('Label cannot exceed 50 characters.')
+      return
+    }
+    setCustomAmenities([...customAmenities, newCustomAmenity.trim()])
+    setNewCustomAmenity('')
+  }
+
+  const removeCustomAmenity = (index: number) => {
+    setCustomAmenities(customAmenities.filter((_, i) => i !== index))
   }
 
   const handleDrop = useCallback((e: React.DragEvent) => {
@@ -999,7 +1025,7 @@ export function PGFormPage() {
             </div>
             <Button
               type="button"
-              variant="outline"
+              variant="default"
               size="sm"
               onClick={addSharingType}
               disabled={
@@ -1008,7 +1034,7 @@ export function PGFormPage() {
                   : sharingTypes.length >= 4
               }
             >
-              <Plus className="size-4" /> Add Sharing Type
+              <Plus className="size-4 mr-1" /> Add Sharing Type
             </Button>
           </CardHeader>
           <CardContent>
@@ -1031,12 +1057,12 @@ export function PGFormPage() {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="1">Single</SelectItem>
+                            <SelectItem value="1" disabled={sharingTypes.some((s, i) => s.type === 1 && i !== index)}>Single</SelectItem>
                             {watchedPgType !== 'coliving' && watchedPgType !== 'co-ed' && (
                               <>
-                                <SelectItem value="2">Double</SelectItem>
-                                <SelectItem value="3">Triple</SelectItem>
-                                <SelectItem value="4">Dormitory</SelectItem>
+                                <SelectItem value="2" disabled={sharingTypes.some((s, i) => s.type === 2 && i !== index)}>Double</SelectItem>
+                                <SelectItem value="3" disabled={sharingTypes.some((s, i) => s.type === 3 && i !== index)}>Triple</SelectItem>
+                                <SelectItem value="4" disabled={sharingTypes.some((s, i) => s.type === 4 && i !== index)}>Dormitory</SelectItem>
                               </>
                             )}
                           </SelectContent>
@@ -1121,6 +1147,42 @@ export function PGFormPage() {
                 </div>
               ))}
             </div>
+            
+            <div className="mt-6 border-t pt-4">
+              <h4 className="text-sm font-semibold mb-3">Custom Amenities</h4>
+              <div className="flex gap-2 max-w-sm mb-4">
+                <Input
+                  value={newCustomAmenity}
+                  onChange={(e) => setNewCustomAmenity(e.target.value)}
+                  placeholder="e.g. Swimming Pool"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      addCustomAmenity()
+                    }
+                  }}
+                />
+                <Button type="button" onClick={addCustomAmenity} variant="secondary">Add</Button>
+              </div>
+              {customAmenities.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {customAmenities.map((amenity, index) => (
+                    <Badge key={index} variant="secondary" className="pl-3 pr-1 py-1 flex items-center gap-1">
+                      {amenity}
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-sm"
+                        className="h-4 w-4 rounded-full hover:bg-muted"
+                        onClick={() => removeCustomAmenity(index)}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </Badge>
+                  ))}
+                </div>
+              )}
+            </div>
           </CardContent>
         </Card>
 
@@ -1135,7 +1197,7 @@ export function PGFormPage() {
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="deposit_amount">Security Deposit (¥)</FieldLabel>
+                  <FieldLabel htmlFor="deposit_amount">Security Deposit (Global) (¥)</FieldLabel>
                   <Input
                     {...field}
                     value={field.value ?? ''}

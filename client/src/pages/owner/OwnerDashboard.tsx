@@ -238,13 +238,20 @@ export function OwnerDashboard() {
               <div className="space-y-3">
                 {listings.slice(0, 3).map((l) => (
                   <div key={l.id} className="flex items-center justify-between rounded-md border p-3 cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => navigate(`/owner/pgs/${l.id}/availability`)}>
-                    <div>
-                      <div className="font-medium text-sm">{l.name}</div>
-                      <div className="text-xs text-muted-foreground">{l.locality}, {l.city}</div>
+                    <div className="flex-1">
+                      <div className="font-medium text-sm flex items-center gap-2">
+                        {l.name}
+                        <Badge className={`text-[10px] h-4 px-1.5 border-0 ${pgStatusColor[l.status]}`}>{l.status}</Badge>
+                      </div>
+                      <div className="text-xs text-muted-foreground mt-0.5">{l.locality}, {l.city}</div>
+                      <div className="text-xs font-medium text-indigo-600 dark:text-indigo-400 mt-1">
+                        {l.available_beds} Available / {l.total_beds} Total Beds
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <div className="text-xs text-muted-foreground">{l.available_beds}/{l.total_beds} beds</div>
-                      <Badge className={`text-xs border-0 ${pgStatusColor[l.status]}`}>{l.status}</Badge>
+                    <div className="flex flex-col items-end gap-2 ml-2">
+                      <Button size="sm" variant="secondary" className="h-7 text-xs bg-indigo-50 text-indigo-600 hover:bg-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-400">
+                        Update Beds
+                      </Button>
                     </div>
                   </div>
                 ))}

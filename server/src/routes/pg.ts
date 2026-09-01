@@ -111,7 +111,11 @@ router.post('/save-listing', async (req, res) => {
     // Save sharing types
     if (sharingTypes && sharingTypes.length > 0 && pgId) {
       await db.from('sharing_types').delete().eq('pg_id', pgId)
-      const sharingPayloads = sharingTypes.map((s: any) => ({
+      
+      // Deduplicate by type to prevent unique constraint violation
+      const uniqueSharingTypes = Array.from(new Map(sharingTypes.map((s: any) => [s.type, s])).values());
+      
+      const sharingPayloads = (uniqueSharingTypes as any[]).map((s: any) => ({
         pg_id: pgId,
         type: s.type,
         price_monthly: Number(s.price_monthly) || 0,
@@ -132,6 +136,19 @@ router.post('/save-listing', async (req, res) => {
       if (amenityPayloads.length > 0) {
         const { error: amenityErr } = await db.from('amenities').insert(amenityPayloads)
         if (amenityErr) throw amenityErr
+      }
+    }
+
+    // Save custom amenities
+    if (req.body.customAmenities && pgId) {
+      await db.from('custom_amenities').delete().eq('pg_id', pgId)
+      const customAmenityPayloads = req.body.customAmenities.map((label: string) => ({
+        pg_id: pgId,
+        label
+      }))
+      if (customAmenityPayloads.length > 0) {
+        const { error: customAmenityErr } = await db.from('custom_amenities').insert(customAmenityPayloads)
+        if (customAmenityErr) throw customAmenityErr
       }
     }
 
