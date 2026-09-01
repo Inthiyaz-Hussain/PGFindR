@@ -110,7 +110,21 @@ router.post('/save-listing', async (req, res) => {
 
     // Save sharing types
     if (sharingTypes && sharingTypes.length > 0 && pgId) {
-      await db.from('sharing_types').delete().eq('pg_id', pgId)
+      // Find which types to keep
+      const keepTypes = sharingTypes.map((s: any) => Number(s.type));
+
+      // Attempt to delete types that are no longer in the payload
+      if (keepTypes.length > 0) {
+        const { error: delErr } = await db
+          .from('sharing_types')
+          .delete()
+          .eq('pg_id', pgId)
+          .not('type', 'in', `(${keepTypes.join(',')})`);
+        
+        if (delErr) {
+          console.warn('Could not delete some sharing types (might be in use by beds/rooms):', delErr);
+        }
+      }
       
       // Deduplicate by type to prevent unique constraint violation
       const uniqueSharingTypes = Array.from(new Map(sharingTypes.map((s: any) => [Number(s.type), s])).values());
@@ -123,7 +137,12 @@ router.post('/save-listing', async (req, res) => {
         total_beds: Number(s.total_beds) || 0,
         occupied_beds: Number(s.occupied_beds) || 0,
       }))
-      const { error: sharingErr } = await db.from('sharing_types').insert(sharingPayloads)
+      
+      // Use upsert to avoid duplicate key errors for existing sharing types
+      const { error: sharingErr } = await db
+        .from('sharing_types')
+        .upsert(sharingPayloads, { onConflict: 'pg_id,type' })
+        
       if (sharingErr) throw sharingErr
     }
 

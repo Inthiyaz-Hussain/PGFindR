@@ -485,6 +485,36 @@ router.put('/:id', async (req, res) => {
           .update({ status: 'booked', updated_at: new Date().toISOString() })
           .eq('id', existingInquiry.id)
 
+        // Update occupied beds and available beds
+        const typeId = existingInquiry.sharing_preference || 2;
+        const { data: stData } = await supabase
+          .from('sharing_types')
+          .select('occupied_beds')
+          .eq('pg_id', existingInquiry.pg_id)
+          .eq('type', typeId)
+          .single();
+          
+        if (stData) {
+          await supabase
+            .from('sharing_types')
+            .update({ occupied_beds: (stData.occupied_beds || 0) + numBeds })
+            .eq('pg_id', existingInquiry.pg_id)
+            .eq('type', typeId);
+        }
+
+        const { data: currentPg } = await supabase
+          .from('pg_listings')
+          .select('available_beds')
+          .eq('id', existingInquiry.pg_id)
+          .single();
+          
+        if (currentPg) {
+          await supabase
+            .from('pg_listings')
+            .update({ available_beds: Math.max(0, (currentPg.available_beds || 0) - numBeds) })
+            .eq('id', existingInquiry.pg_id);
+        }
+
         const seekerFcmToken = await getUserFcmToken(seeker.id)
         const notificationBody = 'Please pay the advance amount or full amount to confirm your bed.'
 

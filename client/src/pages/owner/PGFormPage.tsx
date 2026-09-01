@@ -359,7 +359,11 @@ export function PGFormPage() {
         monthly_rent_min: finalSharingTypes.length > 0 ? Math.min(...finalSharingTypes.map((s) => Number(s.price_monthly) || 0)) : 0,
         monthly_rent_max: finalSharingTypes.length > 0 ? Math.max(...finalSharingTypes.map((s) => Number(s.price_monthly) || 0)) : 0,
         total_beds: finalSharingTypes.reduce((sum, s) => sum + (Number(s.total_beds) || 0), 0),
-        available_beds: finalSharingTypes.reduce((sum, s) => sum + (Number(s.total_beds) || 0), 0),
+        available_beds: finalSharingTypes.reduce((sum, s) => {
+          const total = Number(s.total_beds) || 0;
+          const occupied = Number(s.occupied_beds) || 0;
+          return sum + Math.max(0, total - occupied);
+        }, 0),
         updated_at: new Date().toISOString(),
       }
 
