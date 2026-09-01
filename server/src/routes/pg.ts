@@ -163,7 +163,8 @@ router.post('/save-listing', async (req, res) => {
       await db.from('custom_amenities').delete().eq('pg_id', pgId)
       const customAmenityPayloads = req.body.customAmenities.map((label: string) => ({
         pg_id: pgId,
-        label
+        label,
+        created_by: payload.owner_id
       }))
       if (customAmenityPayloads.length > 0) {
         const { error: customAmenityErr } = await db.from('custom_amenities').insert(customAmenityPayloads)
