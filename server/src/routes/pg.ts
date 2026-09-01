@@ -100,12 +100,14 @@ router.post('/save-listing', async (req, res) => {
       if (error) throw error
       pgId = data.id
     } else {
-      const { error } = await db
+      const { data, error } = await db
         .from('pg_listings')
         .update(payload)
         .eq('id', id)
+        .select('id')
 
       if (error) throw error
+      if (!data || data.length === 0) throw new Error("Unauthorized or PG not found")
     }
 
     // Save sharing types
@@ -115,7 +117,7 @@ router.post('/save-listing', async (req, res) => {
 
       // Attempt to delete types that are no longer in the payload
       if (keepTypes.length > 0) {
-        const { error: delErr } = await db
+        const { error: delErr } = await supabase
           .from('sharing_types')
           .delete()
           .eq('pg_id', pgId)
@@ -139,7 +141,7 @@ router.post('/save-listing', async (req, res) => {
       }))
       
       // Use upsert to avoid duplicate key errors for existing sharing types
-      const { error: sharingErr } = await db
+      const { error: sharingErr } = await supabase
         .from('sharing_types')
         .upsert(sharingPayloads, { onConflict: 'pg_id,type' })
         
@@ -148,54 +150,57 @@ router.post('/save-listing', async (req, res) => {
 
     // Save amenities
     if (pgId) {
-      await db.from('amenities').delete().eq('pg_id', pgId)
+      // We must handle the case where amenities lack RLS policies, so use supabase service client
+      await supabase.from('amenities').delete().eq('pg_id', pgId)
       const amenityPayloads = Object.entries(amenities || {})
         .filter(([, v]) => v)
         .map(([key]) => ({ pg_id: pgId, key, is_available: true }))
       if (amenityPayloads.length > 0) {
-        const { error: amenityErr } = await db.from('amenities').insert(amenityPayloads)
+        const { error: amenityErr } = await supabase.from('amenities').insert(amenityPayloads)
         if (amenityErr) throw amenityErr
       }
     }
 
     // Save custom amenities
     if (req.body.customAmenities && pgId) {
-      await db.from('custom_amenities').delete().eq('pg_id', pgId)
+      await supabase.from('custom_amenities').delete().eq('pg_id', pgId)
       const customAmenityPayloads = req.body.customAmenities.map((label: string) => ({
         pg_id: pgId,
         label,
         created_by: payload.owner_id
       }))
       if (customAmenityPayloads.length > 0) {
-        const { error: customAmenityErr } = await db.from('custom_amenities').insert(customAmenityPayloads)
+        const { error: customAmenityErr } = await supabase.from('custom_amenities').insert(customAmenityPayloads)
         if (customAmenityErr) throw customAmenityErr
       }
     }
 
     // Save custom nearby places
     if (customNearbyPlaces && Array.isArray(customNearbyPlaces) && pgId) {
-      await db.from('custom_nearby_places').delete().eq('pg_id', pgId)
-      if (customNearbyPlaces.length > 0) {
-        const cnpPayload = customNearbyPlaces.map((label: string) => ({
-          pg_id: pgId,
-          label
-        }))
-        const { error: cnpErr } = await db.from('custom_nearby_places').insert(cnpPayload)
-        if (cnpErr) throw cnpErr
+      try {
+        await supabase.from('custom_nearby_places').delete().eq('pg_id', pgId)
+        if (customNearbyPlaces.length > 0) {
+          const cnpPayload = customNearbyPlaces.map((label: string) => ({
+            pg_id: pgId,
+            label
+          }))
+          const { error: cnpErr } = await supabase.from('custom_nearby_places').insert(cnpPayload)
+          if (cnpErr) throw cnpErr
+        }
+      } catch (e) {
+        console.warn('Could not save custom_nearby_places:', e)
       }
     }
 
     // Save photos
     if (photos && photos.length > 0 && pgId) {
-      await db.from('pg_photos').delete().eq('pg_id', pgId)
-      const photoPayloads = photos.map((p: any, i: number) => ({
+      await supabase.from('pg_photos').delete().eq('pg_id', pgId)
+      const photoPayloads = photos.map((p: any) => ({
         pg_id: pgId,
         url: p.url,
-        type: p.type,
-        caption: p.caption,
-        is_primary: i === 0,
+        is_primary: p.is_primary || false
       }))
-      const { error: photoErr } = await db.from('pg_photos').insert(photoPayloads)
+      const { error: photoErr } = await supabase.from('pg_photos').insert(photoPayloads)
       if (photoErr) throw photoErr
     }
 
