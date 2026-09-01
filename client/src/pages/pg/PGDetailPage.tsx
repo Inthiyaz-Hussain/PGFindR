@@ -57,6 +57,7 @@ interface PGDetailData {
   amenities: Array<{ key: string; is_available: boolean }>
   sharing_types: SharingTypeItem[]
   owner: { full_name: string; phone: string | null; phone_alternate?: string | null } | null
+  custom_nearby_places?: Array<{ label: string }>
 }
 
 interface ReviewsResponse {
@@ -82,6 +83,7 @@ function getNearbyLandmarks(pg: {
   near_parks?: string | null
   near_pubs?: string | null
   near_transit?: string | null
+  custom_nearby_places?: Array<{ label: string }>
 }) {
   const landmarks: Array<{ name: string; type: string; distance: string; icon: any }> = []
 
@@ -96,6 +98,11 @@ function getNearbyLandmarks(pg: {
   }
   if (pg.near_transit) {
     landmarks.push({ name: pg.near_transit, type: 'Transit Hub', distance: 'Nearby', icon: Train })
+  }
+  if (pg.custom_nearby_places && pg.custom_nearby_places.length > 0) {
+    pg.custom_nearby_places.forEach(place => {
+      landmarks.push({ name: place.label, type: 'Other', distance: 'Nearby', icon: MapPin })
+    })
   }
 
   // If no landmarks are configured in the database, fall back to mock location-specific ones
@@ -385,36 +392,33 @@ export function PGDetailPage() {
           {/* Location & Connectivity */}
           <section className="space-y-4">
             <h2 className="scroll-m-20 text-xl font-semibold tracking-tight">Location & Connectivity</h2>
-            {pg.latitude && pg.longitude ? (
-              <div className="overflow-hidden rounded-xl border border-border bg-card">
-                <div className="h-64 w-full">
-                  <iframe
-                    title="PG Location Map"
-                    width="100%"
-                    height="100%"
-                    style={{ border: 0 }}
-                    loading="lazy"
-                    allowFullScreen
-                    referrerPolicy="no-referrer-when-downgrade"
-                    src={`https://maps.google.com/maps?q=${pg.latitude},${pg.longitude}&z=15&output=embed`}
-                  />
-                </div>
-                <div className="p-4 bg-muted/30">
-                  <div className="flex items-start gap-2.5">
-                    <MapPin className="size-5 text-primary shrink-0 mt-0.5" />
-                    <div>
-                      <div className="text-sm font-semibold">Exact Address</div>
-                      <div className="text-sm text-muted-foreground">{pg.address}, {pg.locality}, {pg.city}{pg.pincode ? ` - ${pg.pincode}` : ''}</div>
-                    </div>
+            <div className="overflow-hidden rounded-xl border border-border bg-card">
+              <div className="h-64 w-full">
+                <iframe
+                  title="PG Location Map"
+                  width="100%"
+                  height="100%"
+                  style={{ border: 0 }}
+                  loading="lazy"
+                  allowFullScreen
+                  referrerPolicy="no-referrer-when-downgrade"
+                  src={`https://maps.google.com/maps?q=${encodeURIComponent(
+                    pg.latitude && pg.longitude
+                      ? `${pg.latitude},${pg.longitude}`
+                      : `${pg.address}, ${pg.locality}, ${pg.city}`
+                  )}&z=15&output=embed`}
+                />
+              </div>
+              <div className="p-4 bg-muted/30">
+                <div className="flex items-start gap-2.5">
+                  <MapPin className="size-5 text-primary shrink-0 mt-0.5" />
+                  <div>
+                    <div className="text-sm font-semibold">Exact Address</div>
+                    <div className="text-sm text-muted-foreground">{pg.address}, {pg.locality}, {pg.city}{pg.pincode ? ` - ${pg.pincode}` : ''}</div>
                   </div>
                 </div>
               </div>
-            ) : (
-              <div className="rounded-xl border border-border bg-card p-4 flex items-center gap-3 text-muted-foreground">
-                <MapPin className="size-5" />
-                <span className="text-sm">Location coordinates not available. Address: {pg.address}, {pg.locality}, {pg.city}{pg.pincode ? ` - ${pg.pincode}` : ''}</span>
-              </div>
-            )}
+            </div>
 
             {/* Nearby Transit & Landmarks */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

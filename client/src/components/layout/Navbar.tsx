@@ -228,7 +228,7 @@ export function Navbar({
                   About
                 </NavLink>
                 <button
-                  onClick={() => navigate('/seeker/profile?tab=saved')}
+                  onClick={() => navigate('/seeker/saved')}
                   className="relative p-2 rounded-full text-slate-600 dark:text-slate-300 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50/80 dark:hover:bg-rose-950/40 transition-colors cursor-pointer group"
                   title="View Wishlist"
                 >
@@ -254,7 +254,7 @@ export function Navbar({
                     if (onWishlistClick) {
                       onWishlistClick()
                     } else {
-                      navigate('/seeker/profile?tab=saved')
+                      navigate('/seeker/saved')
                     }
                   }}
                   className="relative p-2 rounded-full text-slate-600 dark:text-slate-300 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50/80 dark:hover:bg-rose-950/40 transition-colors cursor-pointer group"
@@ -329,7 +329,7 @@ export function Navbar({
 
                   {profile?.role === 'seeker' && (
                     <DropdownMenuItem
-                      onClick={() => navigate('/seeker/profile?tab=saved')}
+                      onClick={() => navigate('/seeker/saved')}
                       className="cursor-pointer py-2 px-3 rounded-lg text-xs sm:text-sm font-medium hover:bg-rose-50 dark:hover:bg-rose-950/50 text-slate-700 dark:text-slate-200"
                     >
                       <Bookmark className="h-4 w-4 mr-2.5 text-rose-500" />
@@ -385,7 +385,7 @@ export function Navbar({
             <button
               onClick={() => {
                 if (onWishlistClick) onWishlistClick()
-                else navigate('/seeker/profile?tab=saved')
+                else navigate('/seeker/saved')
               }}
               className="relative p-2 rounded-full text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
               aria-label="Wishlist"

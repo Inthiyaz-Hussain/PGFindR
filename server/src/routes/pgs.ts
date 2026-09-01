@@ -288,7 +288,7 @@ router.get('/:id', async (req, res) => {
     // Fetch PG with photos, amenities, sharing_types, owner profile
     const { data: pg, error: pgError } = await supabase
       .from('pg_listings')
-      .select('*, photos:pg_photos(*), amenities(*), sharing_types(*), owner:profiles!pg_listings_owner_id_fkey(full_name, phone)')
+      .select('*, photos:pg_photos(*), amenities(*), sharing_types(*), custom_nearby_places(label), owner:profiles!pg_listings_owner_id_fkey(full_name, phone)')
       .eq('id', pgId)
       .single()
 

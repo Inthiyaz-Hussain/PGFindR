@@ -77,13 +77,15 @@ export function PGFormPage() {
   const [filterCity, setFilterCity] = useState<string>('')
   const [filterLocality, setFilterLocality] = useState<string>('')
 
-  const [sharingTypes, setSharingTypes] = useState<{ type: 1 | 2 | 3 | 4; price_monthly: string; price_daily: string; total_beds: string }[]>([])
+  const [sharingTypes, setSharingTypes] = useState<{ type: 1 | 2 | 3 | 4; price_monthly: string; price_daily: string; total_beds: string; occupied_beds: string }[]>([])
   const [amenities, setAmenities] = useState<Record<AmenityItem['key'], boolean>>({
     wifi: false, ac: false, food_veg: false, food_nonveg: false,
     laundry: false, parking: false, cctv: false, generator: false,
   })
   const [customAmenities, setCustomAmenities] = useState<string[]>([])
   const [newCustomAmenity, setNewCustomAmenity] = useState('')
+  const [customNearbyPlaces, setCustomNearbyPlaces] = useState<string[]>([])
+  const [newCustomNearby, setNewCustomNearby] = useState('')
   const [photos, setPhotos] = useState<{ url: string; type: 'room' | 'common' | 'exterior' | 'kitchen' | 'washroom'; caption?: string }[]>([])
   const [uploading, setUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
@@ -207,10 +209,25 @@ export function PGFormPage() {
   }, [watchedPgType])
 
   // Load existing data for edit
-  useQuery({
+  const query = useQuery({
     queryKey: ['pg-edit', id],
     queryFn: async () => {
       const { data: pg } = await supabaseUntyped.from('pg_listings').select('*').eq('id', id!).single()
+      const { data: sharingData } = await supabaseUntyped.from('sharing_types').select('*').eq('pg_id', id!)
+      const { data: amenityData } = await supabaseUntyped.from('amenities').select('*').eq('pg_id', id!)
+      const { data: custAmenitiesList } = await supabaseUntyped.from('custom_amenities').select('*').eq('pg_id', id!)
+      const { data: custNearbyList } = await supabaseUntyped.from('custom_nearby_places').select('*').eq('pg_id', id!)
+      const { data: photoData } = await supabaseUntyped.from('pg_photos').select('*').eq('pg_id', id!)
+      
+      return { pg, sharingData, amenityData, custAmenitiesList, custNearbyList, photoData }
+    },
+    enabled: !isNew && !!id,
+  })
+
+  useEffect(() => {
+    if (query.data && !isNew) {
+      const { pg, sharingData, amenityData, custAmenitiesList, custNearbyList, photoData } = query.data
+      
       if (pg) {
         const p = pg as Record<string, unknown>
         if (p.owner_id) {
@@ -241,29 +258,30 @@ export function PGFormPage() {
         })
       }
 
-      const { data: sharingData } = await supabaseUntyped.from('sharing_types').select('*').eq('pg_id', id!)
       if (sharingData) {
         setSharingTypes((sharingData as SharingTypeItem[]).map((s) => ({
           type: s.type,
           price_monthly: String(s.price_monthly),
           price_daily: String(s.price_daily || ''),
           total_beds: String(s.total_beds),
+          occupied_beds: String(s.occupied_beds || '0'),
         })))
       }
 
-      const { data: amenityData } = await supabaseUntyped.from('amenities').select('*').eq('pg_id', id!)
       if (amenityData) {
-        const newAmenities = { ...amenities }
-        ;(amenityData as AmenityItem[]).forEach((a) => { newAmenities[a.key] = a.is_available })
-        setAmenities(newAmenities)
+        const newAmenities = { wifi: false, ac: false, food_veg: false, food_nonveg: false, laundry: false, parking: false, cctv: false, generator: false }
+        ;(amenityData as AmenityItem[]).forEach((a) => { (newAmenities as any)[a.key] = a.is_available })
+        setAmenities(newAmenities as Record<AmenityItem['key'], boolean>)
       }
 
-      const { data: custAmenitiesList } = await supabaseUntyped.from('custom_amenities').select('*').eq('pg_id', id!)
       if (custAmenitiesList) {
         setCustomAmenities(custAmenitiesList.map((c: any) => c.label))
       }
 
-      const { data: photoData } = await supabaseUntyped.from('pg_photos').select('*').eq('pg_id', id!)
+      if (custNearbyList) {
+        setCustomNearbyPlaces(custNearbyList.map((c: any) => c.label))
+      }
+
       if (photoData) {
         setPhotos(photoData.map((p: Record<string, unknown>) => ({
           url: p.url as string,
@@ -271,11 +289,8 @@ export function PGFormPage() {
           caption: (p.caption as string) || undefined,
         })))
       }
-
-      return pg
-    },
-    enabled: !isNew && !!id,
-  })
+    }
+  }, [query.data, isNew, form])
 
   const saveMutation = useMutation({
     mutationFn: async (data: PGFormData) => {
@@ -366,6 +381,7 @@ export function PGFormPage() {
           sharingTypes: finalSharingTypes,
           amenities,
           customAmenities,
+          customNearbyPlaces,
           photos,
           isAdmin
         })
@@ -472,7 +488,7 @@ export function PGFormPage() {
     const existingTypes = sharingTypes.map((s) => s.type)
     const available: (1 | 2 | 3 | 4)[] = [1, 2, 3, 4].filter((t) => !existingTypes.includes(t as 1 | 2 | 3 | 4)) as (1 | 2 | 3 | 4)[]
     if (available.length > 0) {
-      setSharingTypes([...sharingTypes, { type: available[0], price_monthly: '', price_daily: '', total_beds: '' }])
+      setSharingTypes([...sharingTypes, { type: available[0], price_monthly: '', price_daily: '', total_beds: '', occupied_beds: '0' } as any])
     }
   }
 
@@ -496,6 +512,24 @@ export function PGFormPage() {
 
   const removeCustomAmenity = (index: number) => {
     setCustomAmenities(customAmenities.filter((_, i) => i !== index))
+  }
+
+  const addCustomNearbyPlace = () => {
+    if (!newCustomNearby.trim()) return
+    if (customNearbyPlaces.length >= 10) {
+      toast.error('Maximum 10 custom places allowed.')
+      return
+    }
+    if (newCustomNearby.length > 50) {
+      toast.error('Label cannot exceed 50 characters.')
+      return
+    }
+    setCustomNearbyPlaces([...customNearbyPlaces, newCustomNearby.trim()])
+    setNewCustomNearby('')
+  }
+
+  const removeCustomNearbyPlace = (index: number) => {
+    setCustomNearbyPlaces(customNearbyPlaces.filter((_, i) => i !== index))
   }
 
   const handleDrop = useCallback((e: React.DragEvent) => {
@@ -1012,6 +1046,41 @@ export function PGFormPage() {
                   )}
                 />
               </div>
+              <div className="mt-6 border-t pt-4">
+                <h4 className="text-sm font-semibold mb-3">Custom Nearby Places</h4>
+                <div className="flex gap-2 max-w-sm mb-4">
+                  <Input
+                    value={newCustomNearby}
+                    onChange={(e) => setNewCustomNearby(e.target.value)}
+                    placeholder="e.g. SRM University"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault()
+                        addCustomNearbyPlace()
+                      }
+                    }}
+                  />
+                  <Button type="button" onClick={addCustomNearbyPlace} variant="secondary">Add</Button>
+                </div>
+                {customNearbyPlaces.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {customNearbyPlaces.map((place, index) => (
+                      <Badge key={index} variant="secondary" className="pl-3 pr-1 py-1 flex items-center gap-1">
+                        {place}
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon-sm"
+                          className="h-4 w-4 rounded-full hover:bg-muted"
+                          onClick={() => removeCustomNearbyPlace(index)}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -1107,6 +1176,20 @@ export function PGFormPage() {
                             setSharingTypes(newTypes)
                           }}
                           placeholder="4"
+                          className="h-9"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-medium text-muted-foreground">Occupied Beds</label>
+                        <Input
+                          type="number"
+                          value={st.occupied_beds || ''}
+                          onChange={(e) => {
+                            const newTypes = [...sharingTypes]
+                            newTypes[index].occupied_beds = e.target.value
+                            setSharingTypes(newTypes)
+                          }}
+                          placeholder="0"
                           className="h-9"
                         />
                       </div>

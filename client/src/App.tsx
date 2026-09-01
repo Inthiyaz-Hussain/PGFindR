@@ -32,6 +32,7 @@ import { SeekerDashboard } from '@/pages/seeker/SeekerDashboard'
 import { InquiriesPage } from '@/pages/seeker/InquiriesPage'
 import { BookingsPage } from '@/pages/seeker/BookingsPage'
 import { ProfilePage } from '@/pages/seeker/ProfilePage'
+import { SavedPGsPage } from '@/pages/seeker/SavedPGsPage'
 import { AboutPage as SeekerAboutPage } from '@/pages/seeker/AboutPage'
 import { HelpDeskPage } from '@/pages/seeker/HelpDeskPage'
 
@@ -112,6 +113,7 @@ export function App() {
                 <Route path="/seeker" element={<SeekerDashboard />} />
                 <Route path="/seeker/inquiries" element={<InquiriesPage />} />
                 <Route path="/seeker/bookings" element={<BookingsPage />} />
+                <Route path="/seeker/saved" element={<SavedPGsPage />} />
                 <Route path="/seeker/profile" element={<ProfilePage />} />
                 <Route path="/seeker/about" element={<SeekerAboutPage />} />
                 <Route path="/seeker/help" element={<HelpDeskPage />} />

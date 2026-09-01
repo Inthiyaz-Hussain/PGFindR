@@ -83,7 +83,7 @@ async function sendCEONotificationEmail(pgName: string, ownerName: string, pgId:
 // POST /api/pg/save-listing - Atomic save listing + relationships (bypasses RLS issues on the client side)
 router.post('/save-listing', async (req, res) => {
   try {
-    const { id, payload, sharingTypes, amenities, photos, isAdmin } = req.body
+    const { id, payload, sharingTypes, amenities, customAmenities, customNearbyPlaces, photos, isAdmin } = req.body
     const isNew = !id || id === 'new'
 
     let pgId = id
@@ -121,7 +121,7 @@ router.post('/save-listing', async (req, res) => {
         price_monthly: Number(s.price_monthly) || 0,
         price_daily: s.price_daily ? Number(s.price_daily) : null,
         total_beds: Number(s.total_beds) || 0,
-        occupied_beds: 0,
+        occupied_beds: Number(s.occupied_beds) || 0,
       }))
       const { error: sharingErr } = await db.from('sharing_types').insert(sharingPayloads)
       if (sharingErr) throw sharingErr
@@ -149,6 +149,19 @@ router.post('/save-listing', async (req, res) => {
       if (customAmenityPayloads.length > 0) {
         const { error: customAmenityErr } = await db.from('custom_amenities').insert(customAmenityPayloads)
         if (customAmenityErr) throw customAmenityErr
+      }
+    }
+
+    // Save custom nearby places
+    if (customNearbyPlaces && Array.isArray(customNearbyPlaces) && pgId) {
+      await db.from('custom_nearby_places').delete().eq('pg_id', pgId)
+      if (customNearbyPlaces.length > 0) {
+        const cnpPayload = customNearbyPlaces.map((label: string) => ({
+          pg_id: pgId,
+          label
+        }))
+        const { error: cnpErr } = await db.from('custom_nearby_places').insert(cnpPayload)
+        if (cnpErr) throw cnpErr
       }
     }
 
