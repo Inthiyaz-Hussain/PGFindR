@@ -288,12 +288,22 @@ router.get('/:id', async (req, res) => {
     // Fetch PG with photos, amenities, sharing_types, owner profile
     const { data: pg, error: pgError } = await supabase
       .from('pg_listings')
-      .select('*, photos:pg_photos(*), amenities(*), sharing_types(*), custom_nearby_places(label), owner:profiles!pg_listings_owner_id_fkey(full_name, phone)')
+      .select('*, photos:pg_photos(*), amenities(*), sharing_types(*), owner:profiles!pg_listings_owner_id_fkey(full_name, phone)')
       .eq('id', pgId)
       .single()
 
     if (pgError) throw pgError
     if (!pg) return res.status(404).json({ error: 'PG not found' })
+
+    // Fetch custom_nearby_places separately to prevent crashes if the table hasn't been migrated
+    const { data: customPlaces } = await supabase
+      .from('custom_nearby_places')
+      .select('label')
+      .eq('pg_id', pgId)
+    
+    if (customPlaces) {
+      pg.custom_nearby_places = customPlaces
+    }
 
     // Compute average rating
     const { data: ratingAgg } = await supabase
