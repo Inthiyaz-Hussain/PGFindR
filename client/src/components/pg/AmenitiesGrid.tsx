@@ -66,8 +66,8 @@ export function AmenitiesGrid({ amenities, pg }: AmenitiesGridProps) {
       {available.map((item) => {
         const isCustom = (item as any).is_custom
         const config = isCustom 
-          ? { label: item.key, icon: Sparkles }
-          : AMENITY_MAP[item.key] || { label: item.key, icon: Zap }
+          ? { label: item.key, icon: Sparkles, image: undefined }
+          : AMENITY_MAP[item.key] || { label: item.key, icon: Zap, image: undefined }
         const Icon = config.icon
         return (
           <div
