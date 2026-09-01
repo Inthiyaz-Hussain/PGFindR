@@ -61,6 +61,8 @@ export interface PGListing {
   // joined
   owner?: Profile
   photos?: PGPhoto[]
+  custom_amenities?: { label: string }[]
+  custom_nearby_places?: { label: string }[]
 }
 
 export interface Bed {

@@ -45,7 +45,13 @@ export function AmenitiesGrid({ amenities, pg }: AmenitiesGridProps) {
     })
   }
 
-  const available = Object.keys(merged).map(key => ({ key, is_available: true }))
+  const available = Object.keys(merged).map(key => ({ key, is_available: true, is_custom: false }))
+  
+  if (pg?.custom_amenities && Array.isArray(pg.custom_amenities)) {
+    pg.custom_amenities.forEach(ca => {
+      available.push({ key: ca.label, is_available: true, is_custom: true })
+    })
+  }
 
   if (available.length === 0) {
     return (
@@ -58,7 +64,10 @@ export function AmenitiesGrid({ amenities, pg }: AmenitiesGridProps) {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
       {available.map((item) => {
-        const config = AMENITY_MAP[item.key] || { label: item.key, icon: Zap }
+        const isCustom = (item as any).is_custom
+        const config = isCustom 
+          ? { label: item.key, icon: Sparkles }
+          : AMENITY_MAP[item.key] || { label: item.key, icon: Zap }
         const Icon = config.icon
         return (
           <div

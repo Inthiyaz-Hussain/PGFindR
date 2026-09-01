@@ -101,7 +101,7 @@ function getNearbyLandmarks(pg: {
   }
   if (pg.custom_nearby_places && pg.custom_nearby_places.length > 0) {
     pg.custom_nearby_places.forEach(place => {
-      landmarks.push({ name: place.label, type: 'Other', distance: 'Nearby', icon: MapPin })
+      landmarks.push({ name: place.label, type: 'Nearby Place', distance: 'Nearby', icon: MapPin })
     })
   }
 
