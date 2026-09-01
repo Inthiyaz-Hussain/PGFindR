@@ -20,7 +20,7 @@ const STATUS_CONFIG: Record<string, { label: string; class: string }> = {
 }
 
 function SharingLabel(type: number | null): string {
-  const map: Record<number, string> = { 1: 'Single', 2: 'Double', 3: 'Triple', 4: 'Dormitory' }
+  const map: Record<number, string> = { 1: 'Single', 2: 'Double', 3: 'Triple', 4: '4 Sharing' }
   return type ? map[type] || `${type}-share` : ''
 }
 
