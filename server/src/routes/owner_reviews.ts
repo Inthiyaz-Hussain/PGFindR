@@ -38,10 +38,11 @@ router.get('/', authenticateToken, requireOwner, async (req: any, res) => {
     // Now fetch reviews for these PGs
     const { data: reviews, error: reviewError, count } = await supabase
       .from('reviews')
-      .select(\`n        *,
+      .select(`
+        *,
         pg:pg_listings!reviews_pg_id_fkey(name),
         reviewer:profiles!reviews_user_id_fkey(full_name)
-      \, { count: 'exact' })
+      `, { count: 'exact' })
       .in('pg_id', pgIds)
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1)
@@ -76,7 +77,7 @@ router.patch('/:id/status', authenticateToken, requireOwner, async (req: any, re
       .single()
 
     if (checkError) throw checkError
-    if (!review || review.pg.owner_id !== ownerId) {
+    if (!review || (review as any).pg.owner_id !== ownerId) {
       return res.status(403).json({ error: 'Not authorized to modify this review' })
     }
 
