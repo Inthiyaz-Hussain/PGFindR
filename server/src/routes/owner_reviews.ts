@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { getSupabaseClient } from '../index.js'
+import { getSupabaseClient, supabase as adminSupabase } from '../index.js'
 import { authenticateToken } from '../middleware/auth.js'
 
 const router = Router()
@@ -81,8 +81,8 @@ router.patch('/:id/status', authenticateToken, requireOwner, async (req: any, re
       return res.status(403).json({ error: 'Not authorized to modify this review' })
     }
 
-    // Update the status
-    const { data: updatedReview, error: updateError } = await supabase
+    // Update the status using the admin client to bypass RLS since we just verified ownership
+    const { data: updatedReview, error: updateError } = await adminSupabase
       .from('reviews')
       .update({ status, updated_at: new Date().toISOString() })
       .eq('id', reviewId)
