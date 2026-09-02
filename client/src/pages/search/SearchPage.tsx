@@ -42,10 +42,6 @@ export function SearchPage() {
   const [maxRent, setMaxRent] = useState<string>('')
   const [filterOpen, setFilterOpen] = useState(false)
 
-  // Use refs for latest state in scroll handler
-  const pageRef = useRef(1)
-  const hasMoreRef = useRef(true)
-
   // Sync internal input value with URL query param if it changes
   useEffect(() => {
     setInputValue(searchQuery)
