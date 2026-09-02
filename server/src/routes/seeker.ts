@@ -185,7 +185,7 @@ router.post('/reviews/:pgId', authenticateToken, async (req: any, res) => {
 
     if (insertError) throw insertError;
 
-    res.json({ message: 'Review submitted successfully.' });
+    res.json({ message: 'Review submitted successfully and is pending approval.' });
   } catch (error: any) {
     console.error('Error submitting review:', error);
     res.status(500).json({ error: 'Failed to submit review', details: error.message });

@@ -39,7 +39,7 @@ export function WriteReviewModal({ open, onOpenChange, pgId, onSuccess }: WriteR
       return data
     },
     onSuccess: (data) => {
-      toast.success(data.message || 'Review submitted successfully.')
+      toast.success(data.message || 'Review submitted successfully and is pending approval.')
       setRating(0)
       setComment('')
       onOpenChange(false)
@@ -56,7 +56,7 @@ export function WriteReviewModal({ open, onOpenChange, pgId, onSuccess }: WriteR
         <DialogHeader>
           <DialogTitle>Write a Review</DialogTitle>
           <DialogDescription>
-            Share your experience with others. Your review will be visible to everyone.
+            Share your experience with others. Your review will be visible once approved.
           </DialogDescription>
         </DialogHeader>
 
