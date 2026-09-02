@@ -14,7 +14,7 @@ export function InstallAppButton() {
         className="rounded-full shadow-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold flex items-center h-14 px-6 border-2 border-white/20"
       >
         <Download className="size-5 mr-2" />
-        Download Android APK
+        Install App
       </Button>
     </div>
   );
