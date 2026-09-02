@@ -2,8 +2,12 @@ import type { PGListing } from '@/types'
 import { Link } from 'react-router-dom'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { MapPin, BedDouble } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { MapPin, BedDouble, Heart, Share2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useAuth } from '@/hooks/useAuth'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
 
 interface PGCardProps {
   pg: PGListing & { distance_meters?: number | null }
@@ -12,6 +16,88 @@ interface PGCardProps {
 }
 
 export function PGCard({ pg, liveAvailableBeds = null, className }: PGCardProps) {
+  const { user, session } = useAuth()
+  const queryClient = useQueryClient()
+
+  const { data: savedIds } = useQuery({
+    queryKey: ['saved-pg-ids'],
+    queryFn: async () => {
+      if (!user) {
+        // Fallback to local storage for unauthenticated users
+        const local = localStorage.getItem('savedPgs')
+        return local ? JSON.parse(local) : []
+      }
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'https://swiftpg-backend.onrender.com'}/api/seeker/saved/ids`, {
+        headers: { 'Authorization': `Bearer ${session?.access_token}` }
+      })
+      if (!res.ok) return []
+      return res.json()
+    }
+  })
+
+  const isSaved = (pg as any).is_saved || savedIds?.includes(pg.id)
+
+  const toggleSaveMutation = useMutation({
+    mutationFn: async () => {
+      if (!user) {
+        // Toggle in localStorage
+        const local = localStorage.getItem('savedPgs')
+        let saved = local ? JSON.parse(local) : []
+        let isNowSaved = false
+        if (saved.includes(pg.id)) {
+          saved = saved.filter((id: string) => id !== pg.id)
+        } else {
+          saved.push(pg.id)
+          isNowSaved = true
+        }
+        localStorage.setItem('savedPgs', JSON.stringify(saved))
+        // Dispatch event for other components to listen
+        window.dispatchEvent(new Event('local-saved-pgs-updated'))
+        return { message: isNowSaved ? 'PG saved successfully' : 'PG unsaved successfully' }
+      }
+
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'https://swiftpg-backend.onrender.com'}/api/seeker/saved/${pg.id}`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${session?.access_token}` }
+      })
+      if (!res.ok) throw new Error('Failed to toggle save')
+      return res.json()
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['saved-pg-ids'] })
+      queryClient.invalidateQueries({ queryKey: ['saved-pgs'] })
+      toast.success(data.message)
+    },
+    onError: (err: any) => toast.error(err.message)
+  })
+
+  const handleToggleSave = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    toggleSaveMutation.mutate()
+  }
+
+  const handleShare = async (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    const url = `${window.location.origin}/pg/${pg.id}`
+    
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: pg.name,
+          text: `Check out ${pg.name} on PGFindR!`,
+          url: url
+        })
+      } catch (err) {
+        console.error('Error sharing:', err)
+      }
+    } else {
+      navigator.clipboard.writeText(url)
+      toast.success('Link copied to clipboard!')
+    }
+  }
+
   const primaryPhoto = pg.photos?.find((p) => p.is_primary) || pg.photos?.[0]
   const typeColor = {
     boys: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
@@ -72,15 +158,35 @@ export function PGCard({ pg, liveAvailableBeds = null, className }: PGCardProps)
               <BedDouble className="size-12 text-muted-foreground/30" />
             </div>
           )}
-          <div className="absolute top-3 left-3">
+          <div className="absolute top-3 left-3 flex flex-col gap-2 items-start">
             <Badge className={cn('border-0 text-xs font-medium', typeColor[pg.pg_type as keyof typeof typeColor] || typeColor['coliving'])}>
               {pg.pg_type === 'coliving' || pg.pg_type === 'co-ed' ? 'Coliving' : pg.pg_type === 'boys' ? 'Boys' : 'Girls'}
             </Badge>
-          </div>
-          <div className="absolute top-3 right-3">
             <Badge variant={availabilityBadge.variant} className={cn('text-xs border', availabilityBadge.className)}>
               {availabilityBadge.label}
             </Badge>
+          </div>
+          <div className="absolute top-3 right-3 flex items-center gap-2">
+            <Button
+              type="button"
+              variant="secondary"
+              size="icon"
+              className="h-8 w-8 rounded-full bg-background/80 backdrop-blur hover:bg-background hover:text-foreground shadow-sm"
+              onClick={handleShare}
+            >
+              <Share2 className="h-4 w-4" />
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              size="icon"
+              className={cn("h-8 w-8 rounded-full bg-background/80 backdrop-blur shadow-sm transition-colors", 
+                isSaved ? "text-rose-500 hover:text-rose-600 hover:bg-background" : "text-muted-foreground hover:text-foreground hover:bg-background"
+              )}
+              onClick={handleToggleSave}
+            >
+              <Heart className={cn("h-4 w-4", isSaved && "fill-current")} />
+            </Button>
           </div>
           {pg.distance_meters != null && (
             <div className="absolute bottom-3 right-3">

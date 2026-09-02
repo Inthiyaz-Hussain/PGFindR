@@ -101,6 +101,7 @@ import notificationRoutes from './routes/notifications.js'
 import ownerOnboardingRoutes from './routes/ownerOnboarding.js'
 import mediaRoutes from './routes/media.js'
 import kycRoutes from './routes/kyc.js'
+import seekerRoutes from './routes/seeker.js'
 
 app.use('/api/auth', authRoutes)
 app.use('/api/pg', pgRoutes)
@@ -112,6 +113,7 @@ app.use('/api/webhook', webhookRoutes)
 app.use('/api/notifications', notificationRoutes)
 app.use('/api/media', mediaRoutes)
 app.use('/api/kyc', kycRoutes)
+app.use('/api/seeker', seekerRoutes)
 app.use('/', ownerOnboardingRoutes)
 
 // Error handler
