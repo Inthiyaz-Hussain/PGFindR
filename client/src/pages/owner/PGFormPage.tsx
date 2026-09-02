@@ -397,6 +397,8 @@ export function PGFormPage() {
     onSuccess: (pgId) => {
       queryClient.invalidateQueries({ queryKey: ['owner-listings'] })
       queryClient.invalidateQueries({ queryKey: ['owner-pgs'] })
+      queryClient.invalidateQueries({ queryKey: ['pg-edit', pgId] })
+      queryClient.invalidateQueries({ queryKey: ['pg-detail', pgId] })
       toast.success(isNew ? 'PG created! Pending admin approval.' : 'Listing updated!')
       const basePath = window.location.pathname.startsWith('/admin') ? '/admin' : '/owner'
       if (isNew && basePath === '/owner') {
