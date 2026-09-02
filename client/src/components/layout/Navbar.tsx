@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
 import {
   Building2,
@@ -17,6 +17,7 @@ import {
   Info
 } from 'lucide-react'
 
+import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -28,8 +29,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '@/components/ui/sheet'
-import { useAuth } from '@/hooks/useAuth'
 import { NotificationBell } from '@/components/shared/NotificationBell'
+import { useQuery } from '@tanstack/react-query'
 
 
 
@@ -64,12 +65,24 @@ export function Navbar({
   const isAdminPath = pathname.startsWith('/admin')
   const isSeekerPath = pathname.startsWith('/seeker')
 
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const [savedCount, setSavedCount] = useState<number>(propWishlistCount)
+  const { data: savedIds } = useQuery({
+    queryKey: ['saved-pg-ids'],
+    queryFn: async () => {
+      if (!user) {
+        const local = localStorage.getItem('savedPgs')
+        return local ? JSON.parse(local) : []
+      }
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'https://swiftpg-backend.onrender.com'}/api/seeker/saved/ids`, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('supabase.auth.token') || ''}` }
+      })
+      if (!res.ok) return []
+      return res.json()
+    }
+  })
+  
+  const savedCount = savedIds?.length || propWishlistCount
 
-  useEffect(() => {
-    setSavedCount(propWishlistCount)
-  }, [propWishlistCount])
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   // User initials for avatar
   const userInitials = profile?.full_name

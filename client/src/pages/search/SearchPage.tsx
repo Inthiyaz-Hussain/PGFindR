@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { Search, SlidersHorizontal, X, Filter, Navigation, Building2, Wifi, Utensils, Snowflake, Car, Shirt, ShieldCheck, User, Users, BedDouble } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -29,14 +29,37 @@ const AMENITIES = [
 
 export function SearchPage() {
   const [searchParams, setSearchParams] = useSearchParams()
-  const [query, setQuery] = useState(searchParams.get('q') || '')
-  const [inputValue, setInputValue] = useState(query)
+  const searchQuery = searchParams.get('q') || ''
+  const [query, setQuery] = useState(searchQuery)
+  const [inputValue, setInputValue] = useState(searchQuery)
+  const [suggestions, setSuggestions] = useState<string[]>([])
+  const [showSuggestions, setShowSuggestions] = useState(false)
+  const searchContainerRef = useRef<HTMLDivElement>(null)
   const [pgType, setPgType] = useState<string>(searchParams.get('type') || 'all')
   const [amenities, setAmenities] = useState<Set<string>>(new Set())
   const [sharingTypes, setSharingTypes] = useState<Set<string>>(new Set())
   const [availableOnly, setAvailableOnly] = useState(false)
   const [maxRent, setMaxRent] = useState<string>('')
   const [filterOpen, setFilterOpen] = useState(false)
+
+  // Use refs for latest state in scroll handler
+  const pageRef = useRef(1)
+  const hasMoreRef = useRef(true)
+
+  // Sync internal input value with URL query param if it changes
+  useEffect(() => {
+    setInputValue(searchQuery)
+  }, [searchQuery])
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(e.target as Node)) {
+        setShowSuggestions(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   useEffect(() => {
     const q = searchParams.get('q') || ''
@@ -305,15 +328,60 @@ export function SearchPage() {
   return (
     <div className="container mx-auto px-4 py-6 max-w-7xl">
       {/* Search Bar */}
-      <form onSubmit={handleSearch} className="flex gap-2 mb-6">
-        <div className="relative flex-1">
+      <form id="search-form" onSubmit={handleSearch} className="flex gap-2 mb-6">
+        <div className="relative flex-1" ref={searchContainerRef}>
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
           <Input
             placeholder="Search by city, locality, or PG name..."
             value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
+            onChange={(e) => {
+              setInputValue(e.target.value)
+              if (e.target.value.length >= 2) {
+                const controller = new AbortController()
+                const rawUrl = import.meta.env.VITE_API_URL || 'https://swiftpg-backend.onrender.com'
+                const baseUrl = rawUrl.replace(/\/api\/?$/, '').replace(/\/$/, '')
+                fetch(`${baseUrl}/api/pgs/cities?q=${encodeURIComponent(e.target.value)}`, {
+                  signal: controller.signal,
+                })
+                  .then((res) => res.json())
+                  .then((data: string[]) => {
+                    setSuggestions(data)
+                    setShowSuggestions(data.length > 0)
+                  })
+                  .catch(() => {})
+              } else {
+                setSuggestions([])
+                setShowSuggestions(false)
+              }
+            }}
+            onFocus={() => {
+              if (suggestions.length > 0) setShowSuggestions(true)
+            }}
             className="pl-10"
           />
+          {/* Autocomplete dropdown */}
+          {showSuggestions && suggestions.length > 0 && (
+            <div className="absolute top-full left-0 right-0 z-50 mt-1 max-h-60 overflow-auto rounded-lg border bg-background shadow-lg">
+              {suggestions.map((suggestion) => (
+                <button
+                  key={suggestion}
+                  type="button"
+                  onClick={() => {
+                    setInputValue(suggestion)
+                    setShowSuggestions(false)
+                    // Trigger search automatically if they select an option
+                    setTimeout(() => {
+                      document.getElementById('search-form')?.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }))
+                    }, 0)
+                  }}
+                  className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-left hover:bg-accent"
+                >
+                  <Search className="size-3.5 text-muted-foreground shrink-0" />
+                  <span>{suggestion}</span>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
         <Button
           type="button"
