@@ -9,7 +9,6 @@ import {
   Utensils,
   Hospital,
   Bus,
-  Star,
   BedDouble,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -105,111 +104,7 @@ function getNearbyLandmarks(pg: {
     })
   }
 
-  // If no landmarks are configured in the database, fall back to mock location-specific ones
-  if (landmarks.length === 0) {
-    const locality = pg.locality?.toLowerCase() || ''
-    const name = pg.name?.toLowerCase() || ''
-
-    if (locality.includes('indiranagar')) {
-      landmarks.push({ name: 'Indiranagar Metro Station', type: 'Metro Station', distance: '0.4 km', icon: Train })
-      landmarks.push({ name: '100 Feet Road Shopping Hub', type: 'Shopping & Dining', distance: '0.3 km', icon: ShoppingBag })
-      landmarks.push({ name: 'ESI Hospital', type: 'Healthcare', distance: '1.1 km', icon: Hospital })
-      landmarks.push({ name: 'Toit Brewpub / Restaurants', type: 'Food & Hangout', distance: '0.6 km', icon: Utensils })
-    } else if (locality.includes('andheri')) {
-      landmarks.push({ name: 'JB Nagar Metro Station', type: 'Metro Station', distance: '0.3 km', icon: Train })
-      landmarks.push({ name: 'SEEPZ IT Park', type: 'Business Hub', distance: '1.4 km', icon: ShoppingBag })
-      landmarks.push({ name: 'Seven Hills Hospital', type: 'Healthcare', distance: '1.8 km', icon: Hospital })
-      landmarks.push({ name: 'Andheri Kurla Road', type: 'Commercial Street', distance: '0.5 km', icon: Bus })
-    } else if (locality.includes('south extension') || locality.includes('south ex')) {
-      landmarks.push({ name: 'South Extension Metro Station', type: 'Metro Station', distance: '0.3 km', icon: Train })
-      landmarks.push({ name: 'South Ex Part 2 Market', type: 'Shopping Hub', distance: '0.2 km', icon: ShoppingBag })
-      landmarks.push({ name: 'AIIMS Delhi', type: 'Healthcare', distance: '2.3 km', icon: Hospital })
-    } else if (locality.includes('saket')) {
-      landmarks.push({ name: 'Saket Metro Station', type: 'Metro Station', distance: '0.5 km', icon: Train })
-      landmarks.push({ name: 'Select CITYWALK Mall', type: 'Shopping Mall', distance: '0.6 km', icon: ShoppingBag })
-      landmarks.push({ name: 'Max Super Speciality Hospital', type: 'Healthcare', distance: '0.9 km', icon: Hospital })
-    } else if (locality.includes('sector 62')) {
-      landmarks.push({ name: 'Sector 62 Metro Station', type: 'Metro Station', distance: '0.5 km', icon: Train })
-      landmarks.push({ name: 'Logix Cyber Park', type: 'IT Hub', distance: '0.8 km', icon: ShoppingBag })
-      landmarks.push({ name: 'Fortis Hospital', type: 'Healthcare', distance: '1.2 km', icon: Hospital })
-    } else if (locality.includes('sector 18')) {
-      landmarks.push({ name: 'Sector 18 Metro Station', type: 'Metro Station', distance: '0.2 km', icon: Train })
-      landmarks.push({ name: 'DLF Mall of India', type: 'Shopping Mall', distance: '0.4 km', icon: ShoppingBag })
-      landmarks.push({ name: 'Sector 18 Market', type: 'Commercial Hub', distance: '0.1 km', icon: Utensils })
-    } else if (locality.includes('dlf phase 2') || locality.includes('cyber city') || name.includes('cyber city')) {
-      landmarks.push({ name: 'DLF Cyber City Rapid Metro', type: 'Rapid Metro', distance: '0.4 km', icon: Train })
-      landmarks.push({ name: 'DLF CyberHub', type: 'Food & Entertainment', distance: '0.5 km', icon: Utensils })
-      landmarks.push({ name: 'Ambience Mall Gurgaon', type: 'Shopping Mall', distance: '1.8 km', icon: ShoppingBag })
-    } else if (locality.includes('golf course road') || locality.includes('sector 43') || name.includes('golf course')) {
-      landmarks.push({ name: 'Sector 42-43 Rapid Metro', type: 'Rapid Metro', distance: '0.6 km', icon: Train })
-      landmarks.push({ name: 'One Horizon Center', type: 'Corporate Park', distance: '0.8 km', icon: ShoppingBag })
-      landmarks.push({ name: 'Paras Hospital', type: 'Healthcare', distance: '1.5 km', icon: Hospital })
-    } else {
-      const prettyLocality = pg.locality || 'Local'
-      landmarks.push({ name: `${prettyLocality} Metro/Bus Station`, type: 'Transit', distance: '0.6 km', icon: Train })
-      landmarks.push({ name: `${prettyLocality} Shopping Plaza`, type: 'Shopping & Groceries', distance: '0.8 km', icon: ShoppingBag })
-      landmarks.push({ name: `${prettyLocality} Multi-speciality Hospital`, type: 'Healthcare', distance: '1.5 km', icon: Hospital })
-      landmarks.push({ name: `Local Restaurants & Cafes`, type: 'Food', distance: '0.3 km', icon: Utensils })
-    }
-  }
-
   return landmarks
-}
-
-function getTestimonials(pg: { pg_type: string }) {
-  const testimonials = {
-    boys: [
-      {
-        quote: "Awesome place! The high-speed internet and power backup are perfect for my work-from-home schedule. Clean rooms and great food.",
-        name: "Rahul Sharma",
-        role: "Software Engineer",
-        avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=120",
-        rating: 5
-      },
-      {
-        quote: "Very close to the metro station, makes daily commute to office extremely easy. Highly recommend for working professionals.",
-        name: "Aman Verma",
-        role: "Data Analyst",
-        avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=120",
-        rating: 5
-      }
-    ],
-    girls: [
-      {
-        quote: "Safety is top-notch here with biometric entry and 24/7 security. The warden is friendly and the housekeeping is daily.",
-        name: "Priya Nair",
-        role: "Student, Delhi University",
-        avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=120",
-        rating: 5
-      },
-      {
-        quote: "Loved the community events and the rooftop lounge. Food is really good and feels like home. Best ladies PG in this area.",
-        name: "Ananya Das",
-        role: "UX Designer",
-        avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=120",
-        rating: 5
-      }
-    ],
-    'co-ed': [
-      {
-        quote: "Perfect coliving space. The gym and recreation area are fantastic. Met amazing people from different industries here.",
-        name: "Vikram Malhotra",
-        role: "Product Manager",
-        avatar: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&q=80&w=120",
-        rating: 5
-      },
-      {
-        quote: "Super convenient location. Rooms are spacious and well-ventilated. The support staff is very responsive to any complaints.",
-        name: "Sneha Gupta",
-        role: "HR Specialist",
-        avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=120",
-        rating: 5
-      }
-    ]
-  }
-
-  const type = pg.pg_type as 'boys' | 'girls' | 'co-ed'
-  return testimonials[type] || testimonials['co-ed']
 }
 
 export function PGDetailPage() {
@@ -421,33 +316,35 @@ export function PGDetailPage() {
             </div>
 
             {/* Nearby Transit & Landmarks */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {getNearbyLandmarks(pg).map((landmark, idx) => {
-                const Icon = landmark.icon
-                return (
-                  <div key={idx} className="flex items-center justify-between p-3 rounded-lg border border-border bg-card">
-                    <div className="flex items-center gap-3">
-                      <div className={cn(
-                        "p-2 rounded-md shrink-0",
-                        (landmark.icon === Train || landmark.icon === Bus) && "bg-sky-500/10 text-sky-600 dark:text-sky-400",
-                        landmark.icon === ShoppingBag && "bg-amber-500/10 text-amber-600 dark:text-amber-400",
-                        landmark.icon === Hospital && "bg-rose-500/10 text-rose-600 dark:text-rose-400",
-                        landmark.icon === Utensils && "bg-orange-500/10 text-orange-600 dark:text-orange-400"
-                      )}>
-                        <Icon className="size-4" />
+            {getNearbyLandmarks(pg).length > 0 && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+                {getNearbyLandmarks(pg).map((landmark, idx) => {
+                  const Icon = landmark.icon
+                  return (
+                    <div key={idx} className="flex items-center justify-between p-3 rounded-lg border border-border bg-card">
+                      <div className="flex items-center gap-3">
+                        <div className={cn(
+                          "p-2 rounded-md shrink-0",
+                          (landmark.icon === Train || landmark.icon === Bus) && "bg-sky-500/10 text-sky-600 dark:text-sky-400",
+                          landmark.icon === ShoppingBag && "bg-amber-500/10 text-amber-600 dark:text-amber-400",
+                          landmark.icon === Hospital && "bg-rose-500/10 text-rose-600 dark:text-rose-400",
+                          landmark.icon === Utensils && "bg-orange-500/10 text-orange-600 dark:text-orange-400"
+                        )}>
+                          <Icon className="size-4" />
+                        </div>
+                        <div>
+                          <div className="text-sm font-medium leading-none">{landmark.name}</div>
+                          <div className="text-xs text-muted-foreground mt-1">{landmark.type}</div>
+                        </div>
                       </div>
-                      <div>
-                        <div className="text-sm font-medium leading-none">{landmark.name}</div>
-                        <div className="text-xs text-muted-foreground mt-1">{landmark.type}</div>
-                      </div>
+                      <span className="text-xs font-semibold bg-muted px-2.5 py-1 rounded-full text-muted-foreground shrink-0">
+                        {landmark.distance}
+                      </span>
                     </div>
-                    <span className="text-xs font-semibold bg-muted px-2.5 py-1 rounded-full text-muted-foreground shrink-0">
-                      {landmark.distance}
-                    </span>
-                  </div>
-                )
-              })}
-            </div>
+                  )
+                })}
+              </div>
+            )}
           </section>
 
           {/* Rules */}
@@ -469,55 +366,6 @@ export function PGDetailPage() {
               onSelect={handleSelectSharing}
               selectedId={selectedSharing?.id}
             />
-          </section>
-
-          {/* Testimonials */}
-          <section className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="scroll-m-20 text-xl font-semibold tracking-tight">Resident Testimonials</h2>
-              <span className="text-xs bg-primary/10 text-primary font-medium px-2.5 py-1 rounded-full">
-                Verified Residents
-              </span>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {getTestimonials(pg).map((testi, idx) => (
-                <div 
-                  key={idx} 
-                  className="relative group overflow-hidden rounded-xl border border-border bg-gradient-to-br from-card to-muted/20 p-5 shadow-sm transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 flex flex-col justify-between"
-                >
-                  <div className="absolute top-2 right-4 text-primary/10 text-6xl font-serif select-none pointer-events-none group-hover:text-primary/15 transition-colors">
-                    “
-                  </div>
-                  
-                  <div className="space-y-3 relative z-10">
-                    <div className="flex gap-0.5">
-                      {Array.from({ length: 5 }).map((_, i) => (
-                        <Star key={i} className="size-4 fill-amber-400 text-amber-400" />
-                      ))}
-                    </div>
-                    <p className="text-sm italic text-muted-foreground leading-relaxed">
-                      "{testi.quote}"
-                    </p>
-                  </div>
-                  
-                  <div className="mt-4 pt-4 border-t border-border/60 flex items-center gap-3 relative z-10">
-                    <img 
-                      src={testi.avatar} 
-                      alt={testi.name} 
-                      className="size-10 rounded-full object-cover ring-2 ring-primary/20 shrink-0"
-                    />
-                    <div>
-                      <div className="text-sm font-semibold text-foreground flex items-center gap-1.5">
-                        {testi.name}
-                        <span className="inline-block size-1.5 rounded-full bg-emerald-500" title="Verified Resident" />
-                      </div>
-                      <div className="text-xs text-muted-foreground">{testi.role}</div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
           </section>
 
           {/* Reviews */}
