@@ -151,4 +151,46 @@ router.get('/saved/ids', authenticateToken, async (req: any, res) => {
   }
 })
 
+// POST /api/seeker/reviews/:pgId - Submit a review for a PG
+router.post('/reviews/:pgId', authenticateToken, async (req: any, res) => {
+  try {
+    const userId = req.user?.id;
+    const { pgId } = req.params;
+    const { rating, comment } = req.body;
+
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+    if (!rating || rating < 1 || rating > 5) return res.status(400).json({ error: 'Invalid rating' });
+
+    const supabase = getSupabaseClient(req);
+
+    // Check if user already reviewed this PG
+    const { data: existing, error: checkError } = await supabase
+      .from('reviews')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('pg_id', pgId)
+      .maybeSingle();
+
+    if (checkError) throw checkError;
+    if (existing) return res.status(400).json({ error: 'You have already reviewed this PG' });
+
+    const { error: insertError } = await supabase
+      .from('reviews')
+      .insert({ 
+        user_id: userId, 
+        pg_id: pgId, 
+        rating, 
+        comment, 
+        status: 'pending' 
+      });
+
+    if (insertError) throw insertError;
+
+    res.json({ message: 'Review submitted successfully and is pending approval.' });
+  } catch (error: any) {
+    console.error('Error submitting review:', error);
+    res.status(500).json({ error: 'Failed to submit review', details: error.message });
+  }
+});
+
 export default router

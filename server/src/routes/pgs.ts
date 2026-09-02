@@ -351,10 +351,11 @@ router.get('/:id/reviews', async (req, res) => {
     const limit = Math.min(Number(req.query.limit) || 10, 50)
     const offset = Number(req.query.offset) || 0
 
-    const { data, error, count } = await supabase
+    const { data, count, error } = await supabase
       .from('reviews')
-      .select('*, reviewer:profiles(full_name)', { count: 'exact' })
+      .select('*, reviewer:profiles!reviews_user_id_fkey(full_name)', { count: 'exact' })
       .eq('pg_id', pgId)
+      .eq('status', 'approved')
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1)
 

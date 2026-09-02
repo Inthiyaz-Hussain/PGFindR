@@ -10,7 +10,8 @@ import {
   Info,
   User,
   Users,
-  Lock
+  Lock,
+  Star
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -28,6 +29,7 @@ const NAV_ITEMS = [
   { to: '/owner/pgs', label: 'My PGs', icon: Building2, end: true },
   { to: '/owner/tenants', label: 'My Tenants', icon: Users, end: true, secure: true },
   { to: '/owner/inquiries', label: 'Inquiries', icon: MessageSquare, end: true, secure: true },
+  { to: '/owner/reviews', label: 'Reviews', icon: Star, end: true, secure: true },
   { to: '/owner/earnings', label: 'Earnings', icon: IndianRupee, end: true, secure: true },
   { to: '/owner/kyc', label: 'KYC', icon: FileCheck, end: true },
   { to: '/owner/profile', label: 'Profile Settings', icon: User, end: true },

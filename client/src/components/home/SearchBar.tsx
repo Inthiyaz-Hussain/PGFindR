@@ -137,7 +137,7 @@ export function SearchBar({
           <Input
             ref={inputRef}
             type="text"
-            placeholder="Search by PG name, locality..."
+            placeholder="Search relevant area / location (e.g., Ban...)"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onFocus={(e) => {

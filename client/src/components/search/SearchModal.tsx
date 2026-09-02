@@ -91,7 +91,7 @@ export function SearchModal({ open, onOpenChange, initialQuery = '' }: SearchMod
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-5 text-indigo-500" />
             <Input
               type="text"
-              placeholder="Search by city, locality or PG name..."
+              placeholder="Search area, location (e.g., Ban...)"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               className="pl-12 pr-10 py-6 text-base rounded-xl bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus-visible:ring-indigo-500 shadow-sm"

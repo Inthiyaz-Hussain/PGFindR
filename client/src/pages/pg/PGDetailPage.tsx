@@ -16,12 +16,14 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import { useQuery } from '@tanstack/react-query'
+import { WriteReviewModal } from '@/components/pg/WriteReviewModal'
 import { useAuth } from '@/hooks/useAuth'
 import { PhotoGallery } from '@/components/pg/PhotoGallery'
 import { PGHeader } from '@/components/pg/PGHeader'
 import { AmenitiesGrid } from '@/components/pg/AmenitiesGrid'
 import { AvailabilitySection } from '@/components/pg/AvailabilitySection'
 import { ReviewsList } from '@/components/pg/ReviewsList'
+import { toast } from 'sonner'
 import { ContactSection } from '@/components/pg/ContactSection'
 import type { SharingTypeItem } from '@/types'
 
@@ -110,9 +112,10 @@ function getNearbyLandmarks(pg: {
 export function PGDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { user: _user } = useAuth()
+  const { user } = useAuth()
   const [selectedSharing, setSelectedSharing] = useState<SharingTypeItem | null>(null)
   const [inquiryOpen, setInquiryOpen] = useState(false)
+  const [reviewModalOpen, setReviewModalOpen] = useState(false)
   const [reviewOffset, setReviewOffset] = useState(0)
 
   function handleSelectSharing(sharing: SharingTypeItem) {
@@ -143,6 +146,7 @@ export function PGDetailPage() {
   const {
     data: reviewsData,
     isLoading: reviewsLoading,
+    refetch,
   } = useQuery<ReviewsResponse>({
     queryKey: ['pg-reviews', id, reviewOffset],
     queryFn: async () => {
@@ -370,9 +374,20 @@ export function PGDetailPage() {
 
           {/* Reviews */}
           <section>
-            <h2 className="scroll-m-20 text-xl font-semibold tracking-tight mb-3">
-              Reviews ({pg.review_count})
-            </h2>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="scroll-m-20 text-xl font-semibold tracking-tight">
+                Reviews ({pg.review_count})
+              </h2>
+              <Button variant="outline" size="sm" onClick={() => {
+                if (!user) {
+                  toast.error("Please log in to write a review")
+                } else {
+                  setReviewModalOpen(true)
+                }
+              }}>
+                Write a Review
+              </Button>
+            </div>
             <ReviewsList
               reviews={allReviews.map((r) => ({
                 ...r,
@@ -486,6 +501,14 @@ export function PGDetailPage() {
           </div>
         )}
       </section>
+
+      <WriteReviewModal 
+        open={reviewModalOpen} 
+        onOpenChange={setReviewModalOpen} 
+        pgId={pg.id} 
+        onSuccess={() => refetch()}
+      />
+
     </div>
   )
 }

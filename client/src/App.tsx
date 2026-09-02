@@ -44,6 +44,7 @@ import { PGFormPage } from '@/pages/owner/PGFormPage'
 import { AvailabilityPage } from '@/pages/owner/AvailabilityPage'
 import { OwnerInquiriesPage } from '@/pages/owner/OwnerInquiriesPage'
 import { OwnerEarningsPage } from '@/pages/owner/OwnerEarningsPage'
+import { OwnerReviewsPage } from '@/pages/owner/OwnerReviewsPage'
 import { KYCPage } from '@/pages/owner/KYCPage'
 import { AboutPage as OwnerAboutPage } from '@/pages/owner/AboutPage'
 import { OwnerResourcesPage } from '@/pages/owner/OwnerResourcesPage'
@@ -133,6 +134,7 @@ export function App() {
                   <Route path="/owner/pgs/:id/availability" element={<AvailabilityPage />} />
                   <Route path="/owner/tenants" element={<MyTenantsPage />} />
                   <Route path="/owner/inquiries" element={<OwnerInquiriesPage />} />
+                  <Route path="/owner/reviews" element={<OwnerReviewsPage />} />
                   <Route path="/owner/earnings" element={<OwnerEarningsPage />} />
                   <Route path="/owner/kyc" element={<KYCPage />} />
                   <Route path="/owner/about" element={<OwnerAboutPage />} />
