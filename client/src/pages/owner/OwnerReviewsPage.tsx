@@ -1,16 +1,13 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '@/hooks/useAuth'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Star, CheckCircle, XCircle } from 'lucide-react'
+import { Star } from 'lucide-react'
 import { toast } from 'sonner'
 import { formatDistanceToNow } from 'date-fns'
 import { cn } from '@/lib/utils'
 
 export function OwnerReviewsPage() {
   const { session } = useAuth()
-  const queryClient = useQueryClient()
 
   const { data: reviewsData, isLoading } = useQuery({
     queryKey: ['owner-reviews'],
@@ -23,26 +20,6 @@ export function OwnerReviewsPage() {
       if (!res.ok) throw new Error('Failed to fetch reviews')
       return res.json()
     }
-  })
-
-  const statusMutation = useMutation({
-    mutationFn: async ({ id, status }: { id: string, status: 'approved' | 'rejected' }) => {
-      const res = await fetch(`${import.meta.env.VITE_API_URL || 'https://swiftpg-backend.onrender.com'}/api/owner/reviews/${id}/status`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session?.access_token}`
-        },
-        body: JSON.stringify({ status })
-      })
-      if (!res.ok) throw new Error('Failed to update review status')
-      return res.json()
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['owner-reviews'] })
-      toast.success('Review status updated')
-    },
-    onError: (err: any) => toast.error(err.message)
   })
 
   if (isLoading) return <div>Loading reviews...</div>
@@ -75,11 +52,6 @@ export function OwnerReviewsPage() {
                       By {review.reviewer?.full_name || 'Anonymous'} • {formatDistanceToNow(new Date(review.created_at), { addSuffix: true })}
                     </p>
                   </div>
-                  <Badge variant={review.status === 'approved' ? 'default' : review.status === 'rejected' ? 'destructive' : 'secondary'} className={cn(
-                    review.status === 'approved' && 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200 dark:bg-emerald-900 dark:text-emerald-200'
-                  )}>
-                    {review.status.charAt(0).toUpperCase() + review.status.slice(1)}
-                  </Badge>
                 </div>
               </CardHeader>
               <CardContent>
@@ -93,29 +65,6 @@ export function OwnerReviewsPage() {
                 </div>
                 <p className="text-sm leading-relaxed">"{review.comment}"</p>
 
-                {review.status === 'pending' && (
-                  <div className="flex gap-2 mt-4 pt-4 border-t">
-                    <Button 
-                      className="flex-1 bg-emerald-600 hover:bg-emerald-700" 
-                      size="sm" 
-                      onClick={() => statusMutation.mutate({ id: review.id, status: 'approved' })}
-                      disabled={statusMutation.isPending}
-                    >
-                      <CheckCircle className="size-4 mr-2" />
-                      Approve
-                    </Button>
-                    <Button 
-                      variant="destructive" 
-                      className="flex-1" 
-                      size="sm" 
-                      onClick={() => statusMutation.mutate({ id: review.id, status: 'rejected' })}
-                      disabled={statusMutation.isPending}
-                    >
-                      <XCircle className="size-4 mr-2" />
-                      Reject
-                    </Button>
-                  </div>
-                )}
               </CardContent>
             </Card>
           ))}
