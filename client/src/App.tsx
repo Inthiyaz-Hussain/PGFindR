@@ -6,6 +6,7 @@ import { AuthProvider } from '@/hooks/useAuth'
 import { ThemeProvider } from '@/components/theme-provider'
 import { ProtectedRoute } from '@/components/shared/ProtectedRoute'
 import { PublicLayout } from '@/components/layout/PublicLayout'
+import { InstallAppButton } from '@/components/InstallAppButton'
 
 // Public
 import { HomePage } from '@/pages/home/HomePage'
@@ -168,6 +169,7 @@ export function App() {
               <Route path="*" element={<NotFoundPage />} />
             </Routes>
           </BrowserRouter>
+          <InstallAppButton />
           <Toaster richColors position="top-right" />
         </AuthProvider>
       </QueryClientProvider>
