@@ -33,6 +33,33 @@ router.get('/saved', authenticateToken, async (req: any, res) => {
   }
 })
 
+// POST /api/seeker/saved/batch - Get PGs by array of IDs (for unauthenticated users using localStorage)
+router.post('/saved/batch', async (req: any, res) => {
+  try {
+    const { pgIds } = req.body
+    if (!Array.isArray(pgIds) || pgIds.length === 0) return res.json([])
+
+    const supabase = getSupabaseClient(req)
+    const { data, error } = await supabase
+      .from('pg_listings')
+      .select('*, photos:pg_photos(*)')
+      .in('id', pgIds)
+
+    if (error) throw error
+    
+    // Set is_saved to true for all
+    const formattedData = data.map((item: any) => ({
+      ...item,
+      is_saved: true
+    }))
+
+    res.json(formattedData)
+  } catch (error: any) {
+    console.error('Error fetching batch PGs:', error)
+    res.status(500).json({ error: 'Failed to fetch batch PGs', details: error.message })
+  }
+})
+
 // POST /api/seeker/saved/:pgId - Toggle saved status of a PG
 router.post('/saved/:pgId', authenticateToken, async (req: any, res) => {
   try {
@@ -121,33 +148,6 @@ router.get('/saved/ids', authenticateToken, async (req: any, res) => {
   } catch (error: any) {
     console.error('Error fetching saved PG IDs:', error)
     res.status(500).json({ error: 'Failed to fetch saved PG IDs', details: error.message })
-  }
-})
-
-// POST /api/seeker/saved/batch - Get PGs by array of IDs (for unauthenticated users using localStorage)
-router.post('/saved/batch', async (req: any, res) => {
-  try {
-    const { pgIds } = req.body
-    if (!Array.isArray(pgIds) || pgIds.length === 0) return res.json([])
-
-    const supabase = getSupabaseClient(req)
-    const { data, error } = await supabase
-      .from('pg_listings')
-      .select('*, photos:pg_photos(*)')
-      .in('id', pgIds)
-
-    if (error) throw error
-    
-    // Set is_saved to true for all
-    const formattedData = data.map((item: any) => ({
-      ...item,
-      is_saved: true
-    }))
-
-    res.json(formattedData)
-  } catch (error: any) {
-    console.error('Error fetching batch PGs:', error)
-    res.status(500).json({ error: 'Failed to fetch batch PGs', details: error.message })
   }
 })
 
