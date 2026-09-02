@@ -1,0 +1,21 @@
+{
+  "name": "FindPGRoom",
+  "short_name": "FindPG",
+  "description": "Find and manage the best PG accommodations seamlessly.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#10b981",
+  "icons": [
+    {
+      "src": "/logo-findpgroom.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/logo-findpgroom.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
