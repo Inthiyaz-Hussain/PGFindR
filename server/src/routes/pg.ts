@@ -310,13 +310,19 @@ router.delete('/:id', authenticateToken, async (req: AuthRequest, res) => {
     const bookingIds = bookings?.map(b => b.id) || []
 
     if (bookingIds.length > 0) {
+      // Break circular dependency if any
+      await supabase.from('bookings').update({ payment_id: null }).in('id', bookingIds)
+
       // Delete invoices first (foreign key to bookings)
       await supabase.from('invoices').delete().in('booking_id', bookingIds).throwOnError()
       
       // Delete tenant documents first (foreign key to bookings)
       await supabase.from('tenant_documents').delete().in('booking_id', bookingIds).throwOnError()
 
-      // Delete payments first (foreign key to bookings)
+      // Delete bookings first, since bookings might reference payments
+      // But wait, if payments reference bookings, we need to delete payments first or bookings first?
+      // Since we just nullified payment_id on bookings, the bookings -> payments constraint is gone.
+      // Now if payments -> bookings exists, we must delete payments first!
       await supabase.from('payments').delete().in('booking_id', bookingIds).throwOnError()
 
       // Delete bookings
