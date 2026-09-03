@@ -311,44 +311,47 @@ router.delete('/:id', authenticateToken, async (req: AuthRequest, res) => {
 
     if (bookingIds.length > 0) {
       // Delete invoices first (foreign key to bookings)
-      await supabase.from('invoices').delete().in('booking_id', bookingIds)
+      await supabase.from('invoices').delete().in('booking_id', bookingIds).throwOnError()
       
       // Delete tenant documents first (foreign key to bookings)
-      await supabase.from('tenant_documents').delete().in('booking_id', bookingIds)
+      await supabase.from('tenant_documents').delete().in('booking_id', bookingIds).throwOnError()
 
       // Delete payments first (foreign key to bookings)
-      await supabase.from('payments').delete().in('booking_id', bookingIds)
+      await supabase.from('payments').delete().in('booking_id', bookingIds).throwOnError()
 
       // Delete bookings
-      await supabase.from('bookings').delete().eq('pg_id', id)
+      await supabase.from('bookings').delete().eq('pg_id', id).throwOnError()
     }
 
     // 2. Delete inquiries
-    await supabase.from('inquiries').delete().eq('pg_id', id)
+    await supabase.from('inquiries').delete().eq('pg_id', id).throwOnError()
 
     // 2.5 Delete reviews
-    await supabase.from('reviews').delete().eq('pg_id', id)
+    await supabase.from('reviews').delete().eq('pg_id', id).throwOnError()
 
     // 3. Delete beds
-    await supabase.from('beds').delete().eq('pg_id', id)
+    await supabase.from('beds').delete().eq('pg_id', id).throwOnError()
 
     // 4. Delete rooms
-    await supabase.from('rooms').delete().eq('pg_id', id)
+    await supabase.from('rooms').delete().eq('pg_id', id).throwOnError()
 
     // 5. Delete sharing types
-    await supabase.from('sharing_types').delete().eq('pg_id', id)
+    await supabase.from('sharing_types').delete().eq('pg_id', id).throwOnError()
 
     // 6. Delete amenities
-    await supabase.from('amenities').delete().eq('pg_id', id)
+    await supabase.from('amenities').delete().eq('pg_id', id).throwOnError()
 
     // 7. Delete custom amenities
-    await supabase.from('custom_amenities').delete().eq('pg_id', id)
+    await supabase.from('custom_amenities').delete().eq('pg_id', id).throwOnError()
 
     // 8. Delete photos
-    await supabase.from('pg_photos').delete().eq('pg_id', id)
+    await supabase.from('pg_photos').delete().eq('pg_id', id).throwOnError()
 
     // 9. Delete property media
-    await supabase.from('property_media').delete().eq('property_id', id)
+    await supabase.from('property_media').delete().eq('property_id', id).throwOnError()
+
+    // 9.5 Delete custom nearby places
+    await supabase.from('custom_nearby_places').delete().eq('pg_id', id).throwOnError()
 
     // 10. Delete the pg_listings record
     const { error: deleteErr } = await supabase
