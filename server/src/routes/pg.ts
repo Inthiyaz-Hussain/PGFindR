@@ -304,29 +304,30 @@ router.delete('/:id', authenticateToken, async (req: AuthRequest, res) => {
     // 1. Fetch bookings for this PG to delete related payments & invoices & tenant documents
     const { data: bookings } = await supabase
       .from('bookings')
-      .select('id')
+      .select('id, payment_id')
       .eq('pg_id', id)
 
     const bookingIds = bookings?.map(b => b.id) || []
+    const paymentIds = bookings?.map(b => b.payment_id).filter(Boolean) || []
 
     if (bookingIds.length > 0) {
-      // Break circular dependency if any
-      await supabase.from('bookings').update({ payment_id: null }).in('id', bookingIds)
-
       // Delete invoices first (foreign key to bookings)
       await supabase.from('invoices').delete().in('booking_id', bookingIds).throwOnError()
       
       // Delete tenant documents first (foreign key to bookings)
       await supabase.from('tenant_documents').delete().in('booking_id', bookingIds).throwOnError()
 
-      // Delete bookings first, since bookings might reference payments
-      // But wait, if payments reference bookings, we need to delete payments first or bookings first?
-      // Since we just nullified payment_id on bookings, the bookings -> payments constraint is gone.
-      // Now if payments -> bookings exists, we must delete payments first!
-      await supabase.from('payments').delete().in('booking_id', bookingIds).throwOnError()
-
-      // Delete bookings
+      // Delete bookings FIRST, because bookings reference payments (bookings_payment_id_fkey)
       await supabase.from('bookings').delete().eq('pg_id', id).throwOnError()
+
+      // Then delete payments using payment_ids
+      if (paymentIds.length > 0) {
+        await supabase.from('payments').delete().in('id', paymentIds).throwOnError()
+      }
+      
+      // Also try to delete payments by booking_id just in case some payments don't have payment_id on booking
+      // We don't throwOnError here because if it's already deleted by CASCADE, it's fine.
+      await supabase.from('payments').delete().in('booking_id', bookingIds)
     }
 
     // 2. Delete inquiries
