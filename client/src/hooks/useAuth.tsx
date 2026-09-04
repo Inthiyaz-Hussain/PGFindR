@@ -415,7 +415,28 @@ function getDemoMockData(email: string) {
         return { error: new Error('User not found') as Error | null, profile: null }
       }
       localStorage.setItem('last_active_time', String(Date.now()))
-      const p = await fetchProfile(data.user.id)
+      let p = await fetchProfile(data.user.id)
+      
+      // Inline profile creation fallback if it doesn't exist
+      if (!p) {
+        const rawMetadata = data.user.user_metadata
+        const fullName = rawMetadata?.full_name || rawMetadata?.name || ''
+        const avatarUrl = rawMetadata?.avatar_url || rawMetadata?.picture || ''
+        const role = rawMetadata?.role || 'seeker'
+        
+        try {
+          await supabaseUntyped.from('profiles').insert({
+            id: data.user.id,
+            full_name: fullName,
+            avatar_url: avatarUrl,
+            role: role
+          })
+          p = await fetchProfile(data.user.id)
+        } catch (err) {
+          console.error('Error creating profile during login fallback:', err)
+        }
+      }
+      
       return { error: null, profile: p }
     } catch (e: any) {
       return { error: e as Error | null, profile: null }
