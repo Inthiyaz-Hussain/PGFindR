@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useRef, useState } from 'r
 import type { User, Session } from '@supabase/supabase-js'
 import { supabase, supabaseUntyped } from '@/lib/supabase'
 import type { Profile, UserRole } from '@/types'
-import { toast } from 'sonner'
+
 
 interface RegisterOptions {
   email: string
