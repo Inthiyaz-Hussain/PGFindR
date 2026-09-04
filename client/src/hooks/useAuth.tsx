@@ -79,7 +79,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .from('profiles')
         .select('*')
         .eq('id', userId)
-        .single()
+        .maybeSingle()
       const p = data as any
       if (p && p.role === 'owner' && !p.onboarding_verified) {
         // Self-heal: If they have existing active/onboarded PG listings, they should be onboarding verified

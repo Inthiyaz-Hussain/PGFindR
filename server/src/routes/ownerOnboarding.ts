@@ -686,7 +686,8 @@ router.post('/api/owner/set-password', async (req: any, res) => {
 
     const { error: profileErr } = await supabase
       .from('profiles')
-      .update({
+      .upsert({
+        id: userId,
         role: 'owner',
         full_name: inquiry.full_name,
         email: inquiry.email,
@@ -695,7 +696,6 @@ router.post('/api/owner/set-password', async (req: any, res) => {
         kyc_status: 'pending',
         listing_status: 'hidden'
       })
-      .eq('id', userId)
 
     if (profileErr) throw profileErr
 
