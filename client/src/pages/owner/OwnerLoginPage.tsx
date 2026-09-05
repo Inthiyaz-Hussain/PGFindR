@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Field, FieldLabel, FieldError } from '@/components/ui/field'
-import { Separator } from '@/components/ui/separator'
+
 import { useAuth } from '@/hooks/useAuth'
 import { supabase } from '@/lib/supabase'
 
@@ -351,24 +351,20 @@ export function OwnerLoginPage() {
               </div>
             )}
 
-            <div className="mt-6">
-              <div className="relative">
-                <Separator />
-                <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-2 text-xs text-muted-foreground">
-                  New to PGFindR?
-                </span>
-              </div>
-              <div className="mt-5 text-center">
-                <Link
-                  to="/owner/signup"
-                  className="text-sm font-medium text-primary hover:underline underline-offset-4"
-                >
-                  Register Your PG
-                </Link>
-              </div>
-            </div>
           </CardContent>
         </Card>
+
+        <div className="text-center">
+          <p className="text-sm text-muted-foreground">
+            New to PGFindR?{' '}
+            <Link
+              to="/owner/signup"
+              className="font-medium text-primary hover:underline underline-offset-4"
+            >
+              Register Your PG
+            </Link>
+          </p>
+        </div>
 
         <p className="text-center text-xs text-muted-foreground">
           By continuing, you agree to our{' '}

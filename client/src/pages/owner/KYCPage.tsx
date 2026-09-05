@@ -32,6 +32,7 @@ export function KYCPage() {
   const { user, profile, refreshProfile } = useAuth()
   const queryClient = useQueryClient()
 
+
   // Form states
   const [bankAccountNumber, setBankAccountNumber] = useState('')
   const [bankIfsc, setBankIfsc] = useState('')
@@ -155,10 +156,33 @@ export function KYCPage() {
     }
   })
 
+  const requestEditMutation = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ kyc_status: 'edit_requested' } as any)
+        .eq('id', user!.id)
+      if (error) throw error
+    },
+    onSuccess: async () => {
+      await refreshProfile()
+      toast.success('Edit request sent to admin. You will be notified once approved.')
+    },
+    onError: (err: any) => {
+      toast.error(err.message || 'Failed to request edit')
+    }
+  })
+
   const currentStatus = profile?.kyc_status || 'pending'
   const cfg = KYC_STATUS_CONFIG[currentStatus as keyof typeof KYC_STATUS_CONFIG] || KYC_STATUS_CONFIG.pending
 
-  const isLocked = currentStatus === 'approved' || currentStatus === 'submitted'
+  const kycSubmittedAt = profile?.kyc_submitted_at ? new Date(profile.kyc_submitted_at).getTime() : 0
+  const isPast24Hours = kycSubmittedAt > 0 && (Date.now() - kycSubmittedAt) > 24 * 60 * 60 * 1000
+
+  // The user can edit if it's pending, resubmission requested, or within 24 hours of submission.
+  const isLocked = currentStatus === 'approved' || 
+                   currentStatus === 'edit_requested' || 
+                   (currentStatus === 'submitted' && isPast24Hours)
 
   return (
     <div className="p-4 md:p-6 max-w-2xl mx-auto space-y-6">
@@ -199,11 +223,26 @@ export function KYCPage() {
         </div>
       )}
 
-      <div className="flex items-center gap-2">
-        <span className="text-sm text-muted-foreground">Status:</span>
-        <Badge variant="outline" className={`font-semibold border-0 ${cfg.class}`}>
-          {cfg.label}
-        </Badge>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground">Status:</span>
+          <Badge variant="outline" className={`font-semibold border-0 ${cfg.class}`}>
+            {currentStatus === 'edit_requested' ? 'Edit Requested' : cfg.label}
+          </Badge>
+        </div>
+        
+        {isLocked && currentStatus !== 'approved' && currentStatus !== 'edit_requested' && (
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => requestEditMutation.mutate()}
+            disabled={requestEditMutation.isPending}
+            className="text-xs"
+          >
+            {requestEditMutation.isPending ? <Loader2 className="size-3 mr-2 animate-spin" /> : null}
+            Request to Edit
+          </Button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 gap-6">

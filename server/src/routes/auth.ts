@@ -6,6 +6,7 @@ import { authenticateToken, requireRole } from '../middleware/auth.js'
 import { z } from 'zod'
 import { validateRequest } from '../middleware/validation.js'
 import { authRateLimiter } from '../middleware/rateLimiter.js'
+import { sendMail } from '../utils/mailer.js'
 
 const registerSchema = z.object({
   body: z.object({
@@ -496,27 +497,20 @@ router.post('/admin/verify-owner', authenticateToken, requireRole('admin'), asyn
           actionLink = `${clientUrl}/auth/reset-password?token=mock-token-${ownerId}&email=${encodeURIComponent(ownerEmail)}`
         }
 
-        // Simulate sending password setup email to the owner
+        // Send password setup email to the owner
         const emailSubject = 'Set Your Password - FindPGRoom Owner Portal'
         const emailBody = `
-          Hi,
-          
-          Your registration request as a PG Owner has been approved by the Admin!
-          
-          Please click the link below to set your account password and access your dashboard:
-          ${actionLink}
-          
-          After setting your password, you will be able to complete your listing details and submit your KYC verification.
-          
-          Regards,
-          FindPGRoom Admin Team
+          <p>Hi,</p>
+          <p>Your registration request as a PG Owner has been approved by the Admin!</p>
+          <p>Please click the link below to set your account password and access your dashboard:</p>
+          <p><a href="${actionLink}">${actionLink}</a></p>
+          <p>After setting your password, you will be able to complete your listing details and submit your KYC verification.</p>
+          <p>Regards,<br/>FindPGRoom Admin Team</p>
         `
-        console.log(`==================================================`)
-        console.log(`SIMULATING EMAIL DISPATCH TO OWNER FOR PASSWORD SETUP`)
-        console.log(`TO: ${ownerEmail}`)
-        console.log(`SUBJECT: ${emailSubject}`)
-        console.log(`BODY: ${emailBody}`)
-        console.log(`==================================================`)
+        const emailResult = await sendMail(ownerEmail, emailSubject, emailBody)
+        if (!emailResult.success) {
+          console.error('Failed to send password setup email:', emailResult.error)
+        }
       }
     }
 

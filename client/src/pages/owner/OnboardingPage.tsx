@@ -794,15 +794,7 @@ export function OnboardingPage() {
                   maxLength={6}
                 />
               </Field>
-              <Field>
-                <Label className="text-sm font-semibold">Standard Deposit Amount (₹)</Label>
-                <Input
-                  type="number"
-                  value={pgDetails.deposit_amount}
-                  onChange={e => setPgDetails({ ...pgDetails, deposit_amount: e.target.value })}
-                  placeholder="5000"
-                />
-              </Field>
+
             </div>
 
             <Field>
@@ -1158,7 +1150,7 @@ export function OnboardingPage() {
                 <>
                   <Upload className="mx-auto size-8 text-muted-foreground mb-2" />
                   <div className="text-sm font-semibold">Upload Photo Files</div>
-                  <div className="text-xs text-muted-foreground mt-1">Drag and drop or click to browse JPEG/PNG (Max 5MB each)</div>
+                  <div className="text-xs text-muted-foreground mt-1">Drag and Drop or click to add photos (Max 5MB)</div>
                 </>
               )}
             </div>
@@ -1225,7 +1217,26 @@ export function OnboardingPage() {
                 <Label className="text-sm font-semibold">Account Number</Label>
                 <Input
                   value={kycDetails.bank_account}
-                  onChange={e => setKycDetails({ ...kycDetails, bank_account: e.target.value.replace(/\D/g, '') })}
+                  onChange={e => {
+                    const val = e.target.value.replace(/\D/g, '')
+                    setKycDetails({ ...kycDetails, bank_account: val })
+                  }}
+                  onBlur={() => {
+                    const bankNameLower = kycDetails.bank_name.toLowerCase()
+                    if (bankNameLower.includes('sbi') || bankNameLower.includes('state bank of india')) {
+                      if (kycDetails.bank_account.length !== 11 && kycDetails.bank_account.length !== 17) {
+                        toast.error('SBI account number must be 11 or 17 digits.')
+                      }
+                    } else if (bankNameLower.includes('hdfc')) {
+                      if (kycDetails.bank_account.length !== 14) {
+                        toast.error('HDFC account number must be exactly 14 digits.')
+                      }
+                    } else if (bankNameLower.includes('icici')) {
+                      if (kycDetails.bank_account.length !== 12) {
+                        toast.error('ICICI account number must be exactly 12 digits.')
+                      }
+                    }
+                  }}
                   placeholder="Bank Account Number"
                 />
               </Field>
@@ -1254,7 +1265,7 @@ export function OnboardingPage() {
                     type="file"
                     id="onboarding-id-proof"
                     className="hidden"
-                    accept=".pdf,.png,.jpg,.jpeg,image/*,application/pdf"
+                    accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,image/*,application/pdf"
                     onChange={e => {
                       if (e.target.files?.[0]) handleKycUpload('id_proof', e.target.files[0])
                       e.target.value = ''
@@ -1315,7 +1326,7 @@ export function OnboardingPage() {
                     type="file"
                     id="onboarding-address-proof"
                     className="hidden"
-                    accept=".pdf,.png,.jpg,.jpeg,image/*,application/pdf"
+                    accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,image/*,application/pdf"
                     onChange={e => {
                       if (e.target.files?.[0]) handleKycUpload('address_proof', e.target.files[0])
                       e.target.value = ''
@@ -1376,7 +1387,7 @@ export function OnboardingPage() {
                     type="file"
                     id="onboarding-ownership-proof"
                     className="hidden"
-                    accept=".pdf,.png,.jpg,.jpeg,image/*,application/pdf"
+                    accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,image/*,application/pdf"
                     onChange={e => {
                       if (e.target.files?.[0]) handleKycUpload('ownership_proof', e.target.files[0])
                       e.target.value = ''

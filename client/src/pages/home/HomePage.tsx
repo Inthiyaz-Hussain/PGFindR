@@ -81,7 +81,7 @@ export function HomePage() {
 
   const handleLookingForPG = () => {
     setShowChoiceModal(false)
-    navigate('/search')
+    navigate('/seeker')
   }
 
   const handleWantToListPG = () => {

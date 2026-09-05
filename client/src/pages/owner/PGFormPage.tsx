@@ -1278,7 +1278,7 @@ export function PGFormPage() {
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="deposit_amount">Security Deposit (Global) (¥)</FieldLabel>
+                  <FieldLabel htmlFor="deposit_amount">Advance Deposit (₹)</FieldLabel>
                   <Input
                     {...field}
                     value={field.value ?? ''}

@@ -114,7 +114,7 @@ export function Navbar({
           {/* ================= LEFT: BRAND LOGO ================= */}
           <div className="flex items-center gap-3 shrink-0">
             <Link
-              to="/"
+              to={user ? getDashboardPath() : "/"}
               className="flex items-center gap-2.5 group transition-transform duration-200 active:scale-95"
             >
               <img

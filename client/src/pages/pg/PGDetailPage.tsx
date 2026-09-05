@@ -112,7 +112,7 @@ function getNearbyLandmarks(pg: {
 export function PGDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { user } = useAuth()
+  const { user, session } = useAuth()
   const [selectedSharing, setSelectedSharing] = useState<SharingTypeItem | null>(null)
   const [inquiryOpen, setInquiryOpen] = useState(false)
   const [reviewModalOpen, setReviewModalOpen] = useState(false)
@@ -379,8 +379,9 @@ export function PGDetailPage() {
                 Reviews ({pg.review_count})
               </h2>
               <Button variant="outline" size="sm" onClick={() => {
-                if (!user) {
-                  toast.error("Please log in to write a review")
+                const hasGoogleAuth = session?.user?.app_metadata?.provider === 'google' || user?.app_metadata?.provider === 'google'
+                if (!hasGoogleAuth) {
+                  toast.error("Please sign in with Google to write a review")
                 } else {
                   setReviewModalOpen(true)
                 }

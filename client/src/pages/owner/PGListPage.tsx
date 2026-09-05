@@ -108,11 +108,19 @@ export function PGListPage() {
             const photo = l.photos?.find((p) => (p as { is_primary: boolean }).is_primary) || l.photos?.[0]
             const photoUrl = photo ? (photo as { url: string }).url : null
 
+            // Actually, we don't have profile in PGListPage, wait, we do not fetch profile here.
+            // Oh wait! The PG listing itself has created_at or updated_at.
+            // Let's use `l.created_at`.
+            const pgCreatedAt = new Date(l.created_at).getTime()
+            const isEditLocked = (Date.now() - pgCreatedAt) > 24 * 60 * 60 * 1000 && l.status === 'pending'
+
             return (
               <Card
                 key={l.id}
                 className="overflow-hidden cursor-pointer hover:border-primary/50 hover:shadow-md transition-all duration-200"
-                onClick={() => navigate(`/owner/pgs/${l.id}/edit`)}
+                onClick={() => {
+                  if (!isEditLocked) navigate(`/owner/pgs/${l.id}/edit`)
+                }}
               >
                 <CardContent className="p-0">
                   <div className="flex flex-col sm:flex-row">
@@ -152,11 +160,14 @@ export function PGListPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-                            <DropdownMenuItem onClick={(e) => {
-                              e.stopPropagation()
-                              navigate(`/owner/pgs/${l.id}/edit`)
-                            }}>
-                              <Edit className="size-4" /> Edit Listing
+                            <DropdownMenuItem 
+                              disabled={isEditLocked}
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                if (!isEditLocked) navigate(`/owner/pgs/${l.id}/edit`)
+                              }}
+                            >
+                              <Edit className="size-4" /> {isEditLocked ? 'Edit Locked' : 'Edit Listing'}
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>

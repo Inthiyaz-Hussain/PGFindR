@@ -20,6 +20,14 @@ export function OnboardingCallback() {
       try {
         // 1. Get current Google OAuth session
         const { data: { session }, error: sessionErr } = await supabase.auth.getSession()
+        
+        // If opened in a popup window, close it immediately after session is processed.
+        // The parent window will detect the closure and handle the rest of the flow.
+        if (window.opener) {
+          window.close()
+          return
+        }
+
         if (sessionErr) throw sessionErr
         if (!session?.user) {
           setErrorMsg('Re-authentication failed. No active Google session.')

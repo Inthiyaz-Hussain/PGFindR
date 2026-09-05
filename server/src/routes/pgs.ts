@@ -80,6 +80,7 @@ router.get('/', async (req, res) => {
       amenities,
       available_only,
       q,
+      city,
       limit = '20',
       offset = '0',
     } = req.query as Record<string, string>
@@ -127,6 +128,11 @@ router.get('/', async (req, res) => {
     if (food === 'true') query = query.eq('food_included', true)
     if (gender) query = query.eq('pg_type', gender)
     if (available_only === 'true') query = query.gt('available_beds', 0)
+    
+    // Strict city matching
+    if (city) {
+      query = query.ilike('city', `%${city}%`)
+    }
 
     // Amenity filters
     const amenityList = amenities
@@ -205,7 +211,8 @@ router.get('/', async (req, res) => {
               if (!isTextMatch && !isCloseGeoMatch) return false
             }
           }
-          return pg.distance_meters == null || pg.distance_meters <= radiusM
+          // Strict location: do not allow PGs with null distance if searching by coords
+          return pg.distance_meters != null && pg.distance_meters <= radiusM
         })
         .sort((a, b) => {
           // If it's a category/nearby search, bubble up PGs that explicitly mention the landmark

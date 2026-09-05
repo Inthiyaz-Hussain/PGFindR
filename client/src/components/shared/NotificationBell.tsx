@@ -49,32 +49,36 @@ export function NotificationBell() {
   const [open, setOpen] = useState(false)
   const { notifications, unreadCount, isLoading, markAsRead, markAllAsRead } = useNotifications()
 
-  const handleNotificationClick = async (notification: { id: string; type: string; data: Record<string, unknown> }) => {
+  const handleNotificationClick = async (notification: { id: string; type: string; data: Record<string, unknown>; title?: string; body?: string }) => {
     await markAsRead(notification.id)
     setOpen(false)
 
     // Navigate based on notification type
-    const data = notification.data
+    const data = notification.data || {}
     if (data && typeof data.link === 'string') {
       if (data.link.startsWith('/invoice')) {
         window.open(data.link, '_blank')
       } else {
         navigate(data.link)
       }
-    } else if (notification.type === 'inquiry_new' && data.inquiry_id) {
-      navigate(`/owner/inquiries`)
-    } else if (notification.type === 'owner_inquiry_new') {
-      navigate(`/admin/owner-inquiries`)
-    } else if (notification.type === 'inquiry_confirmed') {
-      if (data.booking_id) {
+    } else if (notification.type === 'inquiry_new' || notification.type.includes('inquiry')) {
+      if (notification.type === 'owner_inquiry_new') {
+        navigate(`/admin/owner-inquiries`)
+      } else if (notification.type === 'inquiry_confirmed' && data.booking_id) {
         navigate(`/payment/${data.booking_id}`)
+      } else if (notification.title?.toLowerCase().includes('tenant') || notification.body?.toLowerCase().includes('tenant')) {
+        navigate(`/owner/inquiries`)
       } else {
         navigate(`/my-inquiries`)
       }
-    } else if (notification.type === 'inquiry_declined' && data.inquiry_id) {
-      navigate(`/my-inquiries`)
-    } else if (notification.type === 'booking_confirmed' && data.booking_id) {
+    } else if (notification.type === 'booking_confirmed' || notification.type.includes('booking') || notification.type.includes('payment')) {
       navigate(`/seeker/bookings`)
+    } else if (notification.type.includes('kyc')) {
+      navigate(`/owner/kyc`)
+    } else if (notification.type.includes('pg_')) {
+      navigate(`/owner`)
+    } else {
+      console.log('No route configured for notification type:', notification.type)
     }
   }
 

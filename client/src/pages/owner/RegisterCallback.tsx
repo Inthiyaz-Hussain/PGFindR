@@ -20,6 +20,14 @@ export function RegisterCallback() {
       try {
         // 1. Get the session
         const { data: { session }, error: sessionErr } = await supabase.auth.getSession()
+        
+        // If opened in a popup window, close it immediately after session is processed.
+        // The parent window will detect the closure and handle the rest of the flow.
+        if (window.opener) {
+          window.close()
+          return
+        }
+
         if (sessionErr) throw sessionErr
         if (!session?.user) {
           setStatus('error')

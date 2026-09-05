@@ -243,7 +243,7 @@ export function OwnerInquiriesPage() {
                   )}
 
                   {/* Contact Info */}
-                  {(seeker?.phone || inq.mobile) && inq.status !== 'pending' && (
+                  {(seeker?.phone || inq.mobile) && (
                     <div className="flex items-center gap-2 text-sm font-medium text-primary">
                       <Phone className="size-4" />
                       {seeker?.phone || inq.mobile}

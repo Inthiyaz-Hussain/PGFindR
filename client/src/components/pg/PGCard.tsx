@@ -74,6 +74,11 @@ export function PGCard({ pg, liveAvailableBeds = null, className }: PGCardProps)
   const handleToggleSave = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
+    const hasGoogleAuth = session?.user?.app_metadata?.provider === 'google' || user?.app_metadata?.provider === 'google'
+    if (!hasGoogleAuth) {
+      toast.error('Please sign in with Google to save a PG')
+      return
+    }
     toggleSaveMutation.mutate()
   }
 

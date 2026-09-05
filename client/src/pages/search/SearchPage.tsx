@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
-import { useSearchParams } from 'react-router-dom'
-import { Search, SlidersHorizontal, X, Filter, Navigation, Building2, Wifi, Utensils, Snowflake, Car, Shirt, ShieldCheck, User, Users, BedDouble } from 'lucide-react'
+import { useSearchParams, useNavigate } from 'react-router-dom'
+import { Search, SlidersHorizontal, X, Filter, Navigation, Building2, Wifi, Utensils, Snowflake, Car, Shirt, ShieldCheck, User, Users, BedDouble, ChevronLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -29,6 +29,7 @@ const AMENITIES = [
 
 export function SearchPage() {
   const [searchParams, setSearchParams] = useSearchParams()
+  const navigate = useNavigate()
   const searchQuery = searchParams.get('q') || ''
   const [query, setQuery] = useState(searchQuery)
   const [inputValue, setInputValue] = useState(searchQuery)
@@ -120,6 +121,9 @@ export function SearchPage() {
             params.set('lat', String(loc.lat))
             params.set('lng', String(loc.lng))
             params.set('radius', String(loc.radius || 25000))
+          }
+          if (loc.city && loc.city !== 'Near me') {
+            params.set('city', loc.city)
           }
         }
       } catch (e) {
@@ -323,6 +327,11 @@ export function SearchPage() {
 
   return (
     <div className="container mx-auto px-4 py-6 max-w-7xl">
+      <div className="mb-4">
+        <Button variant="ghost" onClick={() => navigate('/seeker')} className="-ml-4 text-muted-foreground hover:text-foreground">
+          <ChevronLeft className="size-4 mr-1" /> Back to Dashboard
+        </Button>
+      </div>
       {/* Search Bar */}
       <form id="search-form" onSubmit={handleSearch} className="flex gap-2 mb-6">
         <div className="relative flex-1" ref={searchContainerRef}>
