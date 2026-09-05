@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -120,6 +120,7 @@ export function InquiryModal({
   })
 
   const selectedPref = watch('sharing_preference')
+  const sharingPrefLabel = selectedPref ? SHARING_LABELS[selectedPref] : ''
 
   // Pre-fill from profile when available
   useEffect(() => {
