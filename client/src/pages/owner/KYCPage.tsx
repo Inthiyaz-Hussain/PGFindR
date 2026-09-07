@@ -160,7 +160,8 @@ export function KYCPage() {
     mutationFn: async () => {
       const { error } = await supabase
         .from('profiles')
-        .update({ kyc_status: 'edit_requested' } as Record<string, string>)
+        // @ts-ignore
+        .update({ kyc_status: 'edit_requested' })
         .eq('id', user!.id)
       if (error) throw error
     },
