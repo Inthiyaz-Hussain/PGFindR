@@ -129,8 +129,7 @@ router.get('/', async (req, res) => {
     if (gender) query = query.eq('pg_type', gender)
     if (available_only === 'true') query = query.gt('available_beds', 0)
     
-    // Strict city matching
-    if (city) {
+    if (city && !q) {
       query = query.ilike('city', `%${city}%`)
     }
 
@@ -174,7 +173,8 @@ router.get('/', async (req, res) => {
     if (hasCoords) {
       const userLat = refLat!
       const userLng = refLng!
-      const radiusM = Number(radius)
+      // If we searched via text, use a larger radius (e.g. 30km) to cover large cities
+      const radiusM = (q && !isCategory) ? 30000 : Number(radius)
 
       results = results
         .map((pg) => {
@@ -191,7 +191,6 @@ router.get('/', async (req, res) => {
             const queryLower = q.toLowerCase().trim()
             
             if (!isCategory) {
-              // Exact address/location search -> show that location ONLY
               const nameLower = pg.name ? pg.name.toLowerCase() : ''
               const cityLower = pg.city ? pg.city.toLowerCase() : ''
               const localityLower = pg.locality ? pg.locality.toLowerCase() : ''
@@ -205,10 +204,8 @@ router.get('/', async (req, res) => {
                 addressLower.includes(queryLower) ||
                 descLower.includes(queryLower)
 
-              const isCloseGeoMatch = 
-                pg.distance_meters != null && pg.distance_meters <= 5000
-
-              if (!isTextMatch && !isCloseGeoMatch) return false
+              // If it's a text match, always include it regardless of distance or coordinates
+              if (isTextMatch) return true
             }
           }
           // Strict location: do not allow PGs with null distance if searching by coords
