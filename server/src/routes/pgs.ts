@@ -147,31 +147,28 @@ router.get('/', async (req, res) => {
     }
 
     // Intersection filter for sharing type and available only against the beds table
-    const sharingList = sharing
-      ? sharing.split(',').map((s) => SHARING_MAP[s]).filter(Boolean)
-      : []
+    const rawSharingList = sharing ? sharing.split(',').filter(Boolean) : []
       
-    if (sharingList.length > 0 || available_only === 'true') {
-      let bedsQuery = supabase.from('beds').select('pg_id')
+    if (rawSharingList.length > 0) {
+      let sharingQuery = supabase.from('sharing_types').select('pg_id')
       
-      if (sharingList.length > 0) {
-        bedsQuery = bedsQuery.in('sharing_type', sharingList)
-      }
-      if (available_only === 'true') {
-        bedsQuery = bedsQuery.eq('status', 'available')
-      }
+      sharingQuery = sharingQuery.in('type', rawSharingList.map(Number))
       
-      const { data: bedRows, error: bedErr } = await bedsQuery
+      const { data: sharingRows, error: sharingErr } = await sharingQuery
       
-      if (!bedErr && bedRows) {
-        const pgIds = [...new Set(bedRows.map((b) => b.pg_id))]
+      if (!sharingErr && sharingRows) {
+        const pgIds = [...new Set(sharingRows.map((s) => s.pg_id))]
         if (pgIds.length > 0) {
           query = query.in('id', pgIds)
         } else {
-          // No PGs match the combined bed-level filters
+          // No PGs match the sharing filter
           return res.json({ data: [], total: 0, limit: pgLimit, offset: pgOffset })
         }
       }
+    }
+
+    if (available_only === 'true') {
+      // available_only is already handled by available_beds > 0 on pg_listings above
     }
 
     // Fetch up to 500 for geo filtering (JS Haversine)
