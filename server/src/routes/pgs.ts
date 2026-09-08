@@ -139,22 +139,23 @@ router.get('/', async (req, res) => {
       query = query.eq(amenity as 'wifi_included', true)
     }
 
-    // Intersection filter for sharing type and price against the beds table
+    if (min_price) {
+      query = query.gte('monthly_rent_max', Number(min_price))
+    }
+    if (max_price) {
+      query = query.lte('monthly_rent_min', Number(max_price))
+    }
+
+    // Intersection filter for sharing type and available only against the beds table
     const sharingList = sharing
       ? sharing.split(',').map((s) => SHARING_MAP[s]).filter(Boolean)
       : []
       
-    if (sharingList.length > 0 || min_price || max_price) {
+    if (sharingList.length > 0 || available_only === 'true') {
       let bedsQuery = supabase.from('beds').select('pg_id')
       
       if (sharingList.length > 0) {
         bedsQuery = bedsQuery.in('sharing_type', sharingList)
-      }
-      if (min_price) {
-        bedsQuery = bedsQuery.gte('monthly_rent', Number(min_price))
-      }
-      if (max_price) {
-        bedsQuery = bedsQuery.lte('monthly_rent', Number(max_price))
       }
       if (available_only === 'true') {
         bedsQuery = bedsQuery.eq('status', 'available')
