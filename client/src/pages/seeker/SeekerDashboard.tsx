@@ -96,7 +96,7 @@ export function SeekerDashboard() {
 
       {/* Quick Actions */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-        <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate('/search')}>
+        <Card className="cursor-pointer hover:shadow-md transition-shadow bg-slate-50" onClick={() => navigate('/search')}>
           <CardContent className="pt-5 flex items-center gap-4">
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
               <Search className="size-6 text-primary" />
@@ -109,7 +109,7 @@ export function SeekerDashboard() {
           </CardContent>
         </Card>
 
-        <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate('/seeker/inquiries')}>
+        <Card className="cursor-pointer hover:shadow-md transition-shadow bg-blue-50" onClick={() => navigate('/seeker/inquiries')}>
           <CardContent className="pt-5 flex items-center gap-4">
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-100">
               <MessageSquare className="size-6 text-blue-600" />
