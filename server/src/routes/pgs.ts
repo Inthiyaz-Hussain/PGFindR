@@ -123,8 +123,6 @@ router.get('/', async (req, res) => {
         )
       }
     }
-    if (min_price) query = query.gte('monthly_rent_min', Number(min_price))
-    if (max_price) query = query.lte('monthly_rent_min', Number(max_price))
     if (food === 'true') query = query.eq('food_included', true)
     if (gender) query = query.eq('pg_type', gender)
     if (available_only === 'true') query = query.gt('available_beds', 0)
@@ -141,21 +139,37 @@ router.get('/', async (req, res) => {
       query = query.eq(amenity as 'wifi_included', true)
     }
 
-    // Sharing type filter: get pg_ids with matching bed types first
+    // Intersection filter for sharing type and price against the beds table
     const sharingList = sharing
       ? sharing.split(',').map((s) => SHARING_MAP[s]).filter(Boolean)
       : []
-    if (sharingList.length > 0) {
-      const { data: bedRows } = await supabase
-        .from('beds')
-        .select('pg_id')
-        .in('sharing_type', sharingList)
-      const pgIds = [...new Set((bedRows || []).map((b) => b.pg_id))]
-      if (pgIds.length > 0) {
-        query = query.in('id', pgIds)
-      } else {
-        // No PGs match sharing filter
-        return res.json({ data: [], total: 0, limit: pgLimit, offset: pgOffset })
+      
+    if (sharingList.length > 0 || min_price || max_price) {
+      let bedsQuery = supabase.from('beds').select('pg_id')
+      
+      if (sharingList.length > 0) {
+        bedsQuery = bedsQuery.in('sharing_type', sharingList)
+      }
+      if (min_price) {
+        bedsQuery = bedsQuery.gte('monthly_rent', Number(min_price))
+      }
+      if (max_price) {
+        bedsQuery = bedsQuery.lte('monthly_rent', Number(max_price))
+      }
+      if (available_only === 'true') {
+        bedsQuery = bedsQuery.eq('status', 'available')
+      }
+      
+      const { data: bedRows, error: bedErr } = await bedsQuery
+      
+      if (!bedErr && bedRows) {
+        const pgIds = [...new Set(bedRows.map((b) => b.pg_id))]
+        if (pgIds.length > 0) {
+          query = query.in('id', pgIds)
+        } else {
+          // No PGs match the combined bed-level filters
+          return res.json({ data: [], total: 0, limit: pgLimit, offset: pgOffset })
+        }
       }
     }
 
@@ -208,6 +222,13 @@ router.get('/', async (req, res) => {
               if (isTextMatch) return true
             }
           }
+          
+          if (city) {
+            const cityLower = city.toLowerCase().trim()
+            const pgCityLower = pg.city ? pg.city.toLowerCase() : ''
+            if (pgCityLower.includes(cityLower)) return true
+          }
+
           // Strict location: do not allow PGs with null distance if searching by coords
           return pg.distance_meters != null && pg.distance_meters <= radiusM
         })
