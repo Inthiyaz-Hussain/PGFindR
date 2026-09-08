@@ -699,6 +699,15 @@ export function HomePage() {
       {showChoiceModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md select-none animate-in fade-in zoom-in-95 duration-200">
           <div className="relative w-full max-w-md overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/90 p-8 shadow-2xl space-y-6 animate-in zoom-in-95 duration-300">
+            {/* Close Button */}
+            <button
+              onClick={() => setShowChoiceModal(false)}
+              className="absolute top-4 right-4 p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all cursor-pointer"
+              aria-label="Close modal"
+            >
+              <X className="h-5 w-5" />
+            </button>
+            
             {/* Header */}
             <div className="text-center space-y-2">
               <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
@@ -726,6 +735,16 @@ export function HomePage() {
                 <Building className="h-8 w-8 text-indigo-400 group-hover:scale-110 transition-transform duration-300" />
                 <span className="mt-3 text-base font-bold text-white group-hover:text-indigo-400 transition-colors">Want to List PG</span>
                 <span className="mt-1 text-xs text-slate-400 max-w-[220px]">Get tenants fast, manage room inventory, and grow digitally</span>
+              </button>
+            </div>
+
+            {/* Login Link */}
+            <div className="text-center pt-2">
+              <button
+                onClick={() => setShowChoiceModal(false)}
+                className="text-sm text-slate-400 hover:text-indigo-400 transition-colors cursor-pointer"
+              >
+                Already have an account? <span className="font-semibold text-white">Sign In</span>
               </button>
             </div>
 

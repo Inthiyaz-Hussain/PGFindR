@@ -7,6 +7,7 @@ import { ThemeProvider } from '@/components/theme-provider'
 import { ProtectedRoute } from '@/components/shared/ProtectedRoute'
 import { PublicLayout } from '@/components/layout/PublicLayout'
 import { InstallAppButton } from '@/components/InstallAppButton'
+import { PWAUpdatePrompt } from '@/components/shared/PWAUpdatePrompt'
 
 // Public
 import { HomePage } from '@/pages/home/HomePage'
@@ -170,6 +171,7 @@ export function App() {
             </Routes>
           </BrowserRouter>
           <InstallAppButton />
+          <PWAUpdatePrompt />
           <Toaster richColors position="top-right" />
         </AuthProvider>
       </QueryClientProvider>
