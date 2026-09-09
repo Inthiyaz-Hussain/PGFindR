@@ -644,7 +644,7 @@ export function HomePage() {
                     Sign In
                   </Link>
                 </Button>
-                <Button asChild variant="outline" className="w-full rounded-xl border-slate-800 hover:bg-slate-800 hover:text-white text-slate-300 font-semibold">
+                <Button asChild className="w-full rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold shadow-xs border border-slate-700">
                   <Link to="/auth/register?role=seeker">
                     <UserPlus className="size-4 shrink-0" />
                     Sign Up
@@ -652,7 +652,7 @@ export function HomePage() {
                 </Button>
               </div>
               <Button asChild variant="ghost" className="w-full rounded-xl hover:bg-slate-800 hover:text-indigo-400 text-slate-400 transition-colors text-xs font-semibold py-1">
-                <Link to="/search" className="flex items-center justify-center gap-1">
+                <Link to="/seeker" className="flex items-center justify-center gap-1">
                   Explore as Guest <ArrowRight className="h-3 w-3 animate-bounce-horizontal" />
                 </Link>
               </Button>
@@ -680,7 +680,7 @@ export function HomePage() {
                   Sign In
                 </Link>
               </Button>
-              <Button asChild variant="outline" className="w-full rounded-xl border-slate-800 hover:bg-slate-800 hover:text-white text-slate-300 font-semibold">
+              <Button asChild className="w-full rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold shadow-xs border border-slate-700">
                 <Link to="/auth/register?role=owner">
                   <UserPlus className="size-4 shrink-0" />
                   Register
@@ -738,15 +738,7 @@ export function HomePage() {
               </button>
             </div>
 
-            {/* Login Link */}
-            <div className="text-center pt-2">
-              <button
-                onClick={() => setShowChoiceModal(false)}
-                className="text-sm text-slate-400 hover:text-indigo-400 transition-colors cursor-pointer"
-              >
-                Already have an account? <span className="font-semibold text-white">Sign In</span>
-              </button>
-            </div>
+
 
             
           </div>
